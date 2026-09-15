@@ -1,0 +1,21 @@
+{
+  "name": "Refuah V'Chesed Dispatch",
+  "short_name": "RVC Dispatch",
+  "description": "Volunteer medical transport dispatch for Refuah V'Chesed, Montreal.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#E31E24",
+  "lang": "en-CA",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "My rides", "url": "/my-trips" },
+    { "name": "Dispatch board", "url": "/board" }
+  ]
+}
