@@ -1,0 +1,46 @@
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# environment — never commit real secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# data & backups
+backups/
+*.dump
+*.sql.gz
+tools/migrate/export/
+tools/migrate/reports/
+
+# logs
+logs/
+*.log
+npm-debug.log*
+
+# editors / os
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+
+# playwright
+test-results/
+playwright-report/
+blob-report/
+
+# playwright auth state (contains real session cookies)
+apps/web/e2e/.auth/
+
+# TypeScript output must never land beside the source. Every workspace emits to
+# dist/; anything here is a stray `tsc` run and would otherwise be committed.
+apps/web/src/**/*.js
+apps/web/src/**/*.d.ts
+apps/web/src/**/*.js.map
+packages/shared/src/**/*.js
+packages/shared/src/**/*.d.ts
+packages/shared/src/**/*.js.map
