@@ -1,10 +1,11 @@
 # =============================================================================
 # Fly.io — Refuah V'Chesed Dispatch, web app
 #
-# The SPA. Built from the `web` stage of the root Dockerfile and served as
-# static files; it holds no secrets and talks to the API over HTTPS.
+# The SPA. Built from ./Dockerfile.web and served by nginx, which also proxies
+# /api and /webhooks to the API so the browser sees one origin. It holds no
+# secrets.
 #
-#   fly deploy --config fly.web.toml --build-target web
+#   fly deploy --config fly.web.toml
 #
 # Same region rule as the API: this app serves Quebec residents and there is no
 # reason for its edge to sit outside Canada. `yyz` (Toronto) or `yul`.
@@ -20,13 +21,11 @@ kill_signal = "SIGTERM"
 kill_timeout = "5s"
 
 [build]
-  dockerfile = "Dockerfile"
-  build-target = "web"
+  dockerfile = "Dockerfile.web"
 
 [env]
-  # Where the SPA sends its API calls. The nginx config in the web stage proxies
-  # /api and /webhooks here, so the browser only ever talks to one origin and
-  # the session cookie stays same-site.
+  # Where nginx forwards /api and /webhooks. The browser never sees this host:
+  # it addresses this app only, which is what keeps the session cookie same-site.
   API_ORIGIN = "https://api.dispatch.refuahvchesed.org"
 
 [http_service]

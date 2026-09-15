@@ -3,25 +3,23 @@
 # =============================================================================
 # Refuah V'Chesed Dispatch — container image
 #
-# Two things ship out of this file:
+# One thing ships out of this file: the API and its background worker.
 #
-#   * the DEFAULT (final) stage `runtime`  — the API + background worker.
-#       docker build -t rvc-api .
-#   * the stage `web`                      — an nginx image serving the built
-#     SPA as static files.
-#       docker build --target web -t rvc-web .
+#     docker build -t rvc-api .
 #
-# The API image does NOT serve the web bundle. apps/api is a JSON API: it has
-# no static-file plugin, it sets `crossOriginResourcePolicy: same-site`, and it
-# disables helmet's CSP on the explicit grounds that "the web app sets its own"
-# (apps/api/src/server.ts). Serving HTML from the same process would mean
-# putting a CSP, a cache policy and an SPA fallback into an API that is
-# deliberately not in that business. So the SPA is a separate artifact served
-# by a static host — the `web` stage here, Fly's second app in production, and
-# the Vite dev server locally. See docs/DEPLOYMENT.md.
+# The SPA is ./Dockerfile.web, a separate image. The API image does NOT serve
+# the web bundle: apps/api is a JSON API, it has no static-file plugin, it sets
+# `crossOriginResourcePolicy: same-site`, and it disables helmet's CSP on the
+# explicit grounds that "the web app sets its own" (apps/api/src/server.ts).
+# Serving HTML from the same process would mean putting a CSP, a cache policy
+# and an SPA fallback into an API that is deliberately not in that business.
 #
-# Build order is shared -> api -> web, because @rvc/shared is a workspace
-# dependency of both and both import it by package name.
+# The two images are joined at the edge instead: nginx in the web image proxies
+# /api and /webhooks here, so the browser addresses one origin and the
+# SameSite=Lax session cookie is actually sent. See docs/DEPLOYMENT.md.
+#
+# Build order is shared -> api, because @rvc/shared is a workspace dependency
+# imported by package name.
 # =============================================================================
 
 ARG NODE_VERSION=22
@@ -56,16 +54,15 @@ RUN --mount=type=cache,target=/root/.npm \
     npm ci --include-workspace-root --workspaces
 
 # -----------------------------------------------------------------------------
-# build — compile shared, then api, then web.
+# build — compile shared, then api.
 # -----------------------------------------------------------------------------
 FROM deps AS build
 ENV NODE_ENV=development
 COPY tsconfig.base.json ./
 COPY packages/shared ./packages/shared
 COPY apps/api ./apps/api
-COPY apps/web ./apps/web
 
-# 1. shared (both other workspaces import it)
+# 1. shared (the API imports it by package name)
 RUN npm run build --workspace=@rvc/shared
 
 # 2. api  -> apps/api/dist
@@ -76,9 +73,6 @@ RUN npm run build --workspace=@rvc/shared
 #    at the TypeScript source; the manifest was fixed, and the rewrite has been
 #    removed rather than left as a no-op that looks load-bearing.
 RUN npm run build --workspace=@rvc/api
-
-# 3. web  -> apps/web/dist
-RUN npm run build --workspace=@rvc/web
 
 # -----------------------------------------------------------------------------
 # prod-deps — the runtime dependency tree only (no vite, vitest, playwright…).
@@ -91,30 +85,6 @@ COPY apps/web/package.json ./apps/web/
 COPY tools/migrate/package.json ./tools/migrate/
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev --include-workspace-root --workspaces
-
-# =============================================================================
-# web — static SPA image (nginx). Build with `--target web`.
-# =============================================================================
-FROM nginx:1.27-alpine AS web
-COPY --from=build /app/apps/web/dist /usr/share/nginx/html
-# SPA fallback: every unknown path is the client router's problem, not a 404.
-# /api is NOT proxied here; the browser talks to API_PUBLIC_URL directly and
-# CORS is allow-listed to APP_URL by the API.
-RUN printf '%s\n' \
-  'server {' \
-  '  listen 8080;' \
-  '  server_name _;' \
-  '  root /usr/share/nginx/html;' \
-  '  index index.html;' \
-  '  gzip on;' \
-  '  gzip_types text/css application/javascript application/json image/svg+xml;' \
-  '  location /assets/ { expires 1y; add_header Cache-Control "public, immutable"; }' \
-  '  location = /service-worker.js { add_header Cache-Control "no-cache"; }' \
-  '  location / { try_files $uri $uri/ /index.html; }' \
-  '}' > /etc/nginx/conf.d/default.conf
-EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
 
 # =============================================================================
 # runtime — the API and its in-process worker. This is the default stage.

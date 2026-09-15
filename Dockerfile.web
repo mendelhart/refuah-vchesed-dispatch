@@ -1,0 +1,72 @@
+# syntax=docker/dockerfile:1.7
+
+# =============================================================================
+# Refuah V'Chesed Dispatch — web image
+#
+#   docker build -f Dockerfile.web -t rvc-web .
+#
+# The SPA, served by nginx, which also proxies /api and /webhooks to the API so
+# the browser only ever sees one origin. deploy/web-nginx.conf.template explains
+# why that matters; the short version is that the session cookie is SameSite=Lax
+# and would simply not be sent across origins.
+#
+# This lives in its own file rather than as a stage of ./Dockerfile because
+# Render cannot build a named stage — it builds whatever a Dockerfile's final
+# stage is. Fly builds this same file (fly.web.toml), so there is one web image
+# definition and not two that drift.
+#
+# The API image is ./Dockerfile. Nothing here holds a secret: everything in this
+# image is shipped to a browser and is therefore public by definition.
+# =============================================================================
+
+ARG NODE_VERSION=22
+
+# -----------------------------------------------------------------------------
+# build — @rvc/shared, then the SPA.
+# -----------------------------------------------------------------------------
+FROM node:${NODE_VERSION}-alpine AS build
+ENV NPM_CONFIG_UPDATE_NOTIFIER=false \
+    NPM_CONFIG_FUND=false
+WORKDIR /app
+
+# Manifests first so the dependency layer survives a source change. npm
+# workspaces needs every workspace manifest present before `npm ci` will
+# resolve the internal @rvc/* links, even the ones this image never builds.
+COPY package.json package-lock.json ./
+COPY packages/shared/package.json ./packages/shared/
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY tools/migrate/package.json ./tools/migrate/
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --include-workspace-root --workspaces
+
+COPY tsconfig.base.json ./
+COPY packages/shared ./packages/shared
+COPY apps/web ./apps/web
+
+RUN npm run build --workspace=@rvc/shared
+RUN npm run build --workspace=@rvc/web
+
+# -----------------------------------------------------------------------------
+# runtime — nginx.
+# -----------------------------------------------------------------------------
+FROM nginx:1.27-alpine
+
+# Where the browser should send /api and /webhooks. Overridden per environment;
+# the default is only useful to someone running the two containers side by side.
+ENV API_ORIGIN=http://api:8080
+
+# The port nginx listens on. Hosts that assign one (Render sets PORT) override
+# this; 8080 matches fly.web.toml's internal_port and docker-compose.
+ENV PORT=8080
+
+COPY --from=build /app/apps/web/dist /usr/share/nginx/html
+
+# nginx:alpine's entrypoint runs envsubst over everything in templates/ at
+# container start and writes the result into conf.d/.
+COPY deploy/web-nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY deploy/rvc-proxy.conf          /etc/nginx/snippets/rvc-proxy.conf
+
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
