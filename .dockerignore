@@ -1,0 +1,54 @@
+# Build context hygiene. Everything the image does not need, or must never
+# contain, is excluded here rather than being copied and then deleted.
+
+# Dependencies and build output are produced inside the image.
+node_modules
+**/node_modules
+dist
+**/dist
+build
+**/build
+coverage
+**/coverage
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Secrets. .env.example is deliberately allowed through; nothing else is.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Data and backups must never end up in a layer.
+backups/
+*.dump
+*.sql.gz
+tools/migrate/export/
+tools/migrate/reports/
+
+# Local-only tooling and history.
+.git
+.github
+.gitignore
+.editorconfig
+.vscode
+.idea
+.DS_Store
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile
+.dockerignore
+fly.toml
+
+# Docs are for humans, not for the runtime image.
+docs/
+README.md
+*.md
+
+# Test artefacts
+test-results/
+playwright-report/
+blob-report/
+logs/
+*.log
