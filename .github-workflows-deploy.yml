@@ -1,0 +1,117 @@
+name: Deploy
+
+# Deploys to Fly on every push to main, but ONLY after CI has gone green for
+# that exact commit.
+#
+# The gate is `workflow_run`: this workflow starts when CI finishes, and the
+# first condition below refuses to run unless CI's conclusion was success. That
+# is a real gate — a push whose CI failed never reaches Fly — whereas a plain
+# `on: push` with a `needs:` is not, because it is a different workflow run.
+#
+# It also means the deploy uses the commit CI tested, not whatever main happens
+# to be at now: the checkout below pins github.event.workflow_run.head_sha.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  # Manual re-deploy (a rollback, or a deploy after a secret change).
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Commit SHA to deploy (defaults to the head of main)
+        required: false
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: deploy to Fly (yyz)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: production
+      url: https://api.dispatch.refuahvchesed.org
+
+    # Green CI, or an explicit human re-deploy. Nothing else.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.sha || github.event.workflow_run.head_sha || github.sha }}
+
+      - name: record what is being deployed
+        run: |
+          echo "commit:  $(git rev-parse HEAD)"
+          echo "subject: $(git log -1 --pretty=%s)"
+          echo "trigger: ${{ github.event_name }}"
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      # ---------------------------------------------------------------------
+      # The API.
+      #
+      # fly.toml's [deploy] release_command runs `node dist/db/migrate.js`
+      # against the production database BEFORE any new machine takes traffic.
+      # A failing migration aborts the release and the old version keeps
+      # serving, which is why migrations must always be backward-compatible
+      # with the version currently running (see docs/DEPLOYMENT.md).
+      # ---------------------------------------------------------------------
+      - name: deploy API
+        run: flyctl deploy --config fly.toml --remote-only --wait-timeout 600
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      # ---------------------------------------------------------------------
+      # The SPA, from the `web` stage of the same Dockerfile, as a second app.
+      # Skipped cleanly if fly.web.toml has not been created yet.
+      # ---------------------------------------------------------------------
+      - name: deploy web
+        run: |
+          if [ -f fly.web.toml ]; then
+            flyctl deploy --config fly.web.toml --build-target web --remote-only --wait-timeout 600
+          else
+            echo "::notice::fly.web.toml not present — skipping the SPA deploy"
+          fi
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      # ---------------------------------------------------------------------
+      # Post-deploy verification. /health does a `select 1`, so a 200 here means
+      # the new version booted, ran its migrations and can reach the database.
+      # ---------------------------------------------------------------------
+      - name: verify /health
+        run: |
+          set -euo pipefail
+          url="https://api.dispatch.refuahvchesed.org/health"
+          for attempt in $(seq 1 20); do
+            code="$(curl -fsS -o /tmp/health.json -w '%{http_code}' "$url" || true)"
+            if [ "$code" = "200" ]; then
+              echo "healthy: $(cat /tmp/health.json)"
+              exit 0
+            fi
+            echo "attempt $attempt: HTTP ${code:-none}"
+            sleep 6
+          done
+          echo "::error::/health did not return 200 within ~2 minutes"
+          echo "::error::roll back now: flyctl releases --app rvc-dispatch-api && flyctl deploy --image <previous-image>"
+          exit 1
+
+      - name: deployment summary
+        if: always()
+        run: |
+          {
+            echo "### Deploy ${{ job.status }}"
+            echo ""
+            echo "- commit: \`$(git rev-parse --short HEAD)\`"
+            echo "- region: yyz (Toronto)"
+            echo "- rollback: \`flyctl releases --app rvc-dispatch-api\`, then redeploy the previous image"
+          } >> "$GITHUB_STEP_SUMMARY"
