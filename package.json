@@ -1,0 +1,32 @@
+{
+  "name": "rvc-dispatch",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "tools/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@rvc/api & npm run dev --workspace=@rvc/web",
+    "build": "npm run build --workspace=@rvc/shared && npm run build --workspace=@rvc/api && npm run build --workspace=@rvc/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint . --max-warnings=0",
+    "test": "npm run test --workspace=@rvc/api",
+    "test:e2e": "./scripts/e2e.sh",
+    "db:migrate": "npm run db:migrate --workspace=@rvc/api",
+    "db:seed": "npm run db:seed --workspace=@rvc/api",
+    "migrate:base44": "npm run start --workspace=@rvc/migrate",
+    "test:all": "npm run test --workspace=@rvc/api && npm test --workspace=@rvc/migrate"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.19.0",
+    "eslint": "^9.19.0",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.24.0"
+  }
+}

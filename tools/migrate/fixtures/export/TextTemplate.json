@@ -1,0 +1,5 @@
+[
+  { "id": "tpl_901", "template_key": "trip_offer_sms", "template_name": "Trip offer", "template_content": "New trip available: {caller_name} from {pickup_address} to {dropoff_address} at {pickup_time}. Call ID: {call_id}", "category": "sms", "description": "Broadcast to a volunteer group.", "available_variables": ["caller_name", "pickup_address", "dropoff_address", "pickup_time", "call_id"], "created_date": "2024-01-15T10:00:00.000Z" },
+  { "id": "tpl_902", "template_key": "trip_accepted_sms", "template_name": "Trip accepted", "template_content": "Trip Accepted! Call ID: {{call_id}}\nPickup: {{pickup_address}}\nDropoff: {{dropoff_address}}", "category": "sms", "available_variables": ["call_id", "pickup_address", "dropoff_address"], "created_date": "2024-01-15T10:05:00.000Z" },
+  { "id": "tpl_903", "template_name": "Orphan template with no key", "template_content": "This never had a key.", "created_date": "2024-06-01T10:00:00.000Z" }
+]

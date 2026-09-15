@@ -1,0 +1,6 @@
+[
+  { "id": "aud_b01", "action": "trip_accepted_sms", "entity_type": "trip", "entity_id": "trip_301", "description": "Trip accepted by Sara Weiss via SMS", "performed_by": "sara.weiss@example.org", "performed_by_name": "Sara Weiss", "ip_address": "203.0.113.7", "created_date": "2025-01-13T18:02:05.000Z" },
+  { "id": "aud_b02", "action": "damage_reported", "entity_type": "equipment", "entity_id": "eq_404", "description": "Damage reported on Adjustable bed (HB-003): Side rail latch broken.", "performed_by": "moshe.klein@example.org", "performed_by_name": "Moshe Klein", "created_date": "2025-01-05T09:00:10.000Z" },
+  { "id": "aud_b03", "action": "trip_cancellation_notified", "entity_type": "trip", "entity_id": "trip_305", "description": "Trip cancellation notified to 2 admins", "performed_by": "someone.who.left@example.org", "performed_by_name": "Someone Who Left", "created_date": "2024-12-08T09:12:30.000Z" },
+  { "id": "aud_b04", "action": "proxy_call_initiated", "entity_type": "trip", "entity_id": "trip_302", "description": "Masked call initiated", "performed_by": "moshe.klein@example.org", "performed_by_name": "Moshe Klein", "created_date": "not a real date" }
+]

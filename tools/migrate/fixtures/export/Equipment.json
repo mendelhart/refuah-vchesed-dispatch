@@ -1,0 +1,108 @@
+[
+  {
+    "id": "eq_401",
+    "category_id": "cat_501",
+    "category_name": "Wheelchairs",
+    "type": "Transport wheelchair",
+    "item_id": "WC-001",
+    "barcode": "0123456789",
+    "status": "loaned",
+    "condition": "good",
+    "borrower_name": "Bracha Adler",
+    "borrower_phone": "(514) 555-0310",
+    "borrower_address": "5700 Avenue Victoria, Unit 3",
+    "date_out": "2025-01-20",
+    "expected_return_date": "2025-02-20",
+    "loan_history": [
+      {
+        "borrower_name": "Shimon Gross",
+        "borrower_phone": "5145550344",
+        "date_out": "2024-11-02",
+        "date_returned": "2024-12-15"
+      },
+      {
+        "borrower_name": "Bracha Adler",
+        "borrower_phone": "(514) 555-0310",
+        "date_out": "2025-01-20"
+      }
+    ],
+    "created_date": "2024-06-01T10:00:00.000Z"
+  },
+  {
+    "id": "eq_402",
+    "category_id": "cat_502",
+    "category_name": "Walkers",
+    "type": "Rollator walker",
+    "item_id": "WK-014",
+    "status": "available",
+    "condition": "fair",
+    "loan_history": [
+      {
+        "borrower_name": "Perel Katz",
+        "borrower_phone": "514 555 0366",
+        "date_out": "2024-08-01",
+        "date_returned": "2024-09-12"
+      }
+    ],
+    "created_date": "2024-05-12T10:00:00.000Z"
+  },
+  {
+    "id": "eq_403",
+    "category_id": "cat_501",
+    "category_name": "Wheelchairs",
+    "type": "Standard wheelchair",
+    "item_id": "WC-002",
+    "status": "loaned",
+    "condition": "good",
+    "borrower_name": "Unknown Neighbour",
+    "date_out": "2025-02-01",
+    "loan_history": [],
+    "created_date": "2024-06-01T10:00:00.000Z"
+  },
+  {
+    "id": "eq_404",
+    "category_id": "cat_509_missing",
+    "category_name": "Hospital beds",
+    "type": "Adjustable bed",
+    "item_id": "HB-003",
+    "status": "maintenance",
+    "condition": "poor",
+    "damage_reported": true,
+    "damage_report": "Side rail latch broken.",
+    "damage_reported_at": "2025-01-05T09:00:00.000Z",
+    "serial_number": "SN-99213",
+    "loan_history": [],
+    "created_date": "2024-03-15T10:00:00.000Z"
+  },
+  {
+    "id": "eq_405",
+    "category_id": "cat_502",
+    "status": "available",
+    "condition": "new",
+    "item_id": "WK-015",
+    "loan_history": [],
+    "created_date": "2025-01-02T10:00:00.000Z"
+  },
+  {
+    "id": "eq_406",
+    "category_id": "cat_501",
+    "category_name": "Wheelchairs",
+    "type": "Transport wheelchair",
+    "item_id": "WC-003",
+    "status": "available",
+    "condition": "good",
+    "loan_history": [
+      {
+        "borrower_name": "Miriam Landau",
+        "borrower_phone": "5145550388",
+        "date_out": "2024-09-01"
+      },
+      {
+        "borrower_name": "Yaakov Segal",
+        "borrower_phone": "5145550422",
+        "date_out": "2024-10-15"
+      }
+    ],
+    "created_date": "2024-04-01T10:00:00.000Z"
+  }
+]

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "vol_101",
+    "email": "sara.weiss@example.org",
+    "full_name": "Sara Weiss",
+    "phone": "514 555 0142",
+    "role": "volunteer",
+    "active": true,
+    "groups": ["chesed_on_the_go"],
+    "vehicle_preference": "standard",
+    "created_date": "2024-02-12T02:00:00.000Z",
+    "updated_date": "2024-05-01T02:00:00.000Z"
+  },
+  {
+    "id": "vol_102",
+    "email": "moshe.klein@example.org",
+    "full_name": "Moshe Klein",
+    "phone": "514-555-0177",
+    "role": "admin",
+    "active": true,
+    "groups": ["chaim_vchesed"],
+    "created_date": "2023-11-03T02:00:00.000Z"
+  },
+  {
+    "id": "vol_103",
+    "email": "dovid.stern@example.org",
+    "full_name": "Dovid Stern",
+    "phone": "5145550155",
+    "role": "volunteer",
+    "active": true,
+    "groups": ["misamchem"],
+    "created_date": "2024-01-21T02:00:00.000Z"
+  },
+  {
+    "id": "vol_104",
+    "email": "leah.friedman@example.org",
+    "full_name": "Leah Friedman",
+    "phone": "(514) 555-0233",
+    "role": "volunteer",
+    "active": true,
+    "groups": ["chesed_on_the_go"],
+    "created_date": "2024-07-19T02:00:00.000Z"
+  }
+]

@@ -1,0 +1,4 @@
+[
+  { "id": "rec_a01", "task_name": "Weekly dialysis run — Mr. Gross", "task_type": "ride", "frequency": "weekly", "day_of_week": "tuesday", "time": "08:30", "pickup_address": "6900 Boulevard Decarie, Montreal", "dropoff_address": "3755 Chemin de la Cote-Sainte-Catherine, Montreal", "volunteer_group": "chaim_vchesed", "assigned_volunteer_id": "usr_002", "assigned_volunteer_name": "Moshe Klein", "active": true, "cancelled_dates": ["2025-01-07"], "created_date": "2024-09-01T10:00:00.000Z" },
+  { "id": "rec_a02", "task_name": "Shabbos meal delivery", "task_type": "hospital_food", "frequency": "weekly", "day_of_week": "friday", "time": "10:00", "pickup_address": "5785 Avenue Victoria, Montreal", "dropoff_address": "Jewish General Hospital", "volunteer_group": "misamchem", "active": true, "created_date": "2024-09-02T10:00:00.000Z" }
+]

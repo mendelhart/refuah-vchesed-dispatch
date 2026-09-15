@@ -1,0 +1,86 @@
+[
+  {
+    "id": "usr_001",
+    "email": "Sara.Weiss@example.org",
+    "full_name": "Sara Weiss",
+    "phone": "(514) 555-0142",
+    "role": "user",
+    "active_volunteer": true,
+    "volunteer_groups": ["chesed_on_the_go"],
+    "preferred_vehicle_name": "standard",
+    "photo_url": "https://cdn.example.org/photos/sara.jpg",
+    "created_date": "2024-02-11T14:02:00.000Z",
+    "updated_date": "2024-09-03T09:15:00.000Z",
+    "data": {
+      "phone": "514-555-0199",
+      "volunteer_groups": ["chesed_on_the_go", "misamchem"],
+      "notification_preference": "push",
+      "active_volunteer": true,
+      "availability": { "mon": { "available": true, "from": "09:00", "to": "17:00" } }
+    }
+  },
+  {
+    "id": "usr_002",
+    "email": "moshe.klein@example.org",
+    "full_name": "Moshe Klein",
+    "phone": "5145550177",
+    "role": "admin",
+    "active_volunteer": true,
+    "volunteer_groups": ["chaim_vchesed"],
+    "emergency_contact_name": "Rivka Klein",
+    "emergency_contact_phone": "514.555.0188",
+    "created_date": "2023-11-02T10:00:00.000Z",
+    "data": {
+      "notification_preference": "both"
+    }
+  },
+  {
+    "id": "usr_003",
+    "email": "dovid.stern@example.org",
+    "full_name": "Dovid Stern",
+    "phone": "call the office ext 4",
+    "role": "user",
+    "active_volunteer": true,
+    "volunteer_groups": ["misamchem"],
+    "created_date": "2024-01-20T08:30:00.000Z",
+    "data": {}
+  },
+  {
+    "id": "usr_004",
+    "email": "chana.brody@example.org",
+    "full_name": "Chana Brody",
+    "phone": "+1 514 555 0201",
+    "role": "user",
+    "active_volunteer": false,
+    "volunteer_groups": ["chesed on the go"],
+    "created_date": "2024-04-05T12:00:00.000Z"
+  },
+  {
+    "id": "usr_005",
+    "email": "",
+    "full_name": "Unnamed Import Row",
+    "phone": "5145550999",
+    "role": "user",
+    "active_volunteer": true,
+    "created_date": "2024-06-01T00:00:00.000Z"
+  },
+  {
+    "id": "usr_006",
+    "email": "yitzy.roth@example.org",
+    "full_name": "Yitzy Roth",
+    "phone": "(514) 555-0199",
+    "role": "user",
+    "active_volunteer": true,
+    "volunteer_groups": ["chaim_vchesed"],
+    "created_date": "2025-03-14T16:45:00.000Z",
+    "data": {}
+  },
+  {
+    "id": "usr_007",
+    "email": "dispatch.desk@example.org",
+    "role": "user",
+    "active_volunteer": true,
+    "created_date": "2024-08-08T08:08:00.000Z",
+    "data": {}
+  }
+]

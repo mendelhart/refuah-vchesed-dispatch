@@ -1,0 +1,36 @@
+[
+  {
+    "id": "dir_201",
+    "user_id": "usr_001",
+    "full_name": "Sara Weiss",
+    "email": "sara.weiss@example.org",
+    "phone": "(514) 555-0142",
+    "role": "volunteer",
+    "groups": ["chesed_on_the_go"],
+    "photo_url": "https://cdn.example.org/photos/sara.jpg",
+    "active": true,
+    "created_date": "2024-02-13T03:00:00.000Z"
+  },
+  {
+    "id": "dir_202",
+    "user_id": "usr_002",
+    "full_name": "Moshe Klein",
+    "email": "moshe.klein@example.org",
+    "phone": "5145550177",
+    "role": "admin",
+    "groups": ["chaim_vchesed"],
+    "active": true,
+    "created_date": "2023-11-04T03:00:00.000Z"
+  },
+  {
+    "id": "dir_203",
+    "user_id": "usr_999_deleted",
+    "full_name": "Ghost Entry",
+    "email": "ghost@example.org",
+    "phone": "5145550000",
+    "role": "volunteer",
+    "groups": [],
+    "active": true,
+    "created_date": "2024-03-01T03:00:00.000Z"
+  }
+]

@@ -1,0 +1,6 @@
+[
+  { "id": "veh_601", "name": "Red Sienna", "vehicle_id": "RVC-01", "vehicle_type": "van", "license_plate": "ABC 123", "capacity": 7, "status": "available", "wheelchair_accessible": true, "maintenance_notes": "Winter tires fitted Nov 2024.", "last_maintenance_date": "2024-11-14", "next_maintenance_date": "2025-05-14", "created_date": "2023-05-01T10:00:00.000Z" },
+  { "id": "veh_602", "name": "Silver Accessible Van", "vehicle_id": "RVC-02", "vehicle_type": "wheelchair_accessible", "license_plate": "DEF 456", "capacity": 4, "status": "in_use", "wheelchair_accessible": true, "stretcher_capable": false, "current_driver_name": "Moshe Klein", "created_date": "2023-05-01T10:05:00.000Z" },
+  { "id": "veh_603", "vehicle_id": "RVC-03", "vehicle_type": "sedan", "license_plate": "GHI 789", "capacity": 4, "status": "retired", "created_date": "2022-09-01T10:00:00.000Z" },
+  { "id": "veh_604", "name": "Red Sienna", "vehicle_id": "RVC-04", "vehicle_type": "van", "status": "available", "created_date": "2024-02-01T10:00:00.000Z" }
+]

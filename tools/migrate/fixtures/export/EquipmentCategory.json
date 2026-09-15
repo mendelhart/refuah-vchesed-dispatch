@@ -1,0 +1,5 @@
+[
+  { "id": "cat_501", "name": "Wheelchairs", "description": "Manual and transport wheelchairs.", "total_quantity": 12, "available_quantity": 9, "track_individually": true, "created_date": "2024-01-05T10:00:00.000Z" },
+  { "id": "cat_502", "name": "Walkers", "description": "Rollators and standard walkers.", "total_quantity": 8, "available_quantity": 8, "track_individually": true, "created_date": "2024-01-05T10:05:00.000Z" },
+  { "id": "cat_503", "name": "wheelchairs", "description": "Duplicate category created by a second admin.", "total_quantity": 3, "track_individually": false, "created_date": "2024-07-22T10:00:00.000Z" }
+]

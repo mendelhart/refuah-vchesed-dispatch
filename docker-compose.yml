@@ -1,0 +1,129 @@
+# Local development stack: Postgres 16 + the API + the web dev server.
+#
+#   docker compose up --build          # start everything
+#   docker compose exec api npm run db:seed --workspace=@rvc/api
+#   docker compose logs -f api
+#   docker compose down -v             # stop and destroy the database volume
+#
+# This file is for development only. It runs the API from source with tsx so
+# edits reload, mounts the repository, and uses throwaway credentials. Nothing
+# here is used in staging or production — see fly.toml and docs/DEPLOYMENT.md.
+
+name: rvc-dispatch
+
+services:
+  # ---------------------------------------------------------------------------
+  # Postgres. Version-pinned to 16 to match Fly's managed Postgres, so a dump
+  # taken here restores there and vice versa.
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rvc
+      POSTGRES_PASSWORD: rvc_local_dev_only
+      POSTGRES_DB: rvc_dev
+      # Trip references are generated in America/Toronto; keeping the server in
+      # UTC matches production and makes the timezone conversion explicit.
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U rvc -d rvc_dev']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # API + in-process background worker.
+  #
+  # Runs `npm run dev --workspace=@rvc/api` (tsx watch) rather than the built
+  # image, so this is the inner loop. To exercise the production image instead:
+  #   docker build -t rvc-api . && docker run --rm -p 8080:8080 --env-file .env rvc-api
+  # ---------------------------------------------------------------------------
+  api:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run db:migrate --workspace=@rvc/api && npm run dev --workspace=@rvc/api"
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: '8080'
+      HOST: 0.0.0.0
+      LOG_LEVEL: debug
+      DATABASE_URL: postgres://rvc:rvc_local_dev_only@db:5432/rvc_dev
+      DATABASE_POOL_MAX: '10'
+      APP_URL: http://localhost:5173
+      API_PUBLIC_URL: http://localhost:8080
+      SESSION_SECRET: local-development-session-secret-at-least-32-chars
+      COOKIE_SECURE: 'false'
+      # No Twilio, VAPID, SMTP or WAHA locally: providers/index.ts falls back to
+      # the in-memory SMS, push, calling, email and WhatsApp providers. Those
+      # record what would have been sent in `notifications`,
+      # `notification_deliveries` and `sms_events`, so the whole flow is
+      # inspectable in the database without a vendor account. Set TWILIO_* here
+      # only when deliberately testing against a real number.
+      #
+      # Licence numbers and images are encrypted at rest and the code refuses to
+      # store them without a key, so development needs one. This value is a
+      # throwaway; production generates its own (see .env.example).
+      FIELD_ENCRYPTION_KEY: cnZjLWxvY2FsLWRldmVsb3BtZW50LWtleS1vbmx5ISE=
+      TWILIO_SKIP_SIGNATURE_VALIDATION: 'true'
+      RUN_WORKER_IN_PROCESS: 'true'
+      WORKER_POLL_MS: '2000'
+      WORKER_CONCURRENCY: '4'
+    ports:
+      - '8080:8080'
+    volumes:
+      - .:/app
+      # Keep container-installed node_modules out of the host tree (and vice
+      # versa): the host may be macOS while this container is linux/alpine.
+      - api-node-modules:/app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:8080/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # ---------------------------------------------------------------------------
+  # Web dev server (Vite). Proxies /api to the api service.
+  # ---------------------------------------------------------------------------
+  web:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev --workspace=@rvc/web -- --host 0.0.0.0"
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: http://api:8080
+    ports:
+      - '5173:5173'
+    volumes:
+      - .:/app
+      - web-node-modules:/app/node_modules
+    depends_on:
+      api:
+        condition: service_started
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:5173/ || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  db-data:
+  api-node-modules:
+  web-node-modules:

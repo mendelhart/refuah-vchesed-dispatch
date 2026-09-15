@@ -1,0 +1,4 @@
+[
+  { "id": "org_801", "organization_name": "Refuah V'Chesed", "charity_number": "123456789RR0001", "street_number": "5785", "street_name": "Avenue Victoria", "unit": "200", "city": "Montreal", "province": "QC", "postal_code": "H3W 2R3", "phone": "(514) 555-0100", "email": "info@refuahvchesed.example.org", "website": "https://refuahvchesed.example.org", "description": "Volunteer medical transport and equipment lending.", "mission_statement": "Getting neighbours to their appointments.", "hours_of_operation": "Sun-Thu 8:00-18:00, Fri 8:00-13:00", "emergency_contact": "514-555-0101", "created_date": "2023-01-01T10:00:00.000Z" },
+  { "id": "org_802", "organization_name": "Refuah V'Chesed (old record)", "phone": "5145550100", "created_date": "2022-01-01T10:00:00.000Z" }
+]
