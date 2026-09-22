@@ -85,6 +85,16 @@ const envSchema = z.object({
   LICENCE_VERIFICATION_URL: z.string().url().optional(),
   LICENCE_VERIFICATION_API_KEY: z.string().optional(),
 
+  /**
+   * First-run administrator, for hosts with no shell (see db/bootstrap-admin.ts).
+   *
+   * Setting this on an empty system creates one administrator with no password
+   * and logs a single-use invitation link. It is ignored once that account has
+   * a password, and ignored outright on a system that already has users.
+   */
+  BOOTSTRAP_ADMIN_EMAIL: z.string().email().optional(),
+  BOOTSTRAP_ADMIN_NAME: z.string().default('Administrator'),
+
   // --- Public signup --------------------------------------------------------
   PUBLIC_SIGNUP_ENABLED: bool(true),
   SIGNUP_MAX_PER_IP_PER_HOUR: z.coerce.number().int().min(1).max(100).default(5),

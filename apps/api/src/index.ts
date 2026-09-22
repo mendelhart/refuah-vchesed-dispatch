@@ -7,6 +7,7 @@ import { startEventBridge, stopEventBridge } from './routes/events.routes.js';
 import { runMigrations } from './db/migrate.js';
 import { logProviderSelection } from './services/providers/index.js';
 import { bootstrapReferenceData } from './db/bootstrap.js';
+import { bootstrapAdmin } from './db/bootstrap-admin.js';
 import { initMonitoring, installProcessHandlers } from './lib/monitoring.js';
 
 async function main(): Promise<void> {
@@ -14,6 +15,7 @@ async function main(): Promise<void> {
   await initMonitoring();
   await runMigrations();
   await bootstrapReferenceData();
+  await bootstrapAdmin();
   logProviderSelection();
 
   const app = await buildServer();
