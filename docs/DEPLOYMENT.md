@@ -221,7 +221,7 @@ fly deploy --config fly.toml --remote-only
 
 What happens, in order:
 
-1. the image is built from the `runtime` stage of the `Dockerfile`;
+1. the API image is built from `./Dockerfile` (the SPA from `./Dockerfile.web`);
 2. `[deploy] release_command = "node dist/db/migrate.js"` runs against the
    production database **before any new machine takes traffic** — if it exits
    non-zero the release is aborted and the old version keeps serving;
@@ -299,18 +299,22 @@ account is audited.
 ### 8. The web app
 
 ```bash
-# fly.web.toml — the SPA, from the `web` stage of the same Dockerfile
-fly deploy --config fly.web.toml --build-target web --remote-only
+# fly.web.toml — the SPA, built from ./Dockerfile.web
+fly deploy --config fly.web.toml --remote-only
 ```
 
-`fly.web.toml` is not in the repository; create it for the `rvc-dispatch-web`
-app, with no `[http_service]` release command and `internal_port = 8080` to match
-the nginx config baked into the `web` stage. `deploy.yml` skips the SPA deploy
-with a notice when the file is absent.
+`fly.web.toml` sets `API_ORIGIN` to the API's public URL. nginx in that image
+serves the SPA and proxies `/api` and `/webhooks` to `API_ORIGIN`, so the browser
+addresses one origin only. That is not a convenience: the session cookie is
+`SameSite=Lax` and a Lax cookie is not sent on a cross-site request, so an SPA
+on one host calling an API on another is a sign-in that never holds.
 
-Any static host works: Cloudflare Pages, Netlify, an S3 bucket behind a CDN. The
-API does not serve the SPA. Whatever you choose, the origin must equal `APP_URL`,
-because that is the CORS allow-list in production.
+The API does not serve the SPA. Another static host will work — Cloudflare
+Pages, Netlify, an S3 bucket behind a CDN — but only if it can proxy `/api` and
+`/webhooks` to the API without buffering (`/api/events/stream` is SSE), and the
+origin it serves must equal `APP_URL`, which is the CORS allow-list in
+production. `deploy/web-nginx.conf.template` is the reference for what such a
+host has to do.
 
 The SPA is a PWA: it ships a service worker and a manifest, and the nginx config
 serves `/service-worker.js` with `Cache-Control: no-cache` and hashed assets with
