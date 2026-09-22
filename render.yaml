@@ -21,6 +21,14 @@ databases:
     plan: free
     databaseName: rvc
     user: rvc
+    # MUST match the services' region. A Render database is reachable from
+    # other services by its internal hostname, and that hostname only resolves
+    # inside its own region — across regions it does not resolve at all, so the
+    # API dies at its first migration with
+    #   getaddrinfo ENOTFOUND dpg-xxxxxxxx-a
+    # which reads like a broken database rather than a misplaced one. Omitting
+    # this line does not mean "same region as the services"; it means Oregon.
+    region: ohio
     # 0004_scope_constraints.sql needs btree_gist for the exclusion constraint
     # that stops two duty shifts of the same kind from overlapping. Render
     # allows CREATE EXTENSION for it on 13+, which the migration does itself.
