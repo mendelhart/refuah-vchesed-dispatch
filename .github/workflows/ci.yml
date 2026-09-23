@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 # A new push to the same branch cancels the previous run; `main` is never
-# cancelled because deploy.yml keys off its result.
+# cancelled because Render deploys only after CI passes on the commit.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}

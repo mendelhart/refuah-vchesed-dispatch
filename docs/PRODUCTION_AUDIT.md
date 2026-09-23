@@ -58,7 +58,7 @@ Severity is the spec's rating or mine. Status "CI" means covered by a test that 
 | F-16 | HIGH (privacy) | PWA | `service-worker.js` cache, `lib/auth.tsx`, `lib/api.ts`, `lib/offline.ts` | Offline ride cache (address, phone) survived logout and ended sessions | Next user of a shared phone could read it | Cache wiped on logout, on login and on any 401. Offline banner says the data is a saved copy | typecheck + web unit; offline read already in `pwa.spec.ts` | Fixed. **Manual phone check recommended** |
 | F-17 | MED | E2E | `apps/web/e2e/offer-flow.spec.ts` | No browser test of offer -> accept -> race -> complete -> cancel | Core flow unguarded in UI | Added | offer-flow (2 tests x phone/desktop) | Fixed, CI (green at 5f8fb4d) |
 | F-18 | LOW | Supply chain | `ci.yml`, `.github/dependabot.yml` | No vulnerability gate or update strategy | Unnoticed vulnerable deps | `npm audit --omit=dev --audit-level=high` in CI (0 found; 6 moderate in dev-only tools); Dependabot weekly/monthly, capped | CI | Fixed |
-| F-19 | HIGH | CI/CD | Render service settings | Render deploys on commit, even if CI fails | A broken build can go live | **Not changed.** Render's "After CI Checks Pass" would never deploy while the Fly `deploy` job (left as is by owner instruction) fails on every push. Fix: remove or disable the Fly workflow, then set `autoDeployTrigger: checksPass` | - | Open |
+| F-19 | HIGH | CI/CD | Render service settings | Render deploys on commit, even if CI fails | A broken build can go live | Owner approved removing the Fly workflow (2026-09-23). `deploy.yml` deleted; both Render services now set `autoDeployTrigger: checksPass` | - | Fixed |
 | F-20 | HIGH | Backup | `.github/workflows/backup.yml`, `docs/BACKUP_AND_RESTORE.md` | Backups not running (secrets unset); RPO 24h; no PITR | Data loss on failure | Documented honestly; PITR listed as a paid enhancement | - | Open (owner) |
 | F-22 | LOW | Audit | `auth/session.ts` | Failed/locked-out logins were not audited | Brute force invisible after the fact | `auth.login_failed` / `auth.login_locked` against real accounts only; never passwords or unknown identifiers | `auth.test.ts` | Fixed, CI |
 | F-23a | LOW | API | `GET /health/deep` | Public unless `HEALTH_CHECK_TOKEN` is set | Exposes operational counts (no personal data) | Set `HEALTH_CHECK_TOKEN` on Render and use `?token=` in the uptime monitor | - | Open (owner, config) |
@@ -83,7 +83,7 @@ F-02, F-03, F-04, F-05 (code), F-06, F-09, F-10a/b/c, F-11a/b, F-12, F-14, F-16,
 
 ## Remaining Work
 
-- **HIGH (owner):** set backup secrets (F-20); create a Sentry DSN and an uptime monitor (F-05); resolve the Fly job, then gate Render on CI (F-19).
+- **HIGH (owner):** set backup secrets (F-20); create a Sentry DSN and an uptime monitor (F-05). (F-19 done: Fly workflow removed, Render gated on CI.)
 - **MEDIUM:** define a retention policy (F-26); PITR when budget allows; manually test offline and logout on a real phone (F-16); test real SMS/WhatsApp delivery once Twilio/WAHA credentials exist.
 - **LOW:** set `HEALTH_CHECK_TOKEN` (F-23a); decide announcement image privacy (F-23b); re-enable 2FA after a domain is connected; add a "test ride" flag so test data doesn't trip the unassigned-ride warning.
 

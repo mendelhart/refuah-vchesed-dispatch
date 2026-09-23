@@ -426,18 +426,10 @@ configuration at boot.
 nothing in `ci.yml` starts Postgres, builds the SPA and runs Playwright. Adding
 it is a job that needs a database service and a browser image.
 
-`deploy.yml` gates on CI's result via `workflow_run`, and deploys the commit CI
-actually tested (`github.event.workflow_run.head_sha`), not whatever `main` has
-drifted to.
-
-Add `FLY_API_TOKEN` as a repository secret (Settings → Secrets → Actions):
-
-```bash
-fly tokens create deploy --app rvc-dispatch-api --name github-actions
-```
-
-Use a deploy-scoped token, not a personal one. Rotate it when anyone with access
-leaves.
+Production runs on Render (see `render.yaml`). Both services set
+`autoDeployTrigger: checksPass`, so Render deploys a push to `main` only after
+CI has passed on that commit. The old GitHub Actions Fly deploy workflow was
+removed on 2026-09-23; `fly.toml` is kept only as a reference.
 
 ---
 
@@ -653,8 +645,6 @@ Things an operator will trip over, stated plainly:
 - **`ci.yml` still passes `--passWithNoTests` to vitest**, from when the API had
   no tests. It has fifteen test files now; remove the flag so an empty suite
   fails loudly again.
-- **`fly.web.toml` is not in the repository.** The SPA deploy step in
-  `deploy.yml` skips with a notice until it exists.
 - **The Dockerfile still rewrites `packages/shared/package.json`'s `exports`
   field** to point at `dist`. The package manifest already declares exactly that,
   so the step is now a no-op that can be deleted.

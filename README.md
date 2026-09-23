@@ -345,8 +345,6 @@ Things that are deliberately not finished, so nobody discovers them at 2am:
   link and returns it to the administrator, who passes it on. Applicant messages —
   including the approval that carries an invite link — *are* sent through the
   email and SMS providers.
-- **`fly.web.toml` is not in the repository**, so the SPA deploy step in
-  `deploy.yml` skips with a notice until somebody creates it.
 - **Rotating `FIELD_ENCRYPTION_KEY` is not supported.** Nothing re-encrypts
   existing values, and losing the key loses every stored licence number and every
   encrypted file.
