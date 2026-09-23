@@ -26,6 +26,8 @@ import {
 } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { invalidateTrips, qk } from '@/lib/query';
+import { saveCallerFromTrip } from '@/lib/save-caller';
+import { isFullTrip } from '@/types/api';
 import { mobilityLabel, relativeTime, tripTypeLabel } from '@/lib/format';
 import { AddressFields, emptyAddress, toAddressInput, type AddressDraft } from './AddressAutocomplete';
 import { Modal } from './Modal';
@@ -132,6 +134,58 @@ const PRIORITY_CHOICES: { value: TripPriority; label: string; effect: string; ac
 ];
 
 /** `datetime-local` wants local wall-clock time, not an ISO-Z string. */
+function nowLocalInput(): string {
+  return toLocalInput(new Date().toISOString());
+}
+
+/**
+ * Date and time as two cells, the way a dispatcher actually reads them back
+ * to a caller. Internally the form keeps the combined `datetime-local`
+ * wall-clock value; this component only splits and rejoins it.
+ */
+function DateTimeFields(props: {
+  id: string;
+  label: string;
+  required?: boolean;
+  value: string;
+  onChange: (value: string) => void;
+  hint?: string;
+  error?: React.ReactNode;
+}): React.JSX.Element {
+  const [datePart, timePart] = props.value ? props.value.split('T') : ['', ''];
+  const join = (d: string, t: string): string => (d || t ? `${d}T${t || '00:00'}` : '');
+  return (
+    <div>
+      <span id={`${props.id}-label`} className={labelClass}>
+        {props.label} {props.required ? <span aria-hidden="true">*</span> : null}
+      </span>
+      <div className="grid grid-cols-2 gap-2" role="group" aria-labelledby={`${props.id}-label`}>
+        <input
+          id={`${props.id}-date`}
+          type="date"
+          aria-label={`${props.label} date`}
+          className={inputClass}
+          value={datePart ?? ''}
+          onChange={(event) => props.onChange(join(event.target.value, timePart ?? ''))}
+        />
+        <input
+          id={`${props.id}-time`}
+          type="time"
+          aria-label={`${props.label} time`}
+          className={inputClass}
+          value={timePart ?? ''}
+          onChange={(event) => props.onChange(join(datePart ?? '', event.target.value))}
+        />
+      </div>
+      {props.hint ? (
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{props.hint}</p>
+      ) : null}
+      {props.error}
+    </div>
+  );
+}
+
+/** `datetime-local` wants local wall-clock time, not an ISO-Z string. */
 function toLocalInput(iso: string | null | undefined): string {
   if (!iso) return '';
   const date = new Date(iso);
@@ -152,7 +206,7 @@ function blankForm(): FormState {
     dropoff: emptyAddress(),
     dropoffEntrance: '',
     dropoffParking: '',
-    pickupAt: '',
+    pickupAt: nowLocalInput(),
     appointmentAt: '',
     tripType: 'ride',
     priority: 'routine',
@@ -308,7 +362,22 @@ export function TripForm({
     },
     onSuccess: (data) => {
       invalidateTrips(queryClient, 'id' in data.trip ? data.trip.id : undefined);
-      toast.success(trip ? 'Trip updated.' : 'Trip created.');
+      const saved = data.trip;
+      if (!trip && isFullTrip(saved) && !saved.callerId && (saved.callerName || saved.callerPhone)) {
+        toast.success('Trip created.', {
+          action: {
+            label: 'Save caller to directory',
+            onClick: () => {
+              saveCallerFromTrip(saved).then(
+                () => toast.success('Caller saved to the directory.'),
+                (error: unknown) => toast.error(errorMessage(error)),
+              );
+            },
+          },
+        });
+      } else {
+        toast.success(trip ? 'Trip updated.' : 'Trip created.');
+      }
       onClose();
     },
     onError: (error: unknown) => {
@@ -667,35 +736,22 @@ export function TripForm({
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="pickup-at" className={labelClass}>
-              Pickup time <span aria-hidden="true">*</span>
-            </label>
-            <input
-              id="pickup-at"
-              type="datetime-local"
-              className={inputClass}
-              value={form.pickupAt}
-              onChange={(event) => setForm({ ...form, pickupAt: event.target.value })}
-            />
-            {fieldError('pickupAt')}
-          </div>
-          <div>
-            <label htmlFor="appointment-at" className={labelClass}>
-              Appointment time
-            </label>
-            <input
-              id="appointment-at"
-              type="datetime-local"
-              className={inputClass}
-              value={form.appointmentAt}
-              onChange={(event) => setForm({ ...form, appointmentAt: event.target.value })}
-            />
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              The appointment the ride exists for, not the pickup. Only worth filling in when the two differ.
-            </p>
-            {fieldError('appointmentAt')}
-          </div>
+          <DateTimeFields
+            id="pickup-at"
+            label="Pickup time"
+            required
+            value={form.pickupAt}
+            onChange={(value) => setForm({ ...form, pickupAt: value })}
+            error={fieldError('pickupAt')}
+          />
+          <DateTimeFields
+            id="appointment-at"
+            label="Appointment time"
+            value={form.appointmentAt}
+            onChange={(value) => setForm({ ...form, appointmentAt: value })}
+            hint="The appointment the ride exists for, not the pickup. Only worth filling in when the two differ."
+            error={fieldError('appointmentAt')}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

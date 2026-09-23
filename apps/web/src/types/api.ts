@@ -7,6 +7,7 @@
  * returns and the handful of ad-hoc row shapes the routes build inline.
  */
 import type {
+  AddressDto,
   AuditEventDto,
   BoardSummary,
   DeliveryStatus,
@@ -259,6 +260,7 @@ export interface ContactRow {
   phone: string;
   role: string | null;
   notes: string | null;
+  address: AddressDto | null;
   createdAt: string;
 }
 export interface ContactsResponse {

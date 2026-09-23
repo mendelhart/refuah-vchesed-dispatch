@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import { contactSchema, equipmentSchema, loanEquipmentSchema, uuidSchema, vehicleSchema } from '@rvc/shared';
 import { db } from '../db/client.js';
-import { contacts, equipment, equipmentCategories, equipmentLoans, organizationInfo, vehicles } from '../db/schema.js';
+import { addresses, contacts, equipment, equipmentCategories, equipmentLoans, organizationInfo, vehicles } from '../db/schema.js';
 import { actorFrom, currentUser, requireAdmin, requireAuth, requireDispatcher } from '../auth/guards.js';
 import { recordAudit } from '../lib/audit.js';
 import { requirePhone } from '../lib/phone.js';
@@ -25,15 +25,56 @@ export async function miscRoutes(app: FastifyInstance): Promise<void> {
   });
 
   // --- contacts ------------------------------------------------------------
-  app.get('/api/contacts', { preHandler: requireDispatcher }, async () => ({
-    contacts: await db.select().from(contacts).where(isNull(contacts.deletedAt)).orderBy(asc(contacts.name)).limit(500),
-  }));
+  // A contact's address is a regular addresses row; the contact just points
+  // at it, so the phone book and the trip forms speak the same address shape.
+  const contactSelect = {
+    contact: contacts,
+    address: addresses,
+  };
+
+  app.get('/api/contacts', { preHandler: requireDispatcher }, async () => {
+    const rows = await db
+      .select(contactSelect)
+      .from(contacts)
+      .leftJoin(addresses, eq(addresses.id, contacts.addressId))
+      .where(isNull(contacts.deletedAt))
+      .orderBy(asc(contacts.name))
+      .limit(500);
+    return {
+      contacts: rows.map((r) => ({
+        ...r.contact,
+        address: r.address
+          ? {
+              ...r.address,
+              formatted: [r.address.line1, r.address.unit, r.address.city, r.address.province, r.address.postalCode]
+                .filter(Boolean)
+                .join(', '),
+            }
+          : null,
+      })),
+    };
+  });
 
   app.post('/api/contacts', { preHandler: requireDispatcher }, async (req, reply) => {
     const body = contactSchema.parse(req.body);
+    let addressId: string | null = null;
+    if (body.address) {
+      const [addr] = await db.insert(addresses).values({
+        line1: body.address.line1,
+        unit: body.address.unit ?? null,
+        city: body.address.city ?? 'Montreal',
+        province: body.address.province ?? 'QC',
+        postalCode: body.address.postalCode ?? null,
+        country: body.address.country ?? 'CA',
+        notes: body.address.notes ?? null,
+        latitude: body.address.latitude ?? null,
+        longitude: body.address.longitude ?? null,
+      }).returning();
+      addressId = addr!.id;
+    }
     const [row] = await db.insert(contacts).values({
       name: body.name, phone: requirePhone(body.phone), role: body.role ?? null,
-      notes: body.notes ?? null, createdById: currentUser(req).id,
+      notes: body.notes ?? null, addressId, createdById: currentUser(req).id,
     }).returning();
     await recordAudit({ actor: actorFrom(req), action: 'contact.created', entityType: 'contact', entityId: row!.id, next: { name: row!.name } });
     reply.status(201); return { contact: row };
@@ -44,11 +85,35 @@ export async function miscRoutes(app: FastifyInstance): Promise<void> {
     const body = contactSchema.partial().parse(req.body);
     const [before] = await db.select().from(contacts).where(eq(contacts.id, id)).limit(1);
     if (!before) throw Errors.notFound('Contact');
+    let addressId: string | null | undefined;
+    if (body.address === null) {
+      addressId = null;
+    } else if (body.address) {
+      const values = {
+        line1: body.address.line1,
+        unit: body.address.unit ?? null,
+        city: body.address.city ?? 'Montreal',
+        province: body.address.province ?? 'QC',
+        postalCode: body.address.postalCode ?? null,
+        country: body.address.country ?? 'CA',
+        notes: body.address.notes ?? null,
+        latitude: body.address.latitude ?? null,
+        longitude: body.address.longitude ?? null,
+      };
+      if (before.addressId) {
+        await db.update(addresses).set(values).where(eq(addresses.id, before.addressId));
+        addressId = before.addressId;
+      } else {
+        const [addr] = await db.insert(addresses).values(values).returning();
+        addressId = addr!.id;
+      }
+    }
     const [row] = await db.update(contacts).set({
       ...(body.name ? { name: body.name } : {}),
       ...(body.phone ? { phone: requirePhone(body.phone) } : {}),
       ...(body.role !== undefined ? { role: body.role ?? null } : {}),
       ...(body.notes !== undefined ? { notes: body.notes ?? null } : {}),
+      ...(addressId !== undefined ? { addressId } : {}),
     }).where(eq(contacts.id, id)).returning();
     await recordAudit({ actor: actorFrom(req), action: 'contact.updated', entityType: 'contact', entityId: id, previous: { name: before.name }, next: { name: row!.name } });
     return { contact: row };

@@ -50,6 +50,20 @@
       "when": 1789440000000,
       "tag": "0006_card_token",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790127590083,
+      "tag": "0007_contacts_address",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790127591083,
+      "tag": "0008_hospital_phonebook",
+      "breakpoints": true
     }
   ]
 }

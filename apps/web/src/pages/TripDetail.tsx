@@ -12,10 +12,10 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   ArrowLeft, CalendarClock, CheckCircle2, Clock, Copy, DoorOpen, FileText, MapPin, MessageSquare, Navigation, Phone,
-  PhoneCall, Repeat, Send, SquareParking, User, UserCheck,
-} from 'lucide-react';
+  PhoneCall, Repeat, Send, SquareParking, User, UserCheck, UserPlus } from 'lucide-react';
 import { TRIP_PRIORITIES, type TripPriority } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
+import { saveCallerFromTrip } from '@/lib/save-caller';
 import { qk } from '@/lib/query';
 import { useAuth } from '@/lib/auth';
 import { markInstallEligible } from '@/lib/install-prompt';
@@ -103,6 +103,15 @@ function AccessLines({ entrance, parking }: { entrance: string | null; parking: 
 }
 
 export function TripDetailPage(): React.JSX.Element {
+
+  const saveCaller = useMutation({
+    mutationFn: async () => {
+      if (!isFullTrip(trip)) throw new Error('Only a full trip can be saved.');
+      await saveCallerFromTrip(trip);
+    },
+    onSuccess: () => toast.success('Caller saved to the directory. Future trips will find them by phone.'),
+    onError: (error: unknown) => toast.error(errorMessage(error)),
+  });
   const { id = '' } = useParams<{ id: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -325,6 +334,17 @@ export function TripDetailPage(): React.JSX.Element {
                     <a className="text-[#E31E24] underline-offset-2 hover:underline" href={telHref(trip.callerPhone)}>
                       {trip.callerPhone}
                     </a>
+                  ) : null}
+                  {isFullTrip(trip) && !trip.callerId && (trip.callerName || trip.callerPhone) ? (
+                    <button
+                      type="button"
+                      className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-slate-300 px-2 text-xs text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                      disabled={saveCaller.isPending}
+                      onClick={() => saveCaller.mutate()}
+                    >
+                      <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />
+                      Save to directory
+                    </button>
                   ) : null}
                 </dd>
               </div>

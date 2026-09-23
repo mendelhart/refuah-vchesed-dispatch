@@ -596,6 +596,7 @@ export const contacts = pgTable(
     phone: text('phone').notNull(),
     role: text('role'),
     notes: text('notes'),
+    addressId: uuid('address_id').references(() => addresses.id, { onDelete: 'set null' }),
     createdById: uuid('created_by_id').references(() => users.id, { onDelete: 'set null' }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),

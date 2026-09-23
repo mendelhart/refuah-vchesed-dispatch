@@ -304,6 +304,8 @@ export const contactSchema = z.object({
   phone: phoneInputSchema,
   role: z.string().trim().max(80).optional().nullable(),
   notes: z.string().trim().max(500).optional().nullable(),
+  /** Optional postal address; one form captures everything known about the contact. */
+  address: addressSchema.optional().nullable(),
 });
 
 export const vehicleSchema = z.object({

@@ -45,6 +45,7 @@ interface Segment {
   id: string;
   label: string;
   status?: readonly TripStatus[];
+  history?: boolean;
   todayOnly?: boolean;
   empty: { title: string; hint?: string };
 }
@@ -121,6 +122,13 @@ const SEGMENTS: Segment[] = [
     label: 'Today',
     todayOnly: true,
     empty: { title: 'Nothing else is scheduled for today.' },
+  },
+  {
+    id: 'completed',
+    label: 'Completed',
+    status: ['completed'],
+    history: true,
+    empty: { title: 'No completed rides yet.', hint: 'Rides land here when the volunteer marks one done.' },
   },
   {
     id: 'all',
@@ -272,7 +280,7 @@ export function BoardPage(): React.JSX.Element {
   const listParams = useMemo<TripListParams>(() => {
     const bounds = segment.todayOnly ? dayBounds() : null;
     return {
-      scope: 'board',
+      scope: segment.history ? ('history' as const) : ('board' as const),
       ...(segment.status ? { status: segment.status } : {}),
       ...(search ? { search } : {}),
       ...(bounds ? { from: bounds.from, to: bounds.to } : {}),
@@ -289,7 +297,7 @@ export function BoardPage(): React.JSX.Element {
     queryKey: qk.trips.list(listParams),
     queryFn: () =>
       api.get<TripListResponse>('/api/trips', {
-        scope: 'board',
+        scope: segment.history ? 'history' : 'board',
         ...(listParams.status ? { status: [...listParams.status] } : {}),
         ...(listParams.search ? { search: listParams.search } : {}),
         ...(listParams.from ? { from: listParams.from } : {}),
