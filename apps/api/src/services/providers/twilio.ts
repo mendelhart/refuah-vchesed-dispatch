@@ -74,6 +74,25 @@ export const twilioCallingProvider: CallingProvider = {
     void destinationNumber;
     return { providerCallId: call.sid, provider: 'twilio', status: call.status };
   },
+  async announce({ to, deliveryId }): Promise<PlacedCall> {
+    if (!client) throw new Error('Twilio is not configured');
+    if (!env.API_PUBLIC_URL) throw new Error('API_PUBLIC_URL is not set; Twilio cannot reach the voice webhook');
+    const base = `${env.API_PUBLIC_URL}/webhooks/twilio/voice-notify/${deliveryId}`;
+    const call = await client.calls.create({
+      to,
+      from: fromNumber(),
+      url: base,
+      method: 'POST',
+      // Tells a person from an answering machine, so a voicemail greeting
+      // is not mistaken for someone listening.
+      machineDetection: 'Enable',
+      statusCallback: `${base}/status`,
+      statusCallbackMethod: 'POST',
+      statusCallbackEvent: ['completed'],
+      timeout: 30,
+    });
+    return { providerCallId: call.sid, provider: 'twilio', status: call.status };
+  },
   validateWebhookSignature: validate,
 };
 

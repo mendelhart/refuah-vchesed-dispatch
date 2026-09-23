@@ -195,7 +195,7 @@ describe('communications and templates', () => {
     expect(rows.map((r) => r.channel)).toContain('whatsapp');
   });
 
-  it('forces SMS for an offer whatever the volunteer prefers', async () => {
+  it('sends an offer on the volunteer's chosen channel (WhatsApp)', async () => {
     const volunteer = await createTestUser({ role: 'volunteer' });
     await db.update(users).set({ notificationPreference: 'whatsapp' }).where(eq(users.id, volunteer.id));
 
@@ -204,9 +204,11 @@ describe('communications and templates', () => {
     await api('POST', `/api/trips/${tripId}/offer`, { cookie: dispatcher.cookie, payload: {} });
     await drainJobs();
 
-    // Offers force SMS and push regardless of preference: a paired WhatsApp
-    // session can drop silently, and a missed offer is a volunteer never asked.
-    expect(captured.sms.some((m) => m.to === volunteer.phone)).toBe(true);
+    // Each volunteer picks their channel. A dropped WhatsApp session is caught
+    // by the health check / failed send and the offer falls back to SMS
+    // (whatsapp-failover.test.ts), so the offer is not trusted to WhatsApp blindly.
+    expect(capturedExtra.whatsapp.some((m) => m.to === volunteer.phone)).toBe(true);
+    expect(captured.sms.some((m) => m.to === volunteer.phone)).toBe(false);
   });
 
   it('still tells a snoozed volunteer that their trip was cancelled', async () => {

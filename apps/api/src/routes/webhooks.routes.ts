@@ -11,6 +11,9 @@ import { hashToken } from '../lib/crypto.js';
 import { normalizeOfferCode } from '../lib/offer-code.js';
 import { claimTrip } from '../domain/dispatch.service.js';
 import { recordSmsStatusCallback } from '../services/notification.service.js';
+import { voiceAnswerTwiml, voiceCallEnded, voiceNotifyTwiml } from '../services/voice.service.js';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 import { recordInbound } from '../domain/conversations.service.js';
 import { renderTemplate } from '../services/templates.service.js';
 import { formatClock } from '../lib/time.js';
@@ -253,6 +256,51 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
         endedAt: ['completed', 'failed', 'no_answer'].includes(mapped) ? new Date() : null,
       })
       .where(eq(calls.providerSid, sid));
+    return reply.status(204).send();
+  });
+  // -------------------------------------------------------------------------
+  // Voice: automated calls to volunteers (offers, cancellations)
+  // -------------------------------------------------------------------------
+  const voiceSigned = (req: FastifyRequest): boolean =>
+    callingProvider.validateWebhookSignature({ signature: signatureOf(req), url: publicUrl(req), params: formParams(req) });
+
+  app.post('/webhooks/twilio/voice-notify/:deliveryId', async (req, reply) => {
+    if (!voiceSigned(req)) {
+      logger.warn({ ip: req.ip }, 'rejected unsigned Twilio voice-notify webhook');
+      return reply.status(403).send('invalid signature');
+    }
+    const { deliveryId } = req.params as { deliveryId: string };
+    if (!UUID_RE.test(deliveryId)) return reply.type('text/xml').send(twimlError());
+    const params = formParams(req);
+    return reply.type('text/xml').send(await voiceNotifyTwiml(deliveryId, params.AnsweredBy));
+  });
+
+  app.post('/webhooks/twilio/voice-notify/:deliveryId/answer', async (req, reply) => {
+    if (!voiceSigned(req)) {
+      logger.warn({ ip: req.ip }, 'rejected unsigned Twilio voice answer webhook');
+      return reply.status(403).send('invalid signature');
+    }
+    const { deliveryId } = req.params as { deliveryId: string };
+    if (!UUID_RE.test(deliveryId)) return reply.type('text/xml').send(twimlError());
+    const q = (req.query ?? {}) as Record<string, string>;
+    const params = formParams(req);
+    const twiml = await voiceAnswerTwiml(deliveryId, {
+      digits: params.Digits,
+      speech: params.SpeechResult,
+      repeats: Math.max(0, Math.min(10, Number(q.r) || 0)),
+      timedOut: q.timeout === '1',
+    });
+    return reply.type('text/xml').send(twiml);
+  });
+
+  app.post('/webhooks/twilio/voice-notify/:deliveryId/status', async (req, reply) => {
+    if (!voiceSigned(req)) return reply.status(403).send('invalid signature');
+    const { deliveryId } = req.params as { deliveryId: string };
+    if (!UUID_RE.test(deliveryId)) return reply.status(204).send();
+    const params = formParams(req);
+    if (params.CallStatus) {
+      await voiceCallEnded(deliveryId, { callStatus: params.CallStatus, answeredBy: params.AnsweredBy });
+    }
     return reply.status(204).send();
   });
 }

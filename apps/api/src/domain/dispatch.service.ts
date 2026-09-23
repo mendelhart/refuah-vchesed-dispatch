@@ -892,7 +892,7 @@ export interface ClaimArgs {
   tripId?: string;
   /** Raw offer code from a deep link or SMS. */
   code?: string;
-  channel: 'app' | 'sms' | 'whatsapp' | 'push' | 'dispatcher';
+  channel: 'app' | 'sms' | 'whatsapp' | 'voice' | 'push' | 'dispatcher';
   /** Present for SMS: the verified sending number, which must match the offer. */
   verifiedPhone?: string;
 }

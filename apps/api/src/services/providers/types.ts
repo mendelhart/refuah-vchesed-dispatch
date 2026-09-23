@@ -63,6 +63,12 @@ export interface CallingProvider {
     destinationNumber: string;
     callId: string;
   }): Promise<PlacedCall>;
+  /**
+   * Automated call to a volunteer (offer, cancellation). When answered, the
+   * provider fetches what to say from our voice-notify webhook for this
+   * delivery; the final result arrives on its status callback.
+   */
+  announce(args: { to: string; deliveryId: string }): Promise<PlacedCall>;
   validateWebhookSignature(args: {
     signature: string | undefined;
     url: string;

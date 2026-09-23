@@ -293,6 +293,8 @@ export const updateUserSchema = z.object({
   emergencyContactPhone: phoneInputSchema.optional().nullable(),
   addressLine: z.string().trim().max(200).optional().nullable(),
   photoUrl: z.string().trim().url().max(500).optional().nullable(),
+  /** Dispatchers can switch how a volunteer is reached. */
+  notificationPreference: z.enum(NOTIFICATION_PREFERENCES).optional(),
 });
 
 /** Role changes are a separate, admin-only, separately-audited operation. */

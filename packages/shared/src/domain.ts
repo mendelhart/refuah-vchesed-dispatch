@@ -235,7 +235,7 @@ export type OfferResponseChannel = (typeof OFFER_RESPONSE_CHANNELS)[number];
 // Notifications
 // ---------------------------------------------------------------------------
 
-export const NOTIFICATION_CHANNELS = ['sms', 'push', 'email', 'whatsapp', 'inapp'] as const;
+export const NOTIFICATION_CHANNELS = ['sms', 'push', 'email', 'whatsapp', 'voice', 'inapp'] as const;
 export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
 
 export const DELIVERY_STATUSES = [
@@ -247,7 +247,7 @@ export const DELIVERY_STATUSES = [
 ] as const;
 export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
 
-export const NOTIFICATION_PREFERENCES = ['sms', 'push', 'whatsapp', 'email', 'both', 'all', 'none'] as const;
+export const NOTIFICATION_PREFERENCES = ['sms', 'push', 'whatsapp', 'voice', 'email', 'both', 'all', 'none'] as const;
 export type NotificationPreference = (typeof NOTIFICATION_PREFERENCES)[number];
 
 export const NOTIFICATION_EVENTS = [
@@ -369,6 +369,14 @@ export const SETTING_KEYS = {
   licenceExpiryWarningDays: 'volunteers.licence_expiry_warning_days',
   applicationDuplicateWindowDays: 'volunteers.application_duplicate_window_days',
   broadcastMaxRecipients: 'announcements.max_recipients',
+  /** Voice calls: no calls from this hour (org time, 0-23)... */
+  voiceQuietStartHour: 'voice.quiet_start_hour',
+  /** ...until this hour. Urgent and emergency trips still call. */
+  voiceQuietEndHour: 'voice.quiet_end_hour',
+  /** Most voice calls one offer round may place; the rest get a text. */
+  voiceMaxCallsPerRound: 'voice.max_calls_per_round',
+  /** Minutes before an unanswered offer call is tried once more. */
+  voiceRetryMinutes: 'voice.retry_minutes',
 } as const;
 
 export const DEFAULT_SETTINGS: Record<string, number> = {
@@ -393,6 +401,10 @@ export const DEFAULT_SETTINGS: Record<string, number> = {
   [SETTING_KEYS.licenceExpiryWarningDays]: 45,
   [SETTING_KEYS.applicationDuplicateWindowDays]: 365,
   [SETTING_KEYS.broadcastMaxRecipients]: 1000,
+  [SETTING_KEYS.voiceQuietStartHour]: 22,
+  [SETTING_KEYS.voiceQuietEndHour]: 7,
+  [SETTING_KEYS.voiceMaxCallsPerRound]: 10,
+  [SETTING_KEYS.voiceRetryMinutes]: 2,
 };
 
 // ---------------------------------------------------------------------------

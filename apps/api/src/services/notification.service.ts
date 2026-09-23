@@ -19,6 +19,14 @@ import {
   PushSubscriptionGoneError,
 } from './providers/index.js';
 import { sendWhatsAppWithFallback } from './whatsapp-failover.js';
+import { callingProvider } from './providers/index.js';
+import {
+  VOICE_ALERT_EVENTS,
+  VOICE_OFFER_EVENTS,
+  voiceBlockedReason,
+  voicePlacementFailed,
+  voiceStillWanted,
+} from './voice.service.js';
 import { smsMessages } from '../db/schema.js';
 
 /**
@@ -95,6 +103,10 @@ function channelsFor(
       // WhatsApp is never the only carrier: a paired session can drop silently
       // and we would not know the message had not arrived.
       return ['whatsapp', 'push', 'inapp'];
+    case 'voice':
+      // Everyday messages go by text; only offers, cancellations and
+      // reassignments ring (see applyPersonalCarrier).
+      return ['sms', 'push', 'inapp'];
     case 'email':
       return ['email', 'inapp'];
     case 'both':
@@ -106,6 +118,43 @@ function channelsFor(
     default:
       return ['sms', 'inapp'];
   }
+}
+
+/**
+ * The volunteer's own carrier.
+ *
+ * Offers and critical events are sent "by text" so they always land. For a
+ * volunteer who chose WhatsApp or voice, "by text" means their channel:
+ *  - WhatsApp: the text goes on WhatsApp (it falls back to SMS by itself when
+ *    WAHA is down and Twilio is configured).
+ *  - Voice: offers become a call (texted instead when unanswered, in quiet
+ *    hours, or past the per-round call limit); cancellations and
+ *    reassignments get a call as well as the text.
+ */
+async function applyPersonalCarrier(
+  wanted: NotificationChannel[],
+  preference: string,
+  input: NotifyInput,
+  exec: Executor,
+): Promise<NotificationChannel[]> {
+  if (input.exactChannels || input.threadId || !wanted.includes('sms')) return wanted;
+  if (preference === 'whatsapp') {
+    return Array.from(new Set(wanted.map((c) => (c === 'sms' ? 'whatsapp' : c))));
+  }
+  if (preference === 'voice') {
+    const offer = VOICE_OFFER_EVENTS.includes(input.event);
+    const alert = VOICE_ALERT_EVENTS.includes(input.event);
+    if (!offer && !alert) return wanted;
+    const blocked = await voiceBlockedReason({ event: input.event, tripId: input.tripId }, exec);
+    if (blocked) {
+      logger.info({ userId: input.userId, event: input.event, blocked }, 'voice call not placed; texting');
+      return wanted;
+    }
+    return offer
+      ? Array.from(new Set(wanted.map((c) => (c === 'sms' ? 'voice' : c))))
+      : [...wanted, 'voice'];
+  }
+  return wanted;
 }
 
 /**
@@ -172,6 +221,7 @@ export async function notify(input: NotifyInput, exec: Executor = db): Promise<s
     // A critical event always gets a carrier that reaches a locked phone.
     wanted = [...wanted, 'sms'];
   }
+  wanted = await applyPersonalCarrier(wanted, recipient.preference, input, exec);
 
   const subs = wanted.includes('push')
     ? await exec
@@ -186,7 +236,7 @@ export async function notify(input: NotifyInput, exec: Executor = db): Promise<s
     // needs to see.
     let status: 'queued' | 'skipped' = 'queued';
     let lastError: string | null = null;
-    if ((channel === 'sms' || channel === 'whatsapp') && !recipient.phone) {
+    if ((channel === 'sms' || channel === 'whatsapp' || channel === 'voice') && !recipient.phone) {
       status = 'skipped';
       lastError = 'no phone number on file';
     }
@@ -199,7 +249,7 @@ export async function notify(input: NotifyInput, exec: Executor = db): Promise<s
       lastError = 'no email address on file';
     }
     const destination =
-      channel === 'sms' || channel === 'whatsapp'
+      channel === 'sms' || channel === 'whatsapp' || channel === 'voice'
         ? recipient.phone
         : channel === 'email'
           ? recipient.email
@@ -372,6 +422,48 @@ export async function deliverNotification(deliveryId: string): Promise<void> {
           providerMessageId: result.providerMessageId,
           carriedBy: result.carriedBy,
           fallbackReason: result.fallbackReason,
+          lastError: null,
+        })
+        .where(eq(notificationDeliveries.id, deliveryId));
+      return;
+    }
+
+    if (row.channel === 'voice') {
+      if (!row.destination) throw new Error('no destination phone number');
+      const still = await voiceStillWanted(deliveryId);
+      if (!still.ok) {
+        await db
+          .update(notificationDeliveries)
+          .set({ status: 'skipped', attempts, lastError: still.reason ?? 'not needed' })
+          .where(eq(notificationDeliveries.id, deliveryId));
+        return;
+      }
+      let placed;
+      try {
+        placed = await withTimeout(
+          callingProvider.announce({ to: row.destination, deliveryId }),
+          SEND_TIMEOUT_MS,
+          'voice call',
+        );
+      } catch (err) {
+        // A call that cannot be placed is not retried for minutes on end:
+        // the offer goes by text now.
+        await db.update(notificationDeliveries).set({ attempts }).where(eq(notificationDeliveries.id, deliveryId));
+        await voicePlacementFailed(deliveryId, err instanceof Error ? err.message : String(err));
+        return;
+      }
+      // 'sent' = the phone is ringing. The status callback settles it:
+      // answered, retried, or texted instead.
+      await db
+        .update(notificationDeliveries)
+        .set({
+          status: 'sent',
+          attempts,
+          sentAt: new Date(),
+          provider: placed.provider,
+          providerMessageId: placed.providerCallId,
+          carriedBy: 'voice',
+          voiceOutcome: null,
           lastError: null,
         })
         .where(eq(notificationDeliveries.id, deliveryId));

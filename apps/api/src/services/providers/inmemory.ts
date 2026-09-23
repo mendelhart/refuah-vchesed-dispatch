@@ -13,7 +13,8 @@ export const captured = {
   sms: [] as CapturedSms[],
   push: [] as CapturedPush[],
   calls: [] as CapturedCall[],
-  reset() { this.sms = []; this.push = []; this.calls = []; },
+  announcements: [] as Array<{ to: string; deliveryId: string; at: Date }>,
+  reset() { this.sms = []; this.push = []; this.calls = []; this.announcements = []; },
 };
 
 /** Set to a number to make the next N sends fail — used by the retry tests. */
@@ -51,6 +52,10 @@ export const memoryCallingProvider: CallingProvider = {
   enabled: true,
   async connect({ initiatorNumber, destinationNumber, callId }): Promise<PlacedCall> {
     captured.calls.push({ initiator: initiatorNumber, destination: destinationNumber, callId, at: new Date() });
+    return { providerCallId: nextId('CA'), provider: 'memory', status: 'queued' };
+  },
+  async announce({ to, deliveryId }): Promise<PlacedCall> {
+    captured.announcements.push({ to, deliveryId, at: new Date() });
     return { providerCallId: nextId('CA'), provider: 'memory', status: 'queued' };
   },
   validateWebhookSignature: () => true,

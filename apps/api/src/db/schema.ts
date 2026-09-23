@@ -443,6 +443,8 @@ export const notificationDeliveries = pgTable(
     carriedBy: text('carried_by'),
     /** Why the WhatsApp -> SMS fallback happened, when it did. */
     fallbackReason: text('fallback_reason'),
+    /** Voice calls: accepted, declined, taken, no_choice, no_answer, busy, voicemail, failed. */
+    voiceOutcome: text('voice_outcome'),
     queuedAt: timestamp('queued_at', { withTimezone: true }).notNull().defaultNow(),
     nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }),
     sentAt: timestamp('sent_at', { withTimezone: true }),
