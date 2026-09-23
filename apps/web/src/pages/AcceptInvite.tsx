@@ -14,12 +14,13 @@ export function AcceptInvitePage(): React.JSX.Element {
   const [token, setToken] = useState(params.get('token') ?? '');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent): Promise<void> => {
     event.preventDefault();
-    const parsed = acceptInviteSchema.safeParse({ token, password, fullName, phone });
+    const parsed = acceptInviteSchema.safeParse({ token, password, fullName, phone, email });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? 'Check the details above.');
       return;
@@ -46,7 +47,7 @@ export function AcceptInvitePage(): React.JSX.Element {
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">Set up your account</h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            One time only. After this you sign in with your email and password.
+            One time only. After this you sign in with your mobile number (or email) and password.
           </p>
         </div>
 
@@ -81,6 +82,12 @@ export function AcceptInvitePage(): React.JSX.Element {
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             Ride offers are sent here, and your replies are matched back to you.
           </p>
+        </div>
+        <div>
+          <label htmlFor="email" className={labelClass}>
+            Email (optional)
+          </label>
+          <input id="email" type="email" className={inputClass} value={email} onChange={(event) => setEmail(event.target.value)} />
         </div>
         <div>
           <label htmlFor="new-password" className={labelClass}>

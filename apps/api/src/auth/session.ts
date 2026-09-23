@@ -6,6 +6,7 @@ import { sessions, userGroups, users, volunteerGroups } from '../db/schema.js';
 import { generateToken, hashToken, verifyPassword, hashPassword } from '../lib/crypto.js';
 import { getNumberSetting } from '../lib/settings.js';
 import { Errors } from '../lib/errors.js';
+import { normalizePhone } from '../lib/phone.js';
 
 const MAX_FAILED_LOGINS = 8;
 const LOCKOUT_MINUTES = 15;
@@ -68,15 +69,21 @@ export async function authenticate(
   password: string,
   ctx: LoginContext,
 ): Promise<{ token: string; user: SessionUser }> {
+  // Volunteers added with only a phone sign in with their mobile number.
+  const identifier = email.trim();
+  const byPhone = !identifier.includes('@') ? normalizePhone(identifier) : null;
   const [row] = await db
     .select()
     .from(users)
-    .where(and(raw`lower(${users.email}) = ${email.toLowerCase()}`, isNull(users.deletedAt)))
+    .where(and(
+      byPhone ? eq(users.phone, byPhone) : raw`lower(${users.email}) = ${identifier.toLowerCase()}`,
+      isNull(users.deletedAt),
+    ))
     .limit(1);
 
   // Deliberately identical failure for "no such account", "wrong password" and
   // "deactivated": account enumeration is a real risk for a volunteer roster.
-  const genericFailure = Errors.unauthorized('Email or password is incorrect');
+  const genericFailure = Errors.unauthorized('Email/phone or password is incorrect');
 
   if (row?.lockedUntil && row.lockedUntil > new Date()) {
     throw Errors.rateLimited('Too many failed attempts. Try again in a few minutes.');

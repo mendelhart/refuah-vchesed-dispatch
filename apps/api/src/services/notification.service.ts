@@ -47,6 +47,12 @@ export interface NotifyInput {
   payload?: Record<string, unknown>;
   /** Overrides the recipient's preference — used for offers, which must land. */
   forceChannels?: NotificationChannel[];
+  /**
+   * Use forceChannels exactly as given: no extra SMS for critical events.
+   * For invitations, where the administrator ticked the channels themselves
+   * and an unrequested text would be a surprise.
+   */
+  exactChannels?: boolean;
   /** Subject line for the email channel; ignored by the others. */
   subject?: string;
   /** Attach outbound SMS to this conversation thread. */
@@ -162,7 +168,7 @@ export async function notify(input: NotifyInput, exec: Executor = db): Promise<s
   const maxAttempts = await getNumberSetting(SETTING_KEYS.notificationMaxAttempts, exec);
 
   let wanted = channelsFor(recipient.preference as NotificationPreference, input.forceChannels);
-  if (isCritical(input.event) && !wanted.includes('sms')) {
+  if (isCritical(input.event) && !wanted.includes('sms') && !(input.exactChannels && input.forceChannels?.length)) {
     // A critical event always gets a carrier that reaches a locked phone.
     wanted = [...wanted, 'sms'];
   }

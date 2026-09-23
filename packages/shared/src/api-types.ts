@@ -13,7 +13,7 @@ export interface Page<T> { items: T[]; nextCursor: string | null }
 
 export interface SessionUser {
   id: string;
-  email: string;
+  email: string | null;
   fullName: string;
   role: Role;
   status: UserStatus;

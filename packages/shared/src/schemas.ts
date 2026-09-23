@@ -48,6 +48,9 @@ export const phoneInputSchema = z
   .min(7, 'Phone number is too short')
   .max(25, 'Phone number is too long');
 
+/** Blank strings from a form mean "not given". */
+const blankToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? null : v);
+
 export const emailSchema = z.string().trim().toLowerCase().email().max(254);
 
 export const passwordSchema = z
@@ -65,8 +68,10 @@ export type Pagination = z.infer<typeof paginationSchema>;
 // Auth
 // ---------------------------------------------------------------------------
 
+/** `email` carries either an email address or a mobile number: volunteers
+ *  added with only a phone sign in with it. Field name kept for older clients. */
 export const loginSchema = z.object({
-  email: emailSchema,
+  email: z.string().trim().min(3, 'Enter your email or mobile number').max(254),
   password: z.string().min(1).max(200),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -81,6 +86,8 @@ export const acceptInviteSchema = z.object({
   password: passwordSchema,
   fullName: z.string().trim().min(2).max(120),
   phone: phoneInputSchema,
+  /** Optional: volunteers added with only a phone may add an email here. */
+  email: z.preprocess(blankToNull, emailSchema.optional().nullable()),
 });
 
 export const requestPasswordResetSchema = z.object({ email: emailSchema });
@@ -232,15 +239,48 @@ export const simpleTransitionSchema = z.object({
 // Users
 // ---------------------------------------------------------------------------
 
-export const createUserSchema = z.object({
-  email: emailSchema,
-  fullName: z.string().trim().min(2).max(120),
-  phone: phoneInputSchema.optional().nullable(),
-  role: z.enum(ROLES).default('volunteer'),
-  groupSlugs: z.array(z.string().trim().max(60)).max(20).default([]),
-  status: z.enum(USER_STATUSES).default('active'),
-  sendInvite: z.boolean().default(true),
-});
+/** Channels an administrator can tick to invite a new person. */
+export const INVITE_CHANNELS = ['sms', 'whatsapp', 'email'] as const;
+export type InviteChannel = (typeof INVITE_CHANNELS)[number];
+
+/**
+ * Creating a person.
+ *
+ * A volunteer needs only a name and a mobile number: that is all dispatch uses
+ * to offer them a ride, and the org adds many drivers who will never open the
+ * app. Email is optional for volunteers. Dispatchers and administrators sign in
+ * to work, so they still need an email address.
+ *
+ * Inviting is opt-in per channel. A volunteer who was never invited still gets
+ * trip offers by text.
+ */
+export const createUserSchema = z
+  .object({
+    email: z.preprocess(blankToNull, emailSchema.optional().nullable()),
+    fullName: z.string().trim().min(2).max(120),
+    phone: z.preprocess(blankToNull, phoneInputSchema.optional().nullable()),
+    role: z.enum(ROLES).default('volunteer'),
+    groupSlugs: z.array(z.string().trim().max(60)).max(20).default([]),
+    status: z.enum(USER_STATUSES).default('active'),
+    /** Create a set-up link (returned to the admin) without sending it. */
+    sendInvite: z.boolean().default(false),
+    /** Send the set-up link on these channels. Empty = do not contact them. */
+    inviteVia: z.array(z.enum(INVITE_CHANNELS)).max(3).default([]),
+  })
+  .superRefine((v, ctx) => {
+    if (v.role === 'volunteer' && !v.phone) {
+      ctx.addIssue({ code: 'custom', path: ['phone'], message: 'A mobile number is needed so the volunteer can get ride offers.' });
+    }
+    if (v.role !== 'volunteer' && !v.email) {
+      ctx.addIssue({ code: 'custom', path: ['email'], message: 'Dispatchers and administrators need an email address to sign in.' });
+    }
+    if (v.inviteVia.includes('email') && !v.email) {
+      ctx.addIssue({ code: 'custom', path: ['inviteVia'], message: 'Add an email address to invite by email.' });
+    }
+    if ((v.inviteVia.includes('sms') || v.inviteVia.includes('whatsapp')) && !v.phone) {
+      ctx.addIssue({ code: 'custom', path: ['inviteVia'], message: 'Add a mobile number to invite by text or WhatsApp.' });
+    }
+  });
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
 export const updateUserSchema = z.object({
@@ -652,4 +692,9 @@ export const bulkOfferSchema = z.object({
 export const calendarRangeSchema = z.object({
   from: isoDate,
   days: z.coerce.number().int().min(1).max(92).default(31),
+});
+
+/** Re-send a set-up link; optionally deliver it on the ticked channels. */
+export const resendInviteSchema = z.object({
+  inviteVia: z.array(z.enum(INVITE_CHANNELS)).max(3).default([]),
 });

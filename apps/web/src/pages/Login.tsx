@@ -68,11 +68,13 @@ export function LoginPage(): React.JSX.Element {
         >
           <div>
             <label htmlFor="email" className={labelClass}>
-              Email
+              Email or mobile number
             </label>
             <input
               id="email"
-              type="email"
+              type="text"
+              inputMode="email"
+              autoCapitalize="none"
               autoComplete="username"
               required
               className={inputClass}

@@ -7,6 +7,7 @@
  * returns and the handful of ad-hoc row shapes the routes build inline.
  */
 import type {
+  InviteChannel,
   AddressDto,
   AuditEventDto,
   BoardSummary,
@@ -119,6 +120,8 @@ export interface DirectoryPerson {
   /** Null for volunteers: the roster is visible, contact details are not. */
   email: string | null;
   phone: string | null;
+  /** False until they set a password (never invited, or invite not used). */
+  activated?: boolean;
 }
 export interface UserListResponse {
   users: DirectoryPerson[];
@@ -127,11 +130,13 @@ export interface DirectoryResponse {
   volunteers: DirectoryPerson[];
 }
 export interface CreateUserResponse {
-  user: { id: string; email: string; fullName: string; role: Role };
+  user: { id: string; email: string | null; fullName: string; role: Role };
   inviteUrl: string | null;
+  invitedVia?: InviteChannel[];
 }
 export interface InviteUrlResponse {
   inviteUrl: string;
+  invitedVia?: InviteChannel[];
 }
 export interface EligibleVolunteersResponse {
   volunteers: { id: string; fullName: string; phone: string | null; role: Role }[];

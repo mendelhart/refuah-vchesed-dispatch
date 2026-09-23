@@ -2,13 +2,13 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { and, eq, isNull } from 'drizzle-orm';
 import {
-  changeRoleSchema, createUserSchema, pushSubscriptionSchema,
+  changeRoleSchema, createUserSchema, pushSubscriptionSchema, resendInviteSchema,
   updateMeSchema, updateUserSchema, uuidSchema,
 } from '@rvc/shared';
 import { db } from '../db/client.js';
 import { pushSubscriptions, users, volunteerGroups } from '../db/schema.js';
 import { actorFrom, currentUser, requireAdmin, requireAuth, requireDispatcher } from '../auth/guards.js';
-import { changeRole, createUser, deactivateUser, issueAuthToken, listUsers, updateUser } from '../domain/users.service.js';
+import { changeRole, createUser, deactivateUser, issueAuthToken, listUsers, sendInvitation, updateUser } from '../domain/users.service.js';
 import { volunteerImpact } from '../domain/impact.js';
 import { loadSessionUser } from '../auth/session.js';
 import { recordAudit } from '../lib/audit.js';
@@ -33,11 +33,11 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   app.post('/api/users', { preHandler: requireAdmin }, async (req, reply) => {
     const body = createUserSchema.parse(req.body);
-    const { user, inviteUrl } = await createUser(actorFrom(req), body);
+    const { user, inviteUrl, invitedVia } = await createUser(actorFrom(req), body);
     reply.status(201);
     // The invite URL is returned to the admin so they can pass it on until
     // transactional email is wired up (see docs/DEPLOYMENT.md).
-    return { user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role }, inviteUrl };
+    return { user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role }, inviteUrl, invitedVia };
   });
 
   app.patch('/api/users/:id', { preHandler: requireDispatcher }, async (req) => {
@@ -66,9 +66,18 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
   app.post('/api/users/:id/resend-invite', { preHandler: requireAdmin }, async (req) => {
     const { id } = idParam.parse(req.params);
+    const body = resendInviteSchema.parse(req.body ?? {});
+    const [target] = await db.select({ id: users.id, fullName: users.fullName, email: users.email, phone: users.phone })
+      .from(users).where(and(eq(users.id, id), isNull(users.deletedAt))).limit(1);
+    if (!target) throw Errors.notFound('User');
+    if (body.inviteVia.includes('email') && !target.email) throw Errors.validation('No email address on file.', { field: 'inviteVia' });
+    if ((body.inviteVia.includes('sms') || body.inviteVia.includes('whatsapp')) && !target.phone) {
+      throw Errors.validation('No mobile number on file.', { field: 'inviteVia' });
+    }
     const { url } = await issueAuthToken(id, 'invite', 60 * 24 * 7);
     await recordAudit({ actor: actorFrom(req), action: 'user.invite_resent', entityType: 'user', entityId: id });
-    return { inviteUrl: url };
+    if (body.inviteVia.length) await sendInvitation(actorFrom(req), id, target.fullName, url, body.inviteVia);
+    return { inviteUrl: url, invitedVia: body.inviteVia };
   });
 
   // --- self service --------------------------------------------------------

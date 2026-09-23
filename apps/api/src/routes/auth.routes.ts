@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, ne, sql as raw } from 'drizzle-orm';
 import { acceptInviteSchema, changePasswordSchema, loginSchema, resetPasswordSchema, requestPasswordResetSchema } from '@rvc/shared';
 import { env } from '../env.js';
 import { db } from '../db/client.js';
@@ -87,8 +87,16 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         .limit(1).for('update');
       if (!token || token.expiresAt < new Date()) throw Errors.unauthorized('This invitation link has expired. Ask an administrator for a new one.');
 
+      const patch: Partial<typeof users.$inferInsert> = { fullName: body.fullName, phone, status: 'active' };
+      if (body.email) {
+        const email = body.email.toLowerCase();
+        const [taken] = await tx.select({ id: users.id }).from(users)
+          .where(and(raw`lower(${users.email}) = ${email}`, isNull(users.deletedAt), ne(users.id, token.userId))).limit(1);
+        if (taken) throw Errors.conflict('That email address is already used by another account.');
+        patch.email = email;
+      }
       await tx.update(authTokens).set({ usedAt: new Date() }).where(eq(authTokens.id, token.id));
-      await tx.update(users).set({ fullName: body.fullName, phone, status: 'active' }).where(eq(users.id, token.userId));
+      await tx.update(users).set(patch).where(eq(users.id, token.userId));
       await setPassword(token.userId, body.password, { mustChange: false }, tx);
       await recordAudit({
         actor: { userId: token.userId, name: body.fullName, role: 'volunteer', ip: req.ip, requestId: req.id },

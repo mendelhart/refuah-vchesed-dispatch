@@ -46,7 +46,8 @@ export const users = pgTable(
   'users',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    email: text('email').notNull(),
+    /** Optional for volunteers added with only a name and phone. */
+    email: text('email'),
     passwordHash: text('password_hash'),
     fullName: text('full_name').notNull(),
     /** E.164. Unique among live users so SMS can resolve exactly one person. */

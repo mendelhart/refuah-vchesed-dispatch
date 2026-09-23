@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Copy, UserPlus, Users } from 'lucide-react';
-import { ROLES, createUserSchema, type Role } from '@rvc/shared';
+import { ROLES, createUserSchema, type InviteChannel, type Role } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
 import { titleCase, formatPhone } from '@/lib/format';
@@ -18,11 +18,36 @@ import {
 } from '@/components/states';
 import type { CreateUserResponse, GroupsResponse, InviteUrlResponse, UserListResponse } from '@/types/api';
 
+const INVITE_OPTIONS: { channel: InviteChannel; label: string }[] = [
+  { channel: 'sms', label: 'Text' },
+  { channel: 'whatsapp', label: 'WhatsApp' },
+  { channel: 'email', label: 'Email' },
+];
+const channelLabel = (c: InviteChannel): string => (c === 'sms' ? 'text' : c === 'whatsapp' ? 'WhatsApp' : 'email');
+
 export function PeoplePage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
-  const [form, setForm] = useState({ email: '', fullName: '', phone: '', role: 'volunteer' as Role, groupSlug: '' });
+  const [invitedVia, setInvitedVia] = useState<InviteChannel[]>([]);
+  const emptyForm = { email: '', fullName: '', phone: '', role: 'volunteer' as Role, groupSlug: '', inviteVia: [] as InviteChannel[] };
+  const [form, setForm] = useState(emptyForm);
+  const toggleVia = (channel: InviteChannel) =>
+    setForm((f) => ({
+      ...f,
+      inviteVia: f.inviteVia.includes(channel) ? f.inviteVia.filter((c) => c !== channel) : [...f.inviteVia, channel],
+    }));
+  const payload = () => ({
+    email: form.email.trim() || null,
+    fullName: form.fullName.trim(),
+    phone: form.phone.trim() || null,
+    role: form.role,
+    groupSlugs: form.groupSlug ? [form.groupSlug] : [],
+    status: 'active' as const,
+    // Staff always get a link back to pass on; volunteers only when ticked.
+    sendInvite: form.role !== 'volunteer',
+    inviteVia: form.inviteVia.filter((c) => (c === 'email' ? form.email.trim() : form.phone.trim())),
+  });
 
   const people = useQuery({
     queryKey: qk.people.list({}),
@@ -35,21 +60,19 @@ export function PeoplePage(): React.JSX.Element {
 
   const create = useMutation({
     mutationFn: () =>
-      api.post<CreateUserResponse>('/api/users', {
-        email: form.email.trim(),
-        fullName: form.fullName.trim(),
-        phone: form.phone.trim() || null,
-        role: form.role,
-        groupSlugs: form.groupSlug ? [form.groupSlug] : [],
-        status: 'active',
-        sendInvite: true,
-      }),
+      api.post<CreateUserResponse>('/api/users', payload()),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: qk.people.list({}) });
-      toast.success(`${data.user.fullName} added.`);
+      const via = data.invitedVia ?? [];
+      toast.success(
+        via.length
+          ? `${data.user.fullName} added. Invite sent by ${via.map(channelLabel).join(' and ')}.`
+          : `${data.user.fullName} added. They will get ride offers by text.`,
+      );
       setInviteUrl(data.inviteUrl);
+      setInvitedVia(via);
       setOpen(false);
-      setForm({ email: '', fullName: '', phone: '', role: 'volunteer', groupSlug: '' });
+      setForm(emptyForm);
     },
     onError: (error: unknown) => toast.error(errorMessage(error)),
   });
@@ -67,6 +90,7 @@ export function PeoplePage(): React.JSX.Element {
     mutationFn: (id: string) => api.post<InviteUrlResponse>(`/api/users/${id}/resend-invite`),
     onSuccess: (data) => {
       setInviteUrl(data.inviteUrl);
+      setInvitedVia(data.invitedVia ?? []);
       toast.success('New invitation link created.');
     },
     onError: (error: unknown) => toast.error(errorMessage(error)),
@@ -89,7 +113,7 @@ export function PeoplePage(): React.JSX.Element {
         actions={
           <button type="button" className={primaryButtonClass} onClick={() => setOpen(true)}>
             <UserPlus className="h-4 w-4" aria-hidden="true" />
-            Invite someone
+            Add someone
           </button>
         }
       />
@@ -97,7 +121,9 @@ export function PeoplePage(): React.JSX.Element {
       {inviteUrl ? (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
           <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
-            Send this invitation link to the new volunteer — it expires in a week.
+            {invitedVia.length
+              ? `Invite sent by ${invitedVia.map(channelLabel).join(' and ')}. You can also pass on this link yourself - it expires in a week.`
+              : 'Send this set-up link to them - it expires in a week.'}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <code className="min-w-0 flex-1 break-all rounded bg-white px-2 py-1 text-xs dark:bg-slate-900">{inviteUrl}</code>
@@ -114,7 +140,7 @@ export function PeoplePage(): React.JSX.Element {
               <Copy className="h-4 w-4" aria-hidden="true" />
               Copy
             </button>
-            <button type="button" className={secondaryButtonClass} onClick={() => setInviteUrl(null)}>
+            <button type="button" className={secondaryButtonClass} onClick={() => { setInviteUrl(null); setInvitedVia([]); }}>
               Done
             </button>
           </div>
@@ -139,6 +165,7 @@ export function PeoplePage(): React.JSX.Element {
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {titleCase(person.status)}
+                  {person.activated === false ? ' · Offers by text only (no app account yet)' : ''}
                   {person.groupSlugs.length > 0 ? ` · ${person.groupSlugs.map(titleCase).join(', ')}` : ''}
                 </p>
               </div>
@@ -179,20 +206,12 @@ export function PeoplePage(): React.JSX.Element {
         </ul>
       )}
 
-      <Modal open={open} title="Invite someone" onClose={() => setOpen(false)}>
+      <Modal open={open} title="Add someone" onClose={() => setOpen(false)}>
         <form
           className="space-y-4"
           onSubmit={(event) => {
             event.preventDefault();
-            const parsed = createUserSchema.safeParse({
-              email: form.email,
-              fullName: form.fullName,
-              phone: form.phone || null,
-              role: form.role,
-              groupSlugs: form.groupSlug ? [form.groupSlug] : [],
-              status: 'active',
-              sendInvite: true,
-            });
+            const parsed = createUserSchema.safeParse(payload());
             if (!parsed.success) {
               toast.error(parsed.error.issues[0]?.message ?? 'Check the details above.');
               return;
@@ -207,16 +226,32 @@ export function PeoplePage(): React.JSX.Element {
             <input id="person-name" className={inputClass} value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} required />
           </div>
           <div>
-            <label htmlFor="person-email" className={labelClass}>
-              Email
+            <label htmlFor="person-phone" className={labelClass}>
+              Mobile number{form.role === 'volunteer' ? '' : ' (optional)'}
             </label>
-            <input id="person-email" type="email" className={inputClass} value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
+            <input
+              id="person-phone"
+              type="tel"
+              inputMode="tel"
+              className={inputClass}
+              placeholder="514 555 1234"
+              value={form.phone}
+              onChange={(event) => setForm({ ...form, phone: event.target.value })}
+              required={form.role === 'volunteer'}
+            />
           </div>
           <div>
-            <label htmlFor="person-phone" className={labelClass}>
-              Mobile number
+            <label htmlFor="person-email" className={labelClass}>
+              Email{form.role === 'volunteer' ? ' (optional)' : ''}
             </label>
-            <input id="person-phone" type="tel" className={inputClass} value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
+            <input
+              id="person-email"
+              type="email"
+              className={inputClass}
+              value={form.email}
+              onChange={(event) => setForm({ ...form, email: event.target.value })}
+              required={form.role !== 'volunteer'}
+            />
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
@@ -245,9 +280,35 @@ export function PeoplePage(): React.JSX.Element {
               </select>
             </div>
           </div>
+          <fieldset>
+            <legend className={labelClass}>Send an invite to set up the app (optional)</legend>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {INVITE_OPTIONS.map(({ channel, label }) => {
+                const missing = channel === 'email' ? !form.email.trim() : !form.phone.trim();
+                return (
+                  <label
+                    key={channel}
+                    className={`flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm dark:border-slate-600 ${missing ? 'opacity-50' : ''}`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5 accent-[#EA0029]"
+                      checked={form.inviteVia.includes(channel) && !missing}
+                      disabled={missing}
+                      onChange={() => toggleVia(channel)}
+                    />
+                    {label}
+                  </label>
+                );
+              })}
+            </div>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Leave all unticked to add them quietly. Volunteers get ride offers by text either way.
+            </p>
+          </fieldset>
           <div className="flex gap-2">
             <button type="submit" className={primaryButtonClass} disabled={create.isPending}>
-              Create account
+              {form.inviteVia.length ? 'Add and invite' : 'Add'}
             </button>
             <button type="button" className={secondaryButtonClass} onClick={() => setOpen(false)}>
               Cancel

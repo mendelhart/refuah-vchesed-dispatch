@@ -1,7 +1,8 @@
 import { and, asc, eq, inArray, isNull, sql as raw } from 'drizzle-orm';
-import type { Role } from '@rvc/shared';
+import type { InviteChannel, Role } from '@rvc/shared';
 import { db, type Executor } from '../db/client.js';
-import { authTokens, sessions, userGroups, users, volunteerGroups } from '../db/schema.js';
+import { authTokens, organizationInfo, sessions, userGroups, users, volunteerGroups } from '../db/schema.js';
+import { notify } from '../services/notification.service.js';
 import { Errors } from '../lib/errors.js';
 import { generateToken, hashToken } from '../lib/crypto.js';
 import { normalizePhone } from '../lib/phone.js';
@@ -45,8 +46,45 @@ async function setGroups(exec: Executor, userId: string, slugs: string[]): Promi
 }
 
 export interface CreateUserArgs {
-  email: string; fullName: string; phone?: string | null;
+  email?: string | null; fullName: string; phone?: string | null;
   role: Role; groupSlugs: string[]; status: string; sendInvite: boolean;
+  inviteVia?: InviteChannel[];
+}
+
+/**
+ * Sends a set-up link on exactly the channels the administrator ticked.
+ *
+ * Goes through notify() so every attempt is recorded and retried like any
+ * other message ("did she get the invite?" is a query). exactChannels stops the
+ * critical-event rule from adding a text nobody asked for.
+ */
+export async function sendInvitation(
+  actor: AuditActor,
+  userId: string,
+  fullName: string,
+  inviteUrl: string,
+  via: InviteChannel[],
+  exec: Executor = db,
+): Promise<void> {
+  const [org] = await exec.select({ name: organizationInfo.name }).from(organizationInfo).limit(1);
+  const orgName = org?.name ?? "Refuah V'Chesed";
+  const first = fullName.trim().split(/\s+/)[0] ?? fullName;
+  const body =
+    `Hi ${first}, ${orgName} added you as a volunteer driver. ` +
+    `Ride offers will come to your phone by text - just reply to accept. ` +
+    `To set up your account in the app (optional), use this link within 7 days: ${inviteUrl}`;
+  await notify({
+    userId,
+    event: 'volunteer.invitation',
+    title: `Welcome to ${orgName}`,
+    subject: `Your ${orgName} account`,
+    body,
+    forceChannels: via,
+    exactChannels: true,
+  }, exec);
+  await recordAudit({
+    actor, action: 'user.invite_sent', entityType: 'user', entityId: userId, metadata: { via },
+  }, exec);
 }
 
 export async function createUser(actor: AuditActor, args: CreateUserArgs) {
@@ -54,9 +92,12 @@ export async function createUser(actor: AuditActor, args: CreateUserArgs) {
     const phone = normalizePhone(args.phone);
     if (args.phone && !phone) throw Errors.validation('Phone number is not valid', { field: 'phone' });
 
-    const existing = await tx.select({ id: users.id }).from(users)
-      .where(and(raw`lower(${users.email}) = ${args.email.toLowerCase()}`, isNull(users.deletedAt))).limit(1);
-    if (existing.length) throw Errors.conflict('Someone with that email address already exists.');
+    const email = args.email ? args.email.toLowerCase() : null;
+    if (email) {
+      const existing = await tx.select({ id: users.id }).from(users)
+        .where(and(raw`lower(${users.email}) = ${email}`, isNull(users.deletedAt))).limit(1);
+      if (existing.length) throw Errors.conflict('Someone with that email address already exists.');
+    }
 
     if (phone) {
       const dupe = await tx.select({ id: users.id }).from(users)
@@ -65,7 +106,7 @@ export async function createUser(actor: AuditActor, args: CreateUserArgs) {
     }
 
     const [user] = await tx.insert(users).values({
-      email: args.email, fullName: args.fullName, phone,
+      email, fullName: args.fullName, phone,
       role: args.role, status: args.status, mustChangePassword: true,
     }).returning();
 
@@ -93,9 +134,15 @@ export async function createUser(actor: AuditActor, args: CreateUserArgs) {
       next: { email: user!.email, fullName: user!.fullName, role: user!.role, groups: args.groupSlugs },
     }, tx);
 
+    const inviteVia = args.inviteVia ?? [];
     let inviteUrl: string | null = null;
-    if (args.sendInvite) inviteUrl = (await issueAuthToken(user!.id, 'invite', 60 * 24 * 7, tx)).url;
-    return { user: user!, inviteUrl };
+    if (args.sendInvite || inviteVia.length > 0) {
+      inviteUrl = (await issueAuthToken(user!.id, 'invite', 60 * 24 * 7, tx)).url;
+    }
+    if (inviteVia.length > 0 && inviteUrl) {
+      await sendInvitation(actor, user!.id, user!.fullName, inviteUrl, inviteVia, tx);
+    }
+    return { user: user!, inviteUrl, invitedVia: inviteVia };
   });
 }
 
@@ -182,7 +229,7 @@ export async function deactivateUser(actor: AuditActor, userId: string, reason: 
     if (open > 0) throw Errors.conflict(`This volunteer still has ${open} active trip(s). Reassign them first.`);
 
     const [after] = await tx.update(users)
-      .set({ status: 'deactivated', deletedAt: new Date(), email: `${before.email}.deleted.${Date.now()}`, phone: null })
+      .set({ status: 'deactivated', deletedAt: new Date(), email: before.email ? `${before.email}.deleted.${Date.now()}` : null, phone: null })
       .where(eq(users.id, userId)).returning();
     await revokeAllSessionsForUser(userId, tx);
     await tx.delete(authTokens).where(eq(authTokens.userId, userId));
@@ -206,6 +253,9 @@ export async function listUsers(viewerRole: Role, args: ListUsersArgs) {
   const rows = await db.select({
     id: users.id, fullName: users.fullName, email: users.email, phone: users.phone,
     role: users.role, status: users.status, photoUrl: users.photoUrl,
+    // Has this person ever set a password? Volunteers added with only a
+    // phone and never invited get offers by text but have no app account.
+    activated: raw<boolean>`(${users.passwordHash} is not null)`,
     groupSlugs: raw<string[]>`coalesce(array_agg(distinct ${volunteerGroups.slug}) filter (where ${volunteerGroups.slug} is not null), '{}')`,
   }).from(users)
     .leftJoin(userGroups, eq(userGroups.userId, users.id))
@@ -220,7 +270,7 @@ export async function listUsers(viewerRole: Role, args: ListUsersArgs) {
 
   return filtered.map((r) => ({
     id: r.id, fullName: r.fullName, role: r.role, status: r.status,
-    photoUrl: r.photoUrl, groupSlugs: r.groupSlugs,
+    photoUrl: r.photoUrl, groupSlugs: r.groupSlugs, activated: Boolean(r.activated),
     // Volunteers see who else is on the roster, not how to contact them.
     email: privileged ? r.email : null,
     phone: privileged ? r.phone : null,
