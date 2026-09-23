@@ -30,7 +30,7 @@ import type { ContactsResponse } from '@/types/api';
 import { saveCallerFromTrip } from '@/lib/save-caller';
 import { isFullTrip } from '@/types/api';
 import { mobilityLabel, relativeTime, tripTypeLabel } from '@/lib/format';
-import { AddressFields, emptyAddress, toAddressInput, type AddressDraft } from './AddressAutocomplete';
+import { AddressFields, emptyAddress, toAddressInput, type AddressDraft, type SavedPlace } from './AddressAutocomplete';
 import { Modal } from './Modal';
 import { InlineSpinner, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from './states';
 import type { GroupsResponse, TripResponse } from '@/types/api';
@@ -319,6 +319,18 @@ export function TripForm({
     queryFn: () => api.get<ContactsResponse>('/api/contacts'),
     staleTime: 300_000,
   });
+  const savedPlaces = useMemo<SavedPlace[]>(
+    () =>
+      (hospitals.data?.contacts ?? [])
+        .filter((c) => c.address)
+        .map((c) => ({
+          id: c.id,
+          name: c.name,
+          isHospital: c.role?.toLowerCase() === 'hospital',
+          address: c.address!,
+        })),
+    [hospitals.data],
+  );
 
   const callerProfile = useQuery({
     queryKey: qk.callers.detail(callerId ?? 'none'),
@@ -655,59 +667,20 @@ export function TripForm({
             label="Pickup address"
             value={form.pickup}
             onChange={(next) => setForm({ ...form, pickup: next })}
+            savedPlaces={savedPlaces}
             required
           />
           {fieldError('pickup.line1')}
         </div>
 
         <div className="space-y-3">
-          {(hospitals.data?.contacts ?? []).some((c) => c.role?.toLowerCase() === 'hospital' && c.address) ? (
-            <div>
-              <label htmlFor="hospital-pick" className={labelClass}>
-                Hospital
-              </label>
-              <select
-                id="hospital-pick"
-                className={inputClass}
-                value=""
-                onChange={(event) => {
-                  const contact = (hospitals.data?.contacts ?? []).find((c) => c.id === event.target.value);
-                  if (!contact?.address) return;
-                  setForm((current) => ({
-                    ...current,
-                    dropoff: {
-                      line1: contact.address!.line1,
-                      unit: contact.address!.unit ?? '',
-                      city: contact.address!.city,
-                      province: contact.address!.province,
-                      postalCode: contact.address!.postalCode ?? '',
-                      country: contact.address!.country ?? 'CA',
-                      notes: contact.address!.notes ?? '',
-                      latitude: contact.address!.latitude ?? null,
-                      longitude: contact.address!.longitude ?? null,
-                    },
-                  }));
-                }}
-              >
-                <option value="" disabled>
-                  Pick a hospital to fill the dropoff
-                </option>
-                {(hospitals.data?.contacts ?? [])
-                  .filter((c) => c.role?.toLowerCase() === 'hospital' && c.address)
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-          ) : null}
           <AddressFields
             id="dropoff"
             label="Dropoff address"
             value={form.dropoff}
             onChange={(next) => setForm({ ...form, dropoff: next })}
             notesPlaceholder="Entrance, department, parking — the volunteer sees this"
+            savedPlaces={savedPlaces}
             required
           />
           {fieldError('dropoff.line1')}

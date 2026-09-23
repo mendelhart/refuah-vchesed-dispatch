@@ -18,11 +18,20 @@
  *    line1; typing afterwards wins again and drops the stale coordinates.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { MapPin } from 'lucide-react';
+import { Building2, MapPin } from 'lucide-react';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { inputClass } from './states';
+import type { AddressDto } from '@rvc/shared';
 import type { AddressSearchResponse, AddressSuggestion } from '@/types/api';
+
+/** A saved hospital or service from Contacts, offered while typing an address. */
+export interface SavedPlace {
+  id: string;
+  name: string;
+  isHospital: boolean;
+  address: AddressDto;
+}
 
 export interface AddressDraft {
   line1: string;
@@ -83,9 +92,11 @@ interface Props {
   onChange: (next: AddressDraft) => void;
   notesPlaceholder?: string;
   required?: boolean;
+  /** Saved hospitals/services; typing part of a name offers them first. */
+  savedPlaces?: SavedPlace[];
 }
 
-export function AddressFields({ id, label, value, onChange, notesPlaceholder, required }: Props): React.JSX.Element {
+export function AddressFields({ id, label, value, onChange, notesPlaceholder, required, savedPlaces }: Props): React.JSX.Element {
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -109,7 +120,7 @@ export function AddressFields({ id, label, value, onChange, notesPlaceholder, re
         .get<AddressSearchResponse>('/api/addresses/search', { q: query }, controller.signal)
         .then((data) => {
           setSuggestions(data.results);
-          setOpen(data.results.length > 0);
+          setOpen(true);
           setLookupFailed(false);
         })
         .catch((error: unknown) => {
@@ -127,6 +138,35 @@ export function AddressFields({ id, label, value, onChange, notesPlaceholder, re
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [value.line1]);
+
+  const typed = value.line1.trim().toLowerCase();
+  const placeMatches =
+    typedRef.current && typed.length >= 2 && savedPlaces
+      ? savedPlaces
+          .filter((p) => p.name.toLowerCase().includes(typed) || p.address.line1.toLowerCase().includes(typed))
+          .sort((a, b) => Number(b.isHospital) - Number(a.isHospital))
+          .slice(0, 5)
+      : [];
+
+  const applyPlace = (place: SavedPlace): void => {
+    typedRef.current = false;
+    const a = place.address;
+    onChange({
+      ...value,
+      line1: a.line1,
+      unit: a.unit ?? '',
+      city: a.city,
+      province: a.province,
+      postalCode: a.postalCode ?? '',
+      country: a.country || 'CA',
+      // The hospital's name travels with the address so the volunteer sees it.
+      notes: [place.name, a.notes].filter(Boolean).join(' - '),
+      latitude: a.latitude ?? null,
+      longitude: a.longitude ?? null,
+    });
+    setSuggestions([]);
+    setOpen(false);
+  };
 
   const applySuggestion = (suggestion: AddressSuggestion): void => {
     typedRef.current = false;
@@ -161,7 +201,7 @@ export function AddressFields({ id, label, value, onChange, notesPlaceholder, re
             value={value.line1}
             required={required ?? false}
             autoComplete="off"
-            placeholder="e.g. 3175 Chemin de la Côte-Sainte-Catherine"
+            placeholder={savedPlaces?.length ? 'Street address, or a hospital name' : 'e.g. 3175 Chemin de la Côte-Sainte-Catherine'}
             onChange={(event) => {
               typedRef.current = true;
               onChange({
@@ -172,6 +212,7 @@ export function AddressFields({ id, label, value, onChange, notesPlaceholder, re
                 latitude: null,
                 longitude: null,
               });
+              setOpen(true);
             }}
             onFocus={() => setOpen(suggestions.length > 0)}
             onBlur={() => window.setTimeout(() => setOpen(false), 150)}
@@ -189,8 +230,24 @@ export function AddressFields({ id, label, value, onChange, notesPlaceholder, re
           </p>
         ) : null}
 
-        {open && suggestions.length > 0 ? (
-          <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-600 dark:bg-slate-800">
+        {open && (suggestions.length > 0 || placeMatches.length > 0) ? (
+          <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-72 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-600 dark:bg-slate-800">
+            {placeMatches.map((place) => (
+              <li key={`place-${place.id}`}>
+                <button
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => applyPlace(place)}
+                  className="flex w-full items-start gap-2 border-b border-slate-100 bg-red-50/40 px-4 py-3 text-left hover:bg-slate-100 dark:border-slate-700 dark:bg-red-950/20 dark:hover:bg-slate-700"
+                >
+                  <Building2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#EA0029]" aria-hidden="true" />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium text-slate-900 dark:text-white">{place.name}</span>
+                    <span className="block text-xs text-slate-500 dark:text-slate-400">{place.address.formatted}</span>
+                  </span>
+                </button>
+              </li>
+            ))}
             {suggestions.map((suggestion, index) => (
               <li key={`${suggestion.formatted}-${index}`}>
                 {/* FIX: type="button". Without it this submitted the form. */}
