@@ -56,7 +56,7 @@ Severity is the spec's rating or mine. Status "CI" means covered by a test that 
 | F-14 | MED | Recurring | `recurring.service.ts` `materialiseDueRides` | Select-then-insert. Scheduled job and "run now" could both create and offer the same date | Duplicate trips and offers | Claim `(ride, date)` via unique index before creating; release on failure | `recurring.test.ts` overlapping runs | Fixed, CI |
 | F-15 | verify | Calendar | `lib/hebcal.ts` | Shabbos/yom tov boundaries | - | Verified over 14 months incl. 3-day yom tov; Montreal location/timezone explicit | `rest-periods.test.ts` | Verified, CI |
 | F-16 | HIGH (privacy) | PWA | `service-worker.js` cache, `lib/auth.tsx`, `lib/api.ts`, `lib/offline.ts` | Offline ride cache (address, phone) survived logout and ended sessions | Next user of a shared phone could read it | Cache wiped on logout, on login and on any 401. Offline banner says the data is a saved copy | typecheck + web unit; offline read already in `pwa.spec.ts` | Fixed. **Manual phone check recommended** |
-| F-17 | MED | E2E | `apps/web/e2e/offer-flow.spec.ts` | No browser test of offer -> accept -> race -> complete -> cancel | Core flow unguarded in UI | Added | offer-flow (2 tests x phone/desktop) | CI pending (first run failed on test data; fixed in 302fedb) |
+| F-17 | MED | E2E | `apps/web/e2e/offer-flow.spec.ts` | No browser test of offer -> accept -> race -> complete -> cancel | Core flow unguarded in UI | Added | offer-flow (2 tests x phone/desktop) | Fixed, CI (green at 5f8fb4d) |
 | F-18 | LOW | Supply chain | `ci.yml`, `.github/dependabot.yml` | No vulnerability gate or update strategy | Unnoticed vulnerable deps | `npm audit --omit=dev --audit-level=high` in CI (0 found; 6 moderate in dev-only tools); Dependabot weekly/monthly, capped | CI | Fixed |
 | F-19 | HIGH | CI/CD | Render service settings | Render deploys on commit, even if CI fails | A broken build can go live | **Not changed.** Render's "After CI Checks Pass" would never deploy while the Fly `deploy` job (left as is by owner instruction) fails on every push. Fix: remove or disable the Fly workflow, then set `autoDeployTrigger: checksPass` | - | Open |
 | F-20 | HIGH | Backup | `.github/workflows/backup.yml`, `docs/BACKUP_AND_RESTORE.md` | Backups not running (secrets unset); RPO 24h; no PITR | Data loss on failure | Documented honestly; PITR listed as a paid enhancement | - | Open (owner) |
@@ -97,7 +97,7 @@ All tests run in GitHub Actions against Postgres 16 with real migrations. No loc
 - `./scripts/e2e.sh` (Playwright, phone and desktop) at `fb3681a`: 55 passed, 4 failed. All 4 were the new offer-flow tests: pickups collided with the test volunteer's earlier ride, and the refusal wording differed. Fixed in `302fedb`; result below.
 - `npm audit --omit=dev`: 0 vulnerabilities.
 
-- `302fedb`: 57 passed, 2 failed. The cancellation test now passes. The race test read the wrong field name (`assignedVolunteerId` instead of `assignedVolunteer.id`). Fixed in `5f8fb4d`, whose CI run was still queued when this report was written. The browser-test result for the new offer-flow test is **not yet confirmed green**.
+- `302fedb`: 57 passed, 2 failed. The cancellation test now passes. The race test read the wrong field name (`assignedVolunteerId` instead of `assignedVolunteer.id`). Fixed in `5f8fb4d`. **CI run 35895092934 at `5f8fb4d`: every job green, including the full browser suite with offer-flow on phone and desktop.**
 
 ## Deployment Readiness
 
