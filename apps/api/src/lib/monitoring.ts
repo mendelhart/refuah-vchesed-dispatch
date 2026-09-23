@@ -4,13 +4,18 @@ import { logger } from './logger.js';
 /**
  * Error reporting.
  *
- * Deliberately dependency-free: structured logs are the baseline, and an
- * aggregator is opt-in. If SENTRY_DSN is set we try to load @sentry/node at
- * runtime; if it is not installed we say so loudly once rather than pretending
- * monitoring is on. That is the honest version of "critical failures must be
+ * Structured logs are the baseline; @sentry/node is installed and turns on
+ * only when SENTRY_DSN is set (Sentry's free plan is enough). It is loaded at
+ * runtime, and if it is ever missing we say so loudly once rather than
+ * pretending monitoring is on. That is the honest version of "critical failures must be
  * observable" for an organisation that may not want another vendor.
  */
 type Capture = (err: unknown, context?: Record<string, unknown>) => void;
+type CaptureMsg = (message: string, context?: Record<string, unknown>) => void;
+
+let captureMsg: CaptureMsg = (message, context) => {
+  logger.error({ ...context, alert: true }, message);
+};
 
 let capture: Capture = (err, context) => {
   logger.error({ err, ...context }, 'captured error');
@@ -29,11 +34,16 @@ export async function initMonitoring(): Promise<void> {
     const sentry = (await import(specifier)) as unknown as {
       init: (o: Record<string, unknown>) => void;
       captureException: (e: unknown, c?: unknown) => void;
+      captureMessage: (m: string, c?: unknown) => void;
     };
     sentry.init({ dsn: env.SENTRY_DSN, environment: env.NODE_ENV, tracesSampleRate: 0 });
     capture = (err, context) => {
       logger.error({ err, ...context }, 'captured error');
       try { sentry.captureException(err, { extra: context }); } catch { /* never mask the original */ }
+    };
+    captureMsg = (message, context) => {
+      logger.error({ ...context, alert: true }, message);
+      try { sentry.captureMessage(message, { level: 'error', extra: context }); } catch { /* never throw from alerting */ }
     };
     logger.info('error aggregation enabled');
   } catch {
@@ -45,6 +55,11 @@ export async function initMonitoring(): Promise<void> {
 
 export function captureException(err: unknown, context?: Record<string, unknown>): void {
   capture(err, context);
+}
+
+/** An operational alert that is not an exception (a failing health check). */
+export function captureMessage(message: string, context?: Record<string, unknown>): void {
+  captureMsg(message, context);
 }
 
 /** Last line of defence: never let the process die silently. */

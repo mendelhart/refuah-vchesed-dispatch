@@ -1,3 +1,5 @@
+import { runHealthChecks } from '../lib/health-checks.js';
+import { env } from '../env.js';
 import type { FastifyInstance } from 'fastify';
 
 import { sql as raw } from 'drizzle-orm';
@@ -26,6 +28,15 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
     } catch {
       return reply.status(503).send({ status: 'degraded', reason: 'database unreachable' });
     }
+  });
+
+  app.get('/health/deep', async (req, reply) => {
+    // Optional shared secret so the check list is not public: ?token=...
+    if (env.HEALTH_CHECK_TOKEN && (req.query as { token?: string }).token !== env.HEALTH_CHECK_TOKEN) {
+      return reply.status(404).send();
+    }
+    const result = await runHealthChecks();
+    return reply.status(result.status === 'down' ? 503 : 200).send({ ...result, time: new Date().toISOString() });
   });
 
   await app.register(authRoutes);

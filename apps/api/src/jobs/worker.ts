@@ -1,3 +1,6 @@
+import { workerHeartbeat } from '../lib/heartbeat.js';
+import { captureException } from '../lib/monitoring.js';
+import { alertOnFailingChecks } from '../lib/health-checks.js';
 import { randomUUID } from 'node:crypto';
 import { endExpiredSuspensions } from '../domain/users.service.js';
 import { env } from '../env.js';
@@ -54,6 +57,7 @@ export class Worker {
   private async tick(): Promise<number> {
     if (this.running || this.stopping) return 0;
     this.running = true;
+    workerHeartbeat.lastTickAt = new Date();
     try {
       const jobs = await claimJobs(this.id, env.WORKER_CONCURRENCY);
       if (jobs.length === 0) return 0;
@@ -69,11 +73,14 @@ export class Worker {
         } catch (err) {
           logger.warn({ err, kind: job.kind, jobId: job.id, attempt: job.attempts }, 'job failed');
           await failJob(job.id, err, job.attempts, job.maxAttempts);
+          if (job.attempts >= job.maxAttempts) {
+            captureException(err, { source: 'job.dead', kind: job.kind, jobId: job.id, attempts: job.attempts });
+          }
         }
       }));
       return jobs.length;
     } catch (err) {
-      logger.error({ err }, 'worker tick failed');
+      captureException(err, { source: 'worker.tick' });
       return 0;
     } finally {
       this.running = false;
@@ -106,8 +113,10 @@ export class Worker {
       // Duty reminders need finer granularity than a day.
       const slot = Math.floor(Date.now() / (15 * 60_000));
       await enqueue('duty.reminder_scan', {}, { dedupeKey: `duty-reminder:${slot}` });
+      workerHeartbeat.lastHousekeepingAt = new Date();
+      await alertOnFailingChecks();
     } catch (err) {
-      logger.error({ err }, 'housekeeping failed');
+      captureException(err, { source: 'worker.housekeeping' });
     }
   }
 }

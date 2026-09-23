@@ -875,3 +875,19 @@ So nobody wastes an hour looking for them:
 - **`audit_events` has no retention job** and grows without bound. That is
   deliberate; everything else with personal data is aged out by
   `cleanup.retention`.
+
+## Monitoring and alerts (free)
+
+- **Errors:** set `SENTRY_DSN` on rvc-api (free Sentry project). Unhandled request
+  errors, crashes, worker failures and jobs that exhaust their retries are sent there.
+- **Health:** `GET /health` is liveness only. `GET /health/deep` runs the
+  operational checks and answers 503 when a critical one fails: database, worker
+  ticking, jobs stuck in `running`, dead jobs, today's standing rides not created,
+  object storage, plus warnings for delivery failure spikes, webhook signature
+  failure spikes and rides with no volunteer near pickup. Counts only, no personal
+  data. Set `HEALTH_CHECK_TOKEN` and call `/health/deep?token=...` to keep it private.
+- **Alerting:** point a free uptime monitor (UptimeRobot / Better Stack) at
+  `/health/deep` with email/SMS alerts. It also keeps the free Render instance awake.
+  The worker additionally reports each failing check to Sentry, at most hourly.
+- **Backups:** the GitHub Actions Backup workflow fails loudly (GitHub emails the
+  repo owner) when a dump or restore check fails.

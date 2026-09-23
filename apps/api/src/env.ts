@@ -128,6 +128,7 @@ const envSchema = z.object({
   LOGIN_MAX_PER_IP_PER_5MIN: z.coerce.number().int().min(1).max(1000).default(10),
 
   SENTRY_DSN: z.string().optional(),
+  HEALTH_CHECK_TOKEN: z.string().min(16).optional(),
 
   /** Run the background worker inside the API process (fine up to a few
    *  thousand jobs/day); set false to run `node dist/jobs/worker.js` separately. */
