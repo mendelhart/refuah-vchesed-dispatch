@@ -59,6 +59,20 @@ describe('two-step sign-in', () => {
     expect(reused.status).toBe(422);
   });
 
+  it('a session still owing two-step sign-in reaches nothing else, however the URL is written', async () => {
+    const coordinator = await createTestUser({ role: 'dispatcher', login: false });
+    const cookie = await login(coordinator.email);
+    for (const url of ['/api/trips', '/api/trips/', '//api/trips', '/api/%74rips', '/api/users', '/api/audit',
+      '/api/volunteers/overview?x=/api/auth/me']) {
+      const res = await api('GET', url, { cookie });
+      expect(res.status, url).not.toBe(200);
+    }
+    // Writes too, including privilege changes.
+    const role = await api('POST', `/api/users/${coordinator.id}/role`, { cookie, payload: { role: 'admin' } });
+    expect(role.status).toBe(403);
+    expect((await api('GET', '/api/auth/me', { cookie })).status).toBe(200);
+  });
+
   it('leaves volunteers and existing sessions alone', async () => {
     const volunteer = await createTestUser({ role: 'volunteer', login: false });
     const cookie = await login(volunteer.email);

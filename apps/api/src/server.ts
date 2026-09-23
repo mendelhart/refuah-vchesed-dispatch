@@ -102,7 +102,10 @@ export async function buildServer(): Promise<FastifyInstance> {
     }
     // Two-step sign-in owed: only the sign-in endpoints answer until it is done.
     if (req.user?.mfaPending) {
-      const path = req.url.split('?')[0] ?? '';
+      // Judge by the ROUTE that matched, not the raw URL: an encoded or
+      // oddly-slashed URL (/api/%74rips, //api/trips) that still routes to a
+      // real handler must not slip past a prefix check on the raw string.
+      const path = req.routeOptions?.url ?? (req.url.split('?')[0] ?? '');
       const open = path === '/api/auth/me' || path === '/api/auth/logout' || path.startsWith('/api/auth/mfa/');
       if (path.startsWith('/api/') && !open) {
         throw new AppError(403, 'mfa_required', 'Finish two-step sign-in first.');
