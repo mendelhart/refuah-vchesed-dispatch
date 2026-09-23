@@ -27,6 +27,7 @@ const DISPATCHER_SCREENS = [
   ['/contacts', /contact/i],
   ['/admin/audit', /audit/i],
   ['/admin/notifications', /notification|delivery/i],
+  ['/impact', /impact/i],
 ] as const;
 
 const VOLUNTEER_SCREENS = [
@@ -35,7 +36,6 @@ const VOLUNTEER_SCREENS = [
   ['/my-availability', /availability/i],
   ['/my-profile', /help with|services|licence/i],
   ['/my-id-card', /card/i],
-  ['/impact', /impact/i],
   ['/directory', /directory/i],
   ['/settings', /settings/i],
 ] as const;
