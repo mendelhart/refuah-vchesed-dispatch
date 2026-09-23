@@ -103,7 +103,7 @@ function AssignedTripCard({ trip }: { trip: TripDto }): React.JSX.Element {
   )}`;
 
   return (
-    <article className={`${cardClass} border-l-4 border-l-[#E31E24]`}>
+    <article className={`${cardClass} border-l-4 border-l-[#EA0029]`}>
       <div className="p-5 md:p-6">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <h3 className="text-base font-semibold text-slate-900 dark:text-white md:text-lg">
@@ -129,7 +129,7 @@ function AssignedTripCard({ trip }: { trip: TripDto }): React.JSX.Element {
 
           <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/60">
             <p className="flex items-start gap-2">
-              <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#E31E24]" aria-hidden="true" />
+              <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#EA0029]" aria-hidden="true" />
               <span>
                 <span className="block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Pick up</span>
                 <span className="block font-medium">
@@ -147,7 +147,7 @@ function AssignedTripCard({ trip }: { trip: TripDto }): React.JSX.Element {
               </span>
             </p>
             <p className="mt-3 flex items-start gap-2">
-              <Navigation className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#E31E24]" aria-hidden="true" />
+              <Navigation className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#EA0029]" aria-hidden="true" />
               <span>
                 <span className="block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Drop off</span>
                 <span className="block font-medium">
@@ -172,7 +172,7 @@ function AssignedTripCard({ trip }: { trip: TripDto }): React.JSX.Element {
               <span className="font-medium">{trip.callerName ?? 'Passenger'}</span>
               {trip.callerPhone ? (
                 <a
-                  className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-medium text-[#E31E24] dark:border-slate-600"
+                  className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-medium text-[#EA0029] dark:border-slate-600"
                   href={telHref(trip.callerPhone)}
                 >
                   <Phone className="h-4 w-4" aria-hidden="true" />
@@ -239,7 +239,7 @@ function AssignedTripCard({ trip }: { trip: TripDto }): React.JSX.Element {
           {can('cancel') ? (
             <button
               type="button"
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-red-300 px-3 text-sm font-medium text-[#E31E24] hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/40"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-red-300 px-3 text-sm font-medium text-[#EA0029] hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950/40"
               disabled={cancel.isPending}
               onClick={() => {
                 const reason = window.prompt('Let dispatch know why you cannot take this ride:');
@@ -259,7 +259,7 @@ function AssignedTripCard({ trip }: { trip: TripDto }): React.JSX.Element {
             <Navigation className="h-4 w-4" aria-hidden="true" />
             Directions
           </a>
-          <Link to={`/trips/${trip.id}`} className="inline-flex min-h-[44px] items-center px-3 text-sm font-medium text-[#E31E24]">
+          <Link to={`/trips/${trip.id}`} className="inline-flex min-h-[44px] items-center px-3 text-sm font-medium text-[#EA0029]">
             Details
           </Link>
         </div>

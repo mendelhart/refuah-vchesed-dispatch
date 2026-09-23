@@ -62,7 +62,7 @@ export function DirectoryPage(): React.JSX.Element {
           {people.data.users.map((person) => (
             <li key={person.id} className={`${cardClass} p-4`}>
               <div className="flex items-start gap-3">
-                <span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full bg-red-50 text-sm font-semibold text-[#E31E24] dark:bg-red-950/40">
+                <span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full bg-red-50 text-sm font-semibold text-[#EA0029] dark:bg-red-950/40">
                   {person.fullName
                     .split(' ')
                     .slice(0, 2)
@@ -76,7 +76,7 @@ export function DirectoryPage(): React.JSX.Element {
                     {person.groupSlugs.length > 0 ? ` · ${person.groupSlugs.map(titleCase).join(', ')}` : ''}
                   </p>
                   {person.phone ? (
-                    <a className="mt-1 flex items-center gap-2 text-sm text-[#E31E24]" href={telHref(person.phone)}>
+                    <a className="mt-1 flex items-center gap-2 text-sm text-[#EA0029]" href={telHref(person.phone)}>
                       <Phone className="h-3 w-3" aria-hidden="true" />
                       {formatPhone(person.phone)}
                     </a>

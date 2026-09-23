@@ -149,7 +149,7 @@ export function TripActions({
         {can('cancel') && show('cancel') ? (
           <button
             type="button"
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-3 text-sm font-medium text-[#E31E24] hover:bg-red-50 dark:border-red-900 dark:bg-slate-900 dark:hover:bg-red-950/40"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-3 text-sm font-medium text-[#EA0029] hover:bg-red-50 dark:border-red-900 dark:bg-slate-900 dark:hover:bg-red-950/40"
             onClick={() => setDialog('cancel')}
           >
             <XCircle className="h-4 w-4" aria-hidden="true" />
@@ -180,7 +180,7 @@ export function TripActions({
         {volunteers.isPending ? (
           <InlineSpinner label="Loading volunteers" />
         ) : volunteers.isError ? (
-          <div className="text-sm text-[#E31E24]">
+          <div className="text-sm text-[#EA0029]">
             We could not load the volunteer list.
             <button type="button" className="ml-2 underline" onClick={() => void volunteers.refetch()}>
               Try again

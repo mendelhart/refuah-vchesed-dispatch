@@ -235,7 +235,7 @@ export function ExportsPage(): React.JSX.Element {
                       {titleCase(row.status)}
                     </span>
                     {row.error ? (
-                      <p className="mt-1 max-w-xs break-words text-xs font-medium text-[#E31E24]">{row.error}</p>
+                      <p className="mt-1 max-w-xs break-words text-xs font-medium text-[#EA0029]">{row.error}</p>
                     ) : null}
                   </td>
                   <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{row.rowCount ?? '—'}</td>
@@ -248,7 +248,7 @@ export function ExportsPage(): React.JSX.Element {
                   <td className="px-4 py-3">
                     {row.status === 'ready' && row.fileId ? (
                       <a
-                        className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-[#E31E24] px-4 text-sm font-semibold text-white hover:bg-[#C41A1F]"
+                        className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-[#EA0029] px-4 text-sm font-semibold text-white hover:bg-[#C80023]"
                         href={`/api/exports/${row.id}/download`}
                       >
                         <Download className="h-4 w-4" aria-hidden="true" />

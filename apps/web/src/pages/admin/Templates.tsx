@@ -195,7 +195,7 @@ export function TemplatesPage(): React.JSX.Element {
                           onClick={() => setSelectedId(row.id)}
                           aria-current={row.id === selectedId}
                           className={`${cardClass} flex w-full min-h-[44px] items-center justify-between gap-3 p-3 text-left ${
-                            row.id === selectedId ? 'ring-2 ring-[#E31E24]' : ''
+                            row.id === selectedId ? 'ring-2 ring-[#EA0029]' : ''
                           }`}
                         >
                           <span className="flex flex-wrap items-center gap-2">
@@ -334,7 +334,7 @@ function TemplateEditor({ id, onClose }: { id: string; onClose: () => void }): R
           <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
             <input
               type="checkbox"
-              className="h-5 w-5 rounded border-slate-300 text-[#E31E24] focus:ring-[#E31E24] dark:border-slate-600 dark:bg-slate-800"
+              className="h-5 w-5 rounded border-slate-300 text-[#EA0029] focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
               checked={current.active}
               disabled={save.isPending}
               onChange={(event) => save.mutate({ active: event.target.checked })}

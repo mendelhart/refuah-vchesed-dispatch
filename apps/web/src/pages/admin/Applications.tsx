@@ -161,7 +161,7 @@ export function ApplicationsPage(): React.JSX.Element {
                 }}
                 className={`min-h-[44px] whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors ${
                   value === tab
-                    ? 'bg-[#E31E24] text-white'
+                    ? 'bg-[#EA0029] text-white'
                     : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
                 }`}
               >
@@ -196,7 +196,7 @@ export function ApplicationsPage(): React.JSX.Element {
                     onClick={() => setSelectedId(row.id)}
                     aria-current={row.id === selectedId}
                     className={`${cardClass} w-full p-4 text-left ${
-                      row.id === selectedId ? 'ring-2 ring-[#E31E24]' : ''
+                      row.id === selectedId ? 'ring-2 ring-[#EA0029]' : ''
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -326,7 +326,7 @@ function ReviewPanel({ id, onClose }: { id: string; onClose: () => void }): Reac
             <Phone className="h-4 w-4 text-slate-400" aria-hidden="true" />
             <dt className="sr-only">Phone</dt>
             <dd>
-              <a className="min-h-[44px] font-medium text-[#E31E24] underline" href={telHref(app.phone)}>
+              <a className="min-h-[44px] font-medium text-[#EA0029] underline" href={telHref(app.phone)}>
                 {formatPhone(app.phone)}
               </a>
             </dd>
@@ -808,7 +808,7 @@ function ApproveModal({
           {groups.isPending ? (
             <InlineSpinner label="Loading groups" />
           ) : groups.isError ? (
-            <p className="text-sm text-[#E31E24]">{errorMessage(groups.error)}</p>
+            <p className="text-sm text-[#EA0029]">{errorMessage(groups.error)}</p>
           ) : (
             <ul className="space-y-1">
               {groups.data.groups.map((group) => (
@@ -816,7 +816,7 @@ function ApproveModal({
                   <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
                     <input
                       type="checkbox"
-                      className="h-5 w-5 rounded border-slate-300 text-[#E31E24] focus:ring-[#E31E24] dark:border-slate-600 dark:bg-slate-800"
+                      className="h-5 w-5 rounded border-slate-300 text-[#EA0029] focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
                       checked={groupSlugs.includes(group.slug)}
                       onChange={() => setGroupSlugs((current) => toggle(current, group.slug))}
                     />
@@ -833,7 +833,7 @@ function ApproveModal({
           {services.isPending ? (
             <InlineSpinner label="Loading services" />
           ) : services.isError ? (
-            <p className="text-sm text-[#E31E24]">{errorMessage(services.error)}</p>
+            <p className="text-sm text-[#EA0029]">{errorMessage(services.error)}</p>
           ) : (
             <ul className="space-y-1">
               {services.data.services.map((service) => (
@@ -841,7 +841,7 @@ function ApproveModal({
                   <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
                     <input
                       type="checkbox"
-                      className="h-5 w-5 rounded border-slate-300 text-[#E31E24] focus:ring-[#E31E24] dark:border-slate-600 dark:bg-slate-800"
+                      className="h-5 w-5 rounded border-slate-300 text-[#EA0029] focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
                       checked={serviceSlugs.includes(service.slug)}
                       onChange={() => setServiceSlugs((current) => toggle(current, service.slug))}
                     />

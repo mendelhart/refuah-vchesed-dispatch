@@ -53,10 +53,12 @@ export function LoginPage(): React.JSX.Element {
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-4 dark:bg-slate-950">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-[#E31E24] text-xl font-black text-white">
-            RV
-          </span>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Refuah V&apos;Chesed</h1>
+          <div className="mx-auto mb-4 flex w-full items-center justify-center rounded-2xl bg-[#EA0029] px-6 py-5 shadow-sm">
+            <img src="/brand/logo-white.svg" alt="" className="h-14 w-auto" />
+          </div>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+            <span className="sr-only">Refuah V&apos;Chesed </span>Dispatch
+          </h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Volunteer medical transport, Montreal</p>
         </div>
 

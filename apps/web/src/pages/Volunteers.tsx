@@ -218,7 +218,7 @@ export function VolunteersPage(): React.JSX.Element {
               onClick={() => setView(item.id)}
               className={`inline-flex min-h-[44px] items-center gap-2 rounded-full px-4 text-sm font-medium transition-colors ${
                 view === item.id
-                  ? 'bg-[#E31E24] text-white'
+                  ? 'bg-[#EA0029] text-white'
                   : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
               }`}
             >
@@ -501,7 +501,7 @@ function FortnightView({ rows }: { rows: VolunteerRow[] }): React.JSX.Element {
           </p>
         ) : null}
         {failed > 0 ? (
-          <p className="mt-2 text-sm font-medium text-[#E31E24]">
+          <p className="mt-2 text-sm font-medium text-[#EA0029]">
             {failed} {failed === 1 ? "person's" : "people's"} hours did not load, so they are missing from the days
             below.
           </p>
@@ -692,7 +692,7 @@ function VolunteerDrawer({
                 <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
                   <input
                     type="checkbox"
-                    className="h-5 w-5 rounded border-slate-300 text-[#E31E24] focus:ring-[#E31E24] dark:border-slate-600 dark:bg-slate-800"
+                    className="h-5 w-5 rounded border-slate-300 text-[#EA0029] focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
                     checked={serviceSlugs.includes(service.slug)}
                     onChange={() => setServiceSlugs((current) => toggle(current, service.slug))}
                   />
@@ -719,7 +719,7 @@ function VolunteerDrawer({
                 <label
                   className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full border px-4 text-sm ${
                     capabilities.includes(capability)
-                      ? 'border-[#E31E24] bg-[#E31E24] text-white'
+                      ? 'border-[#EA0029] bg-[#EA0029] text-white'
                       : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
                   }`}
                 >

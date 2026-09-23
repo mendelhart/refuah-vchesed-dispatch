@@ -259,7 +259,7 @@ export function VolunteerSignupPage(): React.JSX.Element {
     <div className="min-h-screen bg-slate-50 px-4 py-6 dark:bg-slate-950">
       <div className="mx-auto w-full max-w-lg space-y-5">
         <header className="text-center">
-          <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[#E31E24] text-white">
+          <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[#EA0029] text-white">
             <HeartHandshake className="h-6 w-6" aria-hidden="true" />
           </span>
           <h1 className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">Volunteer with us</h1>
@@ -279,7 +279,7 @@ export function VolunteerSignupPage(): React.JSX.Element {
                 <li key={label} className="flex-1">
                   <span
                     className={`block h-1.5 rounded-full ${
-                      index <= step ? 'bg-[#E31E24]' : 'bg-slate-200 dark:bg-slate-700'
+                      index <= step ? 'bg-[#EA0029]' : 'bg-slate-200 dark:bg-slate-700'
                     }`}
                   />
                 </li>
@@ -295,7 +295,7 @@ export function VolunteerSignupPage(): React.JSX.Element {
                   role="alert"
                   className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-slate-900 dark:border-red-900/50 dark:bg-red-950/30 dark:text-slate-100"
                 >
-                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#E31E24]" aria-hidden="true" />
+                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#EA0029]" aria-hidden="true" />
                   <p>{problem}</p>
                 </div>
               ) : null}
@@ -464,7 +464,7 @@ function StepWhatYouCanDo({
               <label className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">
                 <input
                   type="checkbox"
-                  className="mt-1 h-4 w-4 flex-shrink-0 accent-[#E31E24]"
+                  className="mt-1 h-4 w-4 flex-shrink-0 accent-[#EA0029]"
                   checked={form.requestedServices.includes(service.slug)}
                   onChange={() => update('requestedServices', toggle(form.requestedServices, service.slug))}
                 />
@@ -492,7 +492,7 @@ function StepWhatYouCanDo({
               <label className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 flex-shrink-0 accent-[#E31E24]"
+                  className="h-4 w-4 flex-shrink-0 accent-[#EA0029]"
                   checked={form.capabilities.includes(capability)}
                   onChange={() => update('capabilities', toggle(form.capabilities, capability))}
                 />
@@ -508,7 +508,7 @@ function StepWhatYouCanDo({
         <label className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">
           <input
             type="checkbox"
-            className="h-4 w-4 flex-shrink-0 accent-[#E31E24]"
+            className="h-4 w-4 flex-shrink-0 accent-[#EA0029]"
             checked={form.hasVehicle}
             onChange={(event) => update('hasVehicle', event.target.checked)}
           />
@@ -559,7 +559,7 @@ function StepWhatYouCanDo({
                 <label className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">
                   <input
                     type="checkbox"
-                    className="h-4 w-4 flex-shrink-0 accent-[#E31E24]"
+                    className="h-4 w-4 flex-shrink-0 accent-[#EA0029]"
                     checked={form.requestedGroups.includes(group.slug)}
                     onChange={() => update('requestedGroups', toggle(form.requestedGroups, group.slug))}
                   />
@@ -606,7 +606,7 @@ function StepWhen({
                       aria-pressed={active}
                       className={`min-h-[44px] rounded-lg border px-2 text-sm transition-colors ${
                         active
-                          ? 'border-[#E31E24] bg-[#E31E24] font-semibold text-white'
+                          ? 'border-[#EA0029] bg-[#EA0029] font-semibold text-white'
                           : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
                       }`}
                       onClick={() => update('availabilityParts', toggle(form.availabilityParts, key))}
@@ -664,7 +664,7 @@ function StepWhen({
             >
               <input
                 type="checkbox"
-                className="h-4 w-4 flex-shrink-0 accent-[#E31E24]"
+                className="h-4 w-4 flex-shrink-0 accent-[#EA0029]"
                 checked={form.languages.includes(language)}
                 onChange={() => update('languages', toggle(form.languages, language))}
               />
@@ -751,7 +751,7 @@ function StepConfirm({
         <label className="mt-3 flex min-h-[44px] cursor-pointer items-start gap-3 text-sm text-slate-700 dark:text-slate-200">
           <input
             type="checkbox"
-            className="mt-1 h-4 w-4 flex-shrink-0 accent-[#E31E24]"
+            className="mt-1 h-4 w-4 flex-shrink-0 accent-[#EA0029]"
             checked={form.consentContact}
             onChange={(event) => update('consentContact', event.target.checked)}
             required
@@ -763,7 +763,7 @@ function StepConfirm({
       <label className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">
         <input
           type="checkbox"
-          className="mt-1 h-4 w-4 flex-shrink-0 accent-[#E31E24]"
+          className="mt-1 h-4 w-4 flex-shrink-0 accent-[#EA0029]"
           checked={form.consentBackgroundCheck}
           onChange={(event) => update('consentBackgroundCheck', event.target.checked)}
         />

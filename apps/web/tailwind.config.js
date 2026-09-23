@@ -8,7 +8,7 @@ export default {
     extend: {
       colors: {
         // Brand red, carried over from the original application unchanged.
-        brand: { DEFAULT: '#E31E24', dark: '#C41A1F' },
+        brand: { DEFAULT: '#EA0029', dark: '#C80023' },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

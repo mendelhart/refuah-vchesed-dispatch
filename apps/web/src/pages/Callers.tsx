@@ -147,7 +147,7 @@ function CallerListButton({
       aria-current={selected ? 'true' : undefined}
       className={`flex min-h-[44px] w-full flex-col items-start gap-0.5 rounded-lg border px-4 py-3 text-left transition-colors ${
         selected
-          ? 'border-[#E31E24] bg-red-50 dark:border-[#E31E24] dark:bg-red-950/30'
+          ? 'border-[#EA0029] bg-red-50 dark:border-[#EA0029] dark:bg-red-950/30'
           : 'border-slate-200 bg-white hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800'
       }`}
     >
@@ -304,7 +304,7 @@ export function CallersPage(): React.JSX.Element {
         />
         {searching && search.isFetching ? (
           <span
-            className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-slate-300 border-t-[#E31E24] dark:border-slate-600"
+            className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-slate-300 border-t-[#EA0029] dark:border-slate-600"
             role="status"
             aria-label="Searching"
           />
@@ -430,8 +430,8 @@ export function CallersPage(): React.JSX.Element {
               </div>
 
               {defaultPickup ? (
-                <div className="rounded-xl border-2 border-[#E31E24] bg-red-50 p-4 dark:bg-red-950/30">
-                  <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#E31E24]">
+                <div className="rounded-xl border-2 border-[#EA0029] bg-red-50 p-4 dark:bg-red-950/30">
+                  <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#EA0029]">
                     <Star className="h-4 w-4" aria-hidden="true" />
                     Usual pickup
                   </p>
@@ -476,7 +476,7 @@ export function CallersPage(): React.JSX.Element {
                               {titleCase(row.label)}
                             </span>
                             {row.isDefaultPickup ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-[#E31E24] dark:bg-red-500/15 dark:text-red-300">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-[#EA0029] dark:bg-red-500/15 dark:text-red-300">
                                 <Star className="h-3 w-3" aria-hidden="true" />
                                 Use as pickup
                               </span>
@@ -760,7 +760,7 @@ export function CallersPage(): React.JSX.Element {
           <label className="flex min-h-[44px] cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">
             <input
               type="checkbox"
-              className="h-4 w-4 accent-[#E31E24]"
+              className="h-4 w-4 accent-[#EA0029]"
               checked={addressExtra.isDefaultPickup}
               onChange={(event) => setAddressExtra({ ...addressExtra, isDefaultPickup: event.target.checked })}
             />

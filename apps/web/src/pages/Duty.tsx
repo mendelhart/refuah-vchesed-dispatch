@@ -54,7 +54,7 @@ interface DutyResponse {
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
 
 const KIND_CLASSES: Record<string, string> = {
-  phone: 'bg-[#E31E24] text-white',
+  phone: 'bg-[#EA0029] text-white',
   dispatcher: 'bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300',
   backup: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
 };
@@ -192,7 +192,7 @@ export function DutyPage(): React.JSX.Element {
               Call {formatPhone(onDutyNow.phone)}
             </a>
           ) : (
-            <p className="mt-3 text-sm font-medium text-[#E31E24]">
+            <p className="mt-3 text-sm font-medium text-[#EA0029]">
               No phone number on file for them, which rather defeats the point. Add one on their record.
             </p>
           )}
@@ -291,7 +291,7 @@ export function DutyPage(): React.JSX.Element {
                       </p>
                       {shift.phone ? (
                         <a
-                          className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-xs font-medium text-[#E31E24] underline"
+                          className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-xs font-medium text-[#EA0029] underline"
                           href={telHref(shift.phone)}
                         >
                           <Phone className="h-3 w-3" aria-hidden="true" />
@@ -304,7 +304,7 @@ export function DutyPage(): React.JSX.Element {
                       {canEdit ? (
                         <button
                           type="button"
-                          className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-xs font-medium text-slate-600 hover:text-[#E31E24] dark:text-slate-400"
+                          className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-xs font-medium text-slate-600 hover:text-[#EA0029] dark:text-slate-400"
                           disabled={remove.isPending}
                           onClick={() => {
                             if (window.confirm(`Take ${shift.fullName} off this shift?`)) remove.mutate(shift.id);
@@ -444,7 +444,7 @@ function AddShiftModal({
           {people.isPending ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">Loading people…</p>
           ) : people.isError ? (
-            <p className="text-sm text-[#E31E24]">{errorMessage(people.error)}</p>
+            <p className="text-sm text-[#EA0029]">{errorMessage(people.error)}</p>
           ) : (
             <select
               id="duty-person"

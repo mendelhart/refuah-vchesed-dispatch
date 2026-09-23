@@ -248,7 +248,7 @@ export function TripDetailPage(): React.JSX.Element {
                 <p className="flex flex-wrap items-center gap-2">
                   <Repeat className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
                   This ride came from a standing ride.
-                  <Link to="/recurring" className="font-medium text-[#E31E24] underline-offset-2 hover:underline">
+                  <Link to="/recurring" className="font-medium text-[#EA0029] underline-offset-2 hover:underline">
                     See the schedule
                   </Link>
                 </p>
@@ -259,7 +259,7 @@ export function TripDetailPage(): React.JSX.Element {
                   Copied from an earlier ride.
                   <Link
                     to={`/trips/${full.duplicatedFromTripId}`}
-                    className="font-medium text-[#E31E24] underline-offset-2 hover:underline"
+                    className="font-medium text-[#EA0029] underline-offset-2 hover:underline"
                   >
                     Open the original
                   </Link>
@@ -330,7 +330,7 @@ export function TripDetailPage(): React.JSX.Element {
                   <Phone className="h-4 w-4" aria-hidden="true" />
                   {trip.callerName ?? '—'}
                   {trip.callerPhone ? (
-                    <a className="text-[#E31E24] underline-offset-2 hover:underline" href={telHref(trip.callerPhone)}>
+                    <a className="text-[#EA0029] underline-offset-2 hover:underline" href={telHref(trip.callerPhone)}>
                       {formatPhone(trip.callerPhone)}
                     </a>
                   ) : null}
@@ -353,7 +353,7 @@ export function TripDetailPage(): React.JSX.Element {
                   <dd className="mt-1 flex flex-wrap items-center gap-2 text-slate-800 dark:text-slate-100">
                     <PhoneCall className="h-4 w-4" aria-hidden="true" />
                     <a
-                      className="font-medium text-[#E31E24] underline-offset-2 hover:underline"
+                      className="font-medium text-[#EA0029] underline-offset-2 hover:underline"
                       href={telHref(trip.callbackNumber)}
                     >
                       {formatPhone(trip.callbackNumber)}
@@ -370,7 +370,7 @@ export function TripDetailPage(): React.JSX.Element {
                     <>
                       {trip.assignedVolunteer.fullName}
                       {trip.assignedVolunteer.phone ? (
-                        <a className="text-[#E31E24] underline-offset-2 hover:underline" href={telHref(trip.assignedVolunteer.phone)}>
+                        <a className="text-[#EA0029] underline-offset-2 hover:underline" href={telHref(trip.assignedVolunteer.phone)}>
                           {formatPhone(trip.assignedVolunteer.phone)}
                         </a>
                       ) : null}
@@ -480,7 +480,7 @@ export function TripDetailPage(): React.JSX.Element {
                     <MessageSquare className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
                     {thread.displayName ?? thread.phone}
                     {thread.unreadCount > 0 ? (
-                      <span className="rounded-full bg-[#E31E24] px-2 py-0.5 text-xs font-semibold text-white">
+                      <span className="rounded-full bg-[#EA0029] px-2 py-0.5 text-xs font-semibold text-white">
                         {thread.unreadCount} unread
                       </span>
                     ) : null}
@@ -493,7 +493,7 @@ export function TripDetailPage(): React.JSX.Element {
                   ) : null}
                   <Link
                     to="/messages"
-                    className="mt-2 inline-flex min-h-[44px] items-center text-sm font-medium text-[#E31E24] underline-offset-2 hover:underline"
+                    className="mt-2 inline-flex min-h-[44px] items-center text-sm font-medium text-[#EA0029] underline-offset-2 hover:underline"
                   >
                     Open in messages
                   </Link>

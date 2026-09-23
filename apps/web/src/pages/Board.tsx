@@ -215,7 +215,7 @@ function BoardContextStrip(): React.JSX.Element | null {
           )}
         </span>
         {data.onDutyNow?.phone ? (
-          <a className={`${chipClass} font-medium text-[#E31E24]`} href={telHref(data.onDutyNow.phone)}>
+          <a className={`${chipClass} font-medium text-[#EA0029]`} href={telHref(data.onDutyNow.phone)}>
             <Phone className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
             {formatPhone(data.onDutyNow.phone)}
           </a>
@@ -422,7 +422,7 @@ export function BoardPage(): React.JSX.Element {
         <label className="grid min-h-[44px] min-w-[44px] flex-shrink-0 cursor-pointer place-items-center rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
           <input
             type="checkbox"
-            className="h-5 w-5 accent-[#E31E24]"
+            className="h-5 w-5 accent-[#EA0029]"
             checked={checked}
             onChange={() => toggleSelected(trip.id)}
             aria-label={`Select ride ${trip.reference} for a bulk action`}
@@ -471,9 +471,9 @@ export function BoardPage(): React.JSX.Element {
             'Loading counts…'
           ) : (
             <>
-              <span className="font-semibold text-[#E31E24]">{stats?.needsAttention ?? 0}</span> need a driver
+              <span className="font-semibold text-[#EA0029]">{stats?.needsAttention ?? 0}</span> need a driver
               {' · '}
-              <span className={cn('font-semibold', (stats?.overdue ?? 0) > 0 && 'text-[#E31E24]')}>{stats?.overdue ?? 0}</span> overdue
+              <span className={cn('font-semibold', (stats?.overdue ?? 0) > 0 && 'text-[#EA0029]')}>{stats?.overdue ?? 0}</span> overdue
               {' · '}
               <span className="font-semibold">{stats?.unanswered ?? 0}</span> unanswered
             </>
@@ -483,11 +483,11 @@ export function BoardPage(): React.JSX.Element {
       </button>
       <div className={cn('grid-cols-2 gap-3 sm:grid-cols-3 lg:grid lg:grid-cols-6', statsOpen ? 'grid' : 'hidden')}>
         {[
-          { label: 'Needs attention', value: stats?.needsAttention, accent: 'text-[#E31E24]' },
+          { label: 'Needs attention', value: stats?.needsAttention, accent: 'text-[#EA0029]' },
           { label: 'Offered', value: stats?.offered },
           { label: 'Assigned', value: stats?.assigned },
           { label: 'In progress', value: stats?.inProgress },
-          { label: 'Overdue', value: stats?.overdue, accent: 'text-[#E31E24]' },
+          { label: 'Overdue', value: stats?.overdue, accent: 'text-[#EA0029]' },
           { label: 'Unanswered', value: stats?.unanswered, accent: 'text-amber-600 dark:text-amber-400' },
         ].map((tile) => (
           <div
@@ -502,7 +502,7 @@ export function BoardPage(): React.JSX.Element {
         ))}
       </div>
       {summary.isError ? (
-        <p className="text-sm text-[#E31E24]">
+        <p className="text-sm text-[#EA0029]">
           The summary counts did not load.{' '}
           <button type="button" className="underline" onClick={() => void summary.refetch()}>
             Try again
@@ -522,7 +522,7 @@ export function BoardPage(): React.JSX.Element {
               className={cn(
                 'min-h-[44px] whitespace-nowrap rounded-full px-3 text-sm font-medium transition-colors',
                 item.id === segmentId
-                  ? 'bg-[#E31E24] text-white'
+                  ? 'bg-[#EA0029] text-white'
                   : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
               )}
             >
@@ -577,7 +577,7 @@ export function BoardPage(): React.JSX.Element {
         <div className="space-y-8">
           {grouped.needsAttention.length > 0 ? (
             <section aria-labelledby="group-attention">
-              <h2 id="group-attention" className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-[#E31E24]">
+              <h2 id="group-attention" className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-[#EA0029]">
                 <AlertOctagon className="h-4 w-4" aria-hidden="true" />
                 Needs attention now ({grouped.needsAttention.length})
               </h2>
@@ -665,7 +665,7 @@ export function BoardPage(): React.JSX.Element {
                     'flex items-start gap-2 rounded-lg border p-3 text-sm',
                     row.ok
                       ? 'border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-200'
-                      : 'border-red-200 bg-red-50 text-[#E31E24] dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300',
+                      : 'border-red-200 bg-red-50 text-[#EA0029] dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300',
                   )}
                 >
                   {row.ok ? (
@@ -709,7 +709,7 @@ export function BoardPage(): React.JSX.Element {
               {volunteers.isPending ? (
                 <InlineSpinner label="Loading volunteers" />
               ) : volunteers.isError ? (
-                <p className="text-sm text-[#E31E24]">
+                <p className="text-sm text-[#EA0029]">
                   We could not load the volunteer list.{' '}
                   <button type="button" className="underline" onClick={() => void volunteers.refetch()}>
                     Try again

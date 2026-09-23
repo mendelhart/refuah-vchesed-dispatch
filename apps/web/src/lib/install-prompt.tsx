@@ -106,7 +106,7 @@ export function InstallPrompt(): React.JSX.Element | null {
       style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex items-start gap-3">
-        <Download className="mt-0.5 h-5 w-5 shrink-0 text-[#E31E24]" aria-hidden />
+        <Download className="mt-0.5 h-5 w-5 shrink-0 text-[#EA0029]" aria-hidden />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-900 dark:text-white">
             Thank you for that ride
@@ -120,7 +120,7 @@ export function InstallPrompt(): React.JSX.Element | null {
             <button
               type="button"
               onClick={() => void install()}
-              className="mt-3 min-h-[44px] w-full rounded-lg bg-[#E31E24] px-4 text-sm font-semibold text-white hover:bg-[#c41a1f]"
+              className="mt-3 min-h-[44px] w-full rounded-lg bg-[#EA0029] px-4 text-sm font-semibold text-white hover:bg-[#c80023]"
             >
               Add to home screen
             </button>

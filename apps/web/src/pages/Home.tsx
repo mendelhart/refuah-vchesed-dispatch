@@ -41,7 +41,7 @@ function DispatcherHome(): React.JSX.Element {
         {tiles.map((tile) => (
           <div key={tile.label} className={`${cardClass} p-4`}>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{tile.label}</p>
-            <p className={`mt-1 text-3xl font-bold ${tile.accent ? 'text-[#E31E24]' : 'text-slate-900 dark:text-white'}`}>
+            <p className={`mt-1 text-3xl font-bold ${tile.accent ? 'text-[#EA0029]' : 'text-slate-900 dark:text-white'}`}>
               {tile.value}
             </p>
           </div>

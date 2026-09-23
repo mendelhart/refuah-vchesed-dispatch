@@ -34,9 +34,9 @@ export function TripCard({ trip, compact = false }: { trip: TripDto; compact?: b
     <article
       className={`${cardClass} border-l-4 ${
         trip.isOverdue
-          ? 'border-l-[#E31E24]'
+          ? 'border-l-[#EA0029]'
           : trip.priority === 'emergency'
-            ? 'border-l-[#E31E24]'
+            ? 'border-l-[#EA0029]'
             : trip.priority === 'urgent'
               ? 'border-l-amber-500'
               : 'border-l-slate-300 dark:border-l-slate-600'
@@ -67,7 +67,7 @@ export function TripCard({ trip, compact = false }: { trip: TripDto; compact?: b
             </span>
           )}
           {trip.isOverdue ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#E31E24] px-3 py-1 text-xs font-semibold text-white">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#EA0029] px-3 py-1 text-xs font-semibold text-white">
               <AlertOctagon className="h-3 w-3" aria-hidden="true" />
               Overdue
             </span>
@@ -142,7 +142,7 @@ export function TripCard({ trip, compact = false }: { trip: TripDto; compact?: b
           ) : null}
 
           {trip.status === 'expired' ? (
-            <p className="flex items-center gap-2 font-medium text-[#E31E24]">
+            <p className="flex items-center gap-2 font-medium text-[#EA0029]">
               <AlertOctagon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
               The offer window closed with no answer — this one needs you.
             </p>
@@ -183,7 +183,7 @@ export function TripCard({ trip, compact = false }: { trip: TripDto; compact?: b
               extra={
                 <Link
                   to={`/trips/${trip.id}`}
-                  className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-medium text-[#E31E24] hover:bg-red-50 dark:hover:bg-red-950/30"
+                  className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-medium text-[#EA0029] hover:bg-red-50 dark:hover:bg-red-950/30"
                 >
                   Open details
                 </Link>
@@ -195,7 +195,7 @@ export function TripCard({ trip, compact = false }: { trip: TripDto; compact?: b
           <TripActions trip={trip} />
           <Link
             to={`/trips/${trip.id}`}
-            className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-medium text-[#E31E24] hover:bg-red-50 dark:hover:bg-red-950/30"
+            className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-medium text-[#EA0029] hover:bg-red-50 dark:hover:bg-red-950/30"
           >
             Open details
           </Link>

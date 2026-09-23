@@ -130,7 +130,7 @@ const PRIORITY_CHOICES: { value: TripPriority; label: string; effect: string; ac
     value: 'emergency',
     label: 'Emergency',
     effect: 'Goes to everyone at once, ignoring stated availability and snoozed phones.',
-    accent: 'border-[#E31E24]',
+    accent: 'border-[#EA0029]',
   },
 ];
 
@@ -464,7 +464,7 @@ export function TripForm({
 
   const callerRequired = form.tripType !== 'hospital_food';
   const fieldError = (name: string): React.JSX.Element | null =>
-    errors[name] ? <p className="mt-1 text-xs text-[#E31E24]">{errors[name]}</p> : null;
+    errors[name] ? <p className="mt-1 text-xs text-[#EA0029]">{errors[name]}</p> : null;
 
   const savedAddresses = callerProfile.data?.addresses ?? [];
   const accessNotes = callerProfile.data?.caller.accessNotes ?? null;
@@ -873,7 +873,7 @@ export function TripForm({
                   <input
                     type="radio"
                     name="priority"
-                    className="mt-1 h-4 w-4 flex-shrink-0 accent-[#E31E24]"
+                    className="mt-1 h-4 w-4 flex-shrink-0 accent-[#EA0029]"
                     value={choice.value}
                     checked={selected}
                     onChange={() => setForm({ ...form, priority: choice.value })}
@@ -916,7 +916,7 @@ export function TripForm({
               >
                 <input
                   type="checkbox"
-                  className="h-4 w-4 accent-[#E31E24]"
+                  className="h-4 w-4 accent-[#EA0029]"
                   checked={form.mobilityNeeds.includes(need)}
                   onChange={() => toggleNeed(need)}
                 />

@@ -193,7 +193,7 @@ function WeekdayPicker({
             onClick={() => onChange(active ? value.filter((d) => d !== day) : [...value, day])}
             className={`h-11 w-11 rounded-lg border text-sm font-semibold transition-colors ${
               active
-                ? 'border-[#E31E24] bg-[#E31E24] text-white'
+                ? 'border-[#EA0029] bg-[#EA0029] text-white'
                 : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
             }`}
           >
@@ -399,7 +399,7 @@ export function RecurringPage(): React.JSX.Element {
                 aria-current={selectedId === row.ride.id ? 'true' : undefined}
                 className={`w-full rounded-xl border p-4 text-left transition-colors ${
                   selectedId === row.ride.id
-                    ? 'border-[#E31E24] bg-red-50 dark:border-[#E31E24] dark:bg-red-950/30'
+                    ? 'border-[#EA0029] bg-red-50 dark:border-[#EA0029] dark:bg-red-950/30'
                     : 'border-slate-200 bg-white hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800'
                 }`}
               >
@@ -831,7 +831,7 @@ export function RecurringPage(): React.JSX.Element {
                 >
                   <input
                     type="checkbox"
-                    className="h-4 w-4 accent-[#E31E24]"
+                    className="h-4 w-4 accent-[#EA0029]"
                     checked={form.mobilityNeeds.includes(need)}
                     onChange={() => toggleNeed(need)}
                   />
@@ -899,7 +899,7 @@ export function RecurringPage(): React.JSX.Element {
           <label className="flex min-h-[44px] cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">
             <input
               type="checkbox"
-              className="h-4 w-4 accent-[#E31E24]"
+              className="h-4 w-4 accent-[#EA0029]"
               checked={endForm.cancelFuture}
               onChange={(event) => setEndForm({ ...endForm, cancelFuture: event.target.checked })}
             />

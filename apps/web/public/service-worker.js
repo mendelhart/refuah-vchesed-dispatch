@@ -11,7 +11,7 @@
  *              with no signal.
  */
 
-const VERSION = 'v1';
+const VERSION = 'v2'; // v2: Refuah V'Chesed branding (new icons, logo)
 const SHELL_CACHE = `rvc-shell-${VERSION}`;
 const ASSET_CACHE = `rvc-assets-${VERSION}`;
 const TRIP_CACHE = `rvc-trips-${VERSION}`;
@@ -22,6 +22,7 @@ const SHELL_URLS = [
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
+  '/brand/logo-white.svg',
 ];
 
 self.addEventListener('install', (event) => {

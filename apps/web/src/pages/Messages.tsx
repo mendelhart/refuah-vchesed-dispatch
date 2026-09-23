@@ -224,7 +224,7 @@ export function MessagesPage(): React.JSX.Element {
               className={cn(
                 'min-h-[44px] whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors',
                 active
-                  ? 'bg-[#E31E24] text-white'
+                  ? 'bg-[#EA0029] text-white'
                   : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
               )}
             >
@@ -261,7 +261,7 @@ export function MessagesPage(): React.JSX.Element {
                 aria-current={selectedId === row.id ? 'true' : undefined}
                 className={`w-full rounded-xl border p-4 text-left transition-colors ${
                   selectedId === row.id
-                    ? 'border-[#E31E24] bg-red-50 dark:border-[#E31E24] dark:bg-red-950/30'
+                    ? 'border-[#EA0029] bg-red-50 dark:border-[#EA0029] dark:bg-red-950/30'
                     : 'border-slate-200 bg-white hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800'
                 }`}
               >
@@ -272,7 +272,7 @@ export function MessagesPage(): React.JSX.Element {
                   <div className="flex flex-shrink-0 items-center gap-2">
                     {row.unreadCount > 0 ? (
                       <span
-                        className="grid min-w-[1.5rem] place-items-center rounded-full bg-[#E31E24] px-1.5 py-0.5 text-xs font-semibold text-white"
+                        className="grid min-w-[1.5rem] place-items-center rounded-full bg-[#EA0029] px-1.5 py-0.5 text-xs font-semibold text-white"
                         aria-label={`${row.unreadCount} unread`}
                       >
                         {row.unreadCount}
@@ -410,7 +410,7 @@ export function MessagesPage(): React.JSX.Element {
                           <div
                             className={`whitespace-pre-wrap break-words rounded-2xl px-4 py-2 text-sm ${
                               outbound
-                                ? 'rounded-br-sm bg-[#E31E24] text-white'
+                                ? 'rounded-br-sm bg-[#EA0029] text-white'
                                 : 'rounded-bl-sm bg-white text-slate-900 dark:bg-slate-800 dark:text-slate-100'
                             }`}
                           >
@@ -424,7 +424,7 @@ export function MessagesPage(): React.JSX.Element {
                           </p>
                           {message.failureReason ? (
                             <p
-                              className={`mt-1 flex items-center gap-1 text-xs font-medium text-[#E31E24] ${
+                              className={`mt-1 flex items-center gap-1 text-xs font-medium text-[#EA0029] ${
                                 outbound ? 'justify-end' : 'justify-start'
                               }`}
                             >

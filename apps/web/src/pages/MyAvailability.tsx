@@ -227,7 +227,7 @@ export function MyAvailabilityPage(): React.JSX.Element {
       ) : (
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
           <h2 className="flex items-center gap-2 font-semibold text-slate-900 dark:text-white">
-            <Clock className="h-5 w-5 text-[#E31E24]" aria-hidden="true" />
+            <Clock className="h-5 w-5 text-[#EA0029]" aria-hidden="true" />
             We will only ask you inside these hours
           </h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">

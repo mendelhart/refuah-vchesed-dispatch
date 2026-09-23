@@ -85,7 +85,7 @@ export function BottomNavigation({ items }: { items: BottomNavItem[] }): React.J
               className={({ isActive }) =>
                 cn(
                   'flex min-h-[56px] flex-1 flex-col items-center justify-center py-2 transition-colors',
-                  isActive ? 'text-[#E31E24] dark:text-red-400' : 'text-slate-600 dark:text-slate-400',
+                  isActive ? 'text-[#EA0029] dark:text-red-400' : 'text-slate-600 dark:text-slate-400',
                 )
               }
             >
@@ -93,7 +93,7 @@ export function BottomNavigation({ items }: { items: BottomNavItem[] }): React.J
                 <Icon className="mb-1 h-6 w-6" />
                 {item.badge !== undefined && item.badge > 0 ? (
                   <span
-                    className="absolute -right-2 -top-1 min-w-[18px] rounded-full bg-[#E31E24] px-1 text-center text-[10px] font-semibold leading-[18px] text-white"
+                    className="absolute -right-2 -top-1 min-w-[18px] rounded-full bg-[#EA0029] px-1 text-center text-[10px] font-semibold leading-[18px] text-white"
                     aria-label={`${item.badge} waiting`}
                   >
                     {item.badge > 99 ? '99+' : item.badge}

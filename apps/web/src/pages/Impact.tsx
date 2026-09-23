@@ -56,7 +56,7 @@ export function ImpactPage(): React.JSX.Element {
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{tile.label}</p>
                   <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-white">{tile.value}</p>
                 </div>
-                <span className="rounded-xl bg-red-50 p-3 text-[#E31E24] dark:bg-red-950/40">
+                <span className="rounded-xl bg-red-50 p-3 text-[#EA0029] dark:bg-red-950/40">
                   <Icon className="h-7 w-7" aria-hidden="true" />
                 </span>
               </div>

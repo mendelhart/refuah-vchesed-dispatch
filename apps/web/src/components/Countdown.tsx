@@ -32,7 +32,7 @@ export function OfferCountdown({ expiresAt }: { expiresAt: string | null }): Rea
     <span
       className={
         urgent
-          ? 'inline-flex items-center gap-1 rounded-full bg-[#E31E24] px-2 py-1 text-xs font-semibold text-white'
+          ? 'inline-flex items-center gap-1 rounded-full bg-[#EA0029] px-2 py-1 text-xs font-semibold text-white'
           : 'inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-300'
       }
       aria-label={`Offer expires in ${remaining}`}

@@ -113,7 +113,7 @@ const PRIORITY_LABELS: Record<TripPriority, string> = {
 const PRIORITY_CLASSES: Record<TripPriority, string> = {
   routine: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
   urgent: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
-  emergency: 'bg-[#E31E24] text-white',
+  emergency: 'bg-[#EA0029] text-white',
 };
 export const priorityLabel = (priority: TripPriority): string => PRIORITY_LABELS[priority] ?? priority;
 export const priorityClass = (priority: TripPriority): string => PRIORITY_CLASSES[priority] ?? PRIORITY_CLASSES.routine;

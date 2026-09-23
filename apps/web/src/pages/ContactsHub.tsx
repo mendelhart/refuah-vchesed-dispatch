@@ -43,7 +43,7 @@ export function ContactsHubPage(): React.JSX.Element {
             className={cn(
               'min-h-[44px] whitespace-nowrap rounded-full px-3 text-sm font-medium transition-colors',
               item.id === tab
-                ? 'bg-[#E31E24] text-white'
+                ? 'bg-[#EA0029] text-white'
                 : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
             )}
           >

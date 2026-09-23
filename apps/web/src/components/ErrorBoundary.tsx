@@ -49,7 +49,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
             <button
               type="button"
               onClick={this.reset}
-              className="min-h-[44px] rounded-lg bg-[#E31E24] px-4 text-sm font-semibold text-white hover:bg-[#C41A1F]"
+              className="min-h-[44px] rounded-lg bg-[#EA0029] px-4 text-sm font-semibold text-white hover:bg-[#C80023]"
             >
               Try again
             </button>

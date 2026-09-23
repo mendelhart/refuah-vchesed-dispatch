@@ -139,7 +139,7 @@ export function EquipmentPage(): React.JSX.Element {
                       <p className="text-sm text-slate-600 dark:text-slate-400">
                         {row.borrowerName} · {formatPhone(row.borrowerPhone)}
                       </p>
-                      <p className={`text-xs ${overdue ? 'font-medium text-[#E31E24]' : 'text-slate-500 dark:text-slate-400'}`}>
+                      <p className={`text-xs ${overdue ? 'font-medium text-[#EA0029]' : 'text-slate-500 dark:text-slate-400'}`}>
                         {row.expectedReturnAt ? `${overdue ? 'Overdue since' : 'Due back'} ${formatDate(row.expectedReturnAt)}` : 'No return date set'}
                       </p>
                     </div>

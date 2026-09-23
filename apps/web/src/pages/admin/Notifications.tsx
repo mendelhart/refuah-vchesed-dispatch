@@ -44,7 +44,7 @@ export function NotificationsAdminPage(): React.JSX.Element {
         {[
           { label: 'Delivered', value: health?.delivered, accent: '' },
           { label: 'Queued', value: health?.queued, accent: '' },
-          { label: 'Failed', value: health?.failed, accent: 'text-[#E31E24]' },
+          { label: 'Failed', value: health?.failed, accent: 'text-[#EA0029]' },
           { label: 'Skipped', value: health?.skipped, accent: 'text-amber-600 dark:text-amber-400' },
         ].map((tile) => (
           <div key={tile.label} className={`${cardClass} p-4`}>
@@ -89,7 +89,7 @@ export function NotificationsAdminPage(): React.JSX.Element {
                     {row.recipientName} · {row.channel.toUpperCase()} · attempt {row.attempts}
                   </p>
                   {row.lastError ? (
-                    <p className="mt-1 break-words text-sm font-medium text-[#E31E24]">{row.lastError}</p>
+                    <p className="mt-1 break-words text-sm font-medium text-[#EA0029]">{row.lastError}</p>
                   ) : null}
                 </div>
                 <div className="text-right">

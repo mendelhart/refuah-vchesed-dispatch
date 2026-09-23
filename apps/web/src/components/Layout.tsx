@@ -146,7 +146,7 @@ function navLinkClass({ isActive }: { isActive: boolean }): string {
   return cn(
     'flex min-h-[44px] items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors',
     isActive
-      ? 'bg-[#E31E24] font-semibold text-white shadow-md'
+      ? 'bg-[#EA0029] font-semibold text-white shadow-md'
       : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800',
   );
 }
@@ -205,13 +205,13 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
 
   return (
     <div className="min-h-screen bg-slate-50 transition-colors dark:bg-slate-950">
-      <header className="sticky top-0 z-50 bg-[#E31E24] text-white shadow-lg">
+      <header className="sticky top-0 z-50 bg-[#EA0029] text-white shadow-lg">
         <div className="flex items-center justify-between px-4 py-3">
           <Link to="/" className="flex min-w-0 items-center gap-3 min-h-[44px] py-1">
-            <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-lg bg-white/15 text-base font-black">
-              RV
-            </span>
-            <span className="truncate text-base font-semibold sm:text-lg">Refuah V&apos;Chesed</span>
+            {/* The organisation's own wordmark (refuahvchesed.org), white on the brand red. */}
+            <img src="/brand/logo-white.svg" alt="" className="h-8 w-auto flex-shrink-0 sm:h-9" />
+            <span className="sr-only">Refuah V&apos;Chesed</span>
+            <span className="truncate border-l border-white/40 pl-3 text-sm font-medium text-white/90">Dispatch</span>
           </Link>
           <div className="flex items-center gap-1">
             <button
@@ -240,7 +240,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
         </div>
 
         {menuOpen ? (
-          <nav className="border-t border-red-700 bg-[#C41A1F] lg:hidden" aria-label="All screens">
+          <nav className="border-t border-red-700 bg-[#C80023] lg:hidden" aria-label="All screens">
             <div className="space-y-1 px-2 py-3">
               {items.map((item) => {
                 const Icon = item.icon;
@@ -253,7 +253,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
                     className={({ isActive }) =>
                       cn(
                         'flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-3',
-                        isActive ? 'bg-white font-semibold text-[#E31E24]' : 'text-red-50 hover:bg-red-800',
+                        isActive ? 'bg-white font-semibold text-[#EA0029]' : 'text-red-50 hover:bg-red-800',
                       )
                     }
                   >
@@ -297,7 +297,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
           <div className="border-t border-slate-200 p-4 dark:border-slate-700">
             <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{user?.fullName}</p>
             <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user?.email}</p>
-            <p className="mt-1 text-xs font-medium capitalize text-[#E31E24]">{role}</p>
+            <p className="mt-1 text-xs font-medium capitalize text-[#EA0029]">{role}</p>
             <button
               type="button"
               onClick={handleLogout}
@@ -326,7 +326,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
         <Link
           to="/board?new=1"
           aria-label="Create a new trip"
-          className="fixed right-4 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#E31E24] text-white shadow-lg hover:bg-[#C41A1F] lg:hidden"
+          className="fixed right-4 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#EA0029] text-white shadow-lg hover:bg-[#C80023] lg:hidden"
           style={{ bottom: 'calc(72px + env(safe-area-inset-bottom))' }}
         >
           <Plus className="h-7 w-7" aria-hidden="true" />

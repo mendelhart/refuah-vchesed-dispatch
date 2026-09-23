@@ -202,7 +202,7 @@ function ServicesCard(): React.JSX.Element {
                   <label className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800/60">
                     <input
                       type="checkbox"
-                      className="mt-1 h-4 w-4 flex-shrink-0 accent-[#E31E24]"
+                      className="mt-1 h-4 w-4 flex-shrink-0 accent-[#EA0029]"
                       checked={selected.has(service.slug)}
                       disabled={save.isPending}
                       onChange={() => toggle(service.slug)}
@@ -294,7 +294,7 @@ function CapabilitiesCard(): React.JSX.Element {
                   <label className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800/60">
                     <input
                       type="checkbox"
-                      className="mt-1 h-4 w-4 flex-shrink-0 accent-[#E31E24]"
+                      className="mt-1 h-4 w-4 flex-shrink-0 accent-[#EA0029]"
                       checked={selected.has(capability)}
                       disabled={save.isPending}
                       onChange={() => toggle(capability)}

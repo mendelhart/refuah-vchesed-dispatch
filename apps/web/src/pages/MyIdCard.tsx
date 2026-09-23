@@ -446,7 +446,7 @@ export function MyIdCardPage(): React.JSX.Element {
         id="volunteer-id-card"
         className="mx-auto w-full max-w-sm overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-lg"
       >
-        <div className="bg-[#E31E24] px-5 py-4 text-white">
+        <div className="bg-[#EA0029] px-5 py-4 text-white">
           <p className="text-lg font-bold leading-tight">{card.organization.name}</p>
           <p className="text-xs uppercase tracking-widest text-white/90">Volunteer identification</p>
         </div>
