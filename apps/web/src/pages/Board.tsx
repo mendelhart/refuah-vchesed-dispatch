@@ -30,7 +30,7 @@ import {
 import type { TripDto, TripStatus } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { invalidateTrips, qk, type TripListParams } from '@/lib/query';
-import { formatDateTime, formatTime, priorityRank, telHref, formatPhone } from '@/lib/format';
+import { formatDateTime, formatTime, formatWeekdayTime, priorityRank, telHref, formatPhone } from '@/lib/format';
 import { isFullTrip, type BoardSummaryResponse, type TripListResponse, type UserListResponse } from '@/types/api';
 import { TripCard } from '@/components/TripCard';
 import { TripForm } from '@/components/TripForm';
@@ -195,7 +195,7 @@ function BoardContextStrip(): React.JSX.Element | null {
             <span>
               <span className="font-medium text-slate-900 dark:text-white">{nextRest.label}</span>
               <span className="ml-1 text-slate-500 lg:ml-0 lg:block lg:text-xs dark:text-slate-400">
-                Candles {formatDateTime(nextRest.startsAt)} · out {formatTime(nextRest.endsAt)}
+                Starts {formatDateTime(nextRest.startsAt)} · ends {formatDateTime(nextRest.endsAt)}
               </span>
             </span>
           </span>
@@ -435,7 +435,7 @@ export function BoardPage(): React.JSX.Element {
               <Flame className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
               During {rest.label}
               <span className="font-normal text-indigo-600 dark:text-indigo-300">
-                ({formatTime(rest.startsAt)} – {formatTime(rest.endsAt)})
+                ({formatWeekdayTime(rest.startsAt)} – {formatWeekdayTime(rest.endsAt)})
               </span>
             </p>
           ) : null}

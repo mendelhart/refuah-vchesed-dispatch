@@ -100,6 +100,15 @@ export interface RestPeriod {
  * Pikuach nefesh is exactly the case this organisation exists for, and the
  * software is not the authority on whether a particular ride may happen.
  */
+/** The candle-lighting event links to the day it falls on; name the yom tov
+ *  that starts that evening instead ("Sukkot VII (Hoshana Raba)" would read
+ *  as if Sukkot were starting again). */
+function restLabel(linked: string): string {
+  if (/Hoshana Raba/i.test(linked)) return 'Shemini Atzeret & Simchat Torah';
+  if (/^Pesach VI\b/i.test(linked)) return 'Pesach (last days)';
+  return linked.replace(/^Erev /, '');
+}
+
 export function restPeriodsBetween(from: Date, to: Date): RestPeriod[] {
   const events = HebrewCalendar.calendar({
     start: from,
@@ -147,7 +156,7 @@ export function restPeriodsBetween(from: Date, to: Date): RestPeriod[] {
         const linked = timed(ev).linkedEvent?.getDesc();
         open = {
           startsAt: at,
-          label: linked ? linked.replace(/^Erev /, '') : 'Shabbos',
+          label: linked ? restLabel(linked) : 'Shabbos',
           kind: linked ? 'yomtov' : 'shabbat',
         };
       }

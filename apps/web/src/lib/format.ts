@@ -172,3 +172,12 @@ export function formatMinuteOfDay(minuteOfDay: number): string {
   const m = wrapped % 60;
   return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 }
+
+const weekdayTimeFormat = new Intl.DateTimeFormat('en-US', { hour12: true, weekday: 'short', hour: 'numeric', minute: '2-digit' });
+
+/** "Fri 6:40 PM": for spans where the day matters (Shabbos, yom tov). */
+export function formatWeekdayTime(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? '—' : weekdayTimeFormat.format(date);
+}
