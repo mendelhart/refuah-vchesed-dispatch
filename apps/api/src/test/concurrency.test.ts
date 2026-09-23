@@ -140,7 +140,7 @@ describe('concurrent acceptance', () => {
     const offers = await db.select().from(tripOffers).where(eq(tripOffers.tripId, tripId));
     // Expire volunteer 0's offer while all three press accept.
     const v0Offer = offers.find((o) => o.volunteerId === volunteers[0]!.id)!;
-    await db.update(tripOffers).set({ expiresAt: new Date(Date.now() - 1000) }).where(eq(tripOffers.id, v0Offer.id));
+    await db.update(tripOffers).set({ offeredAt: new Date(Date.now() - 20 * 60_000), expiresAt: new Date(Date.now() - 1000) }).where(eq(tripOffers.id, v0Offer.id));
     const results = await Promise.all(
       volunteers.map((v) => api('POST', `/api/trips/${tripId}/claim`, { cookie: v.cookie, payload: {} })),
     );

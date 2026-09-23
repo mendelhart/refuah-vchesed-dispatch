@@ -26,11 +26,11 @@ describe('claim vs assign authorization', () => {
     v2 = await createTestUser({ role: 'volunteer' });
   });
 
-  async function offered(): Promise<string> {
+  async function offered(expected = 2): Promise<string> {
     const created = await api('POST', '/api/trips', { cookie: dispatcher.cookie, payload: sampleTrip() });
     const tripId = (created.body.trip as { id: string }).id;
     const r = await api('POST', `/api/trips/${tripId}/offer`, { cookie: dispatcher.cookie, payload: {} });
-    expect(r.body.offered).toBe(2);
+    expect(r.body.offered).toBe(expected);
     return tripId;
   }
 
@@ -90,7 +90,7 @@ describe('claim vs assign authorization', () => {
     const [a] = await db.select().from(tripAssignments).where(eq(tripAssignments.tripId, tripId));
     expect(a!.assignedById).toBe(dispatcher.id);
 
-    const t2 = await offered();
+    const t2 = await offered(1); // v2 is now busy with the first trip
     const r2 = await api('POST', `/api/trips/${t2}/assign`, { cookie: admin.cookie, payload: { volunteerId: v1.id } });
     expect(r2.status).toBe(200);
   });
@@ -103,7 +103,9 @@ describe('claim vs assign authorization', () => {
 
   it('expired offer: refused', async () => {
     const tripId = await offered();
-    await db.update(tripOffers).set({ expiresAt: new Date(Date.now() - 60_000) }).where(eq(tripOffers.tripId, tripId));
+    await db.update(tripOffers)
+      .set({ offeredAt: new Date(Date.now() - 20 * 60_000), expiresAt: new Date(Date.now() - 60_000) })
+      .where(eq(tripOffers.tripId, tripId));
     const r = await api('POST', `/api/trips/${tripId}/claim`, { cookie: v1.cookie, payload: {} });
     expect(r.status).toBe(409);
     expect((r.body.error as { code: string }).code).toBe('expired');
