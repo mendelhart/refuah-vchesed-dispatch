@@ -143,12 +143,13 @@ export async function webhookRoutes(app: FastifyInstance): Promise<void> {
           fromNumber: params.From ?? null,
           toNumber: params.To ?? null,
           body: (params.Body ?? '').slice(0, 500),
-          providerSid: params.MessageSid ?? null,
+          // Not stored in provider_sid: that column is the idempotency claim,
+          // and a forged request must not be able to "use up" a real message id.
+          providerSid: null,
           signatureValid: false,
           outcome: 'rejected_signature',
-          detail: `from ip ${req.ip}`,
-        })
-        .onConflictDoNothing();
+          detail: `from ip ${req.ip}${params.MessageSid ? `, claimed sid ${params.MessageSid.slice(0, 64)}` : ''}`,
+        });
       // 403 and no TwiML: a forged request gets nothing back, and in particular
       // never causes us to send an SMS to an attacker-chosen number.
       return reply.status(403).type('text/plain').send('invalid signature');
@@ -365,25 +366,29 @@ export interface InboundText {
 export async function handleInboundText(ctx: InboundText): Promise<string | null> {
     const { from, body, sid } = ctx;
 
-    // Twilio retries on timeout; the unique index on provider_sid makes this
-    // idempotent so a redelivery cannot accept a second trip.
+    /**
+     * Idempotency: claim the provider message id BEFORE doing anything.
+     *
+     * Providers redeliver on timeout, sometimes while the first delivery is
+     * still being processed. A "have we seen it?" read followed by a later
+     * insert leaves a window where both deliveries pass the read and both run
+     * the command. Instead the first thing we do is insert a `processing` row
+     * keyed by the unique provider id; only the request whose insert wins runs
+     * the command, and it then records the outcome on that same row.
+     *
+     * - duplicate while processing, or after success: ignored, no side effects;
+     * - first attempt threw: the row is marked `failed`, and a redelivery may
+     *   re-claim it (failed -> processing is one conditional UPDATE, so only one
+     *   retry wins);
+     * - process died mid-command: the row stays `processing` and redeliveries are
+     *   ignored. That can lose a reply, never duplicate an acceptance; the stuck
+     *   row is visible in sms_events for follow-up.
+     * Messages without a provider id cannot be de-duplicated and are processed
+     * once per delivery, as before.
+     */
+    let claimedId: string | null = null;
     if (sid) {
-      const [seen] = await db
-        .select({ id: smsEvents.id })
-        .from(smsEvents)
-        .where(eq(smsEvents.providerSid, sid))
-        .limit(1);
-      if (seen) return null;
-    }
-
-
-    const record = async (
-      outcome: string,
-      detail: string,
-      matchedUserId?: string | null,
-      matchedOfferId?: string | null,
-    ) => {
-      await db
+      const [claimed] = await db
         .insert(smsEvents)
         .values({
           direction: 'inbound',
@@ -392,13 +397,70 @@ export async function handleInboundText(ctx: InboundText): Promise<string | null
           body: body.slice(0, 500),
           providerSid: sid,
           signatureValid: true,
-          matchedUserId: matchedUserId ?? null,
-          matchedOfferId: matchedOfferId ?? null,
-          outcome,
-          detail: ctx.channel === 'whatsapp' ? `whatsapp: ${detail}` : detail,
+          outcome: 'processing',
+          detail: ctx.channel === 'whatsapp' ? 'whatsapp: processing' : 'processing',
         })
+        .onConflictDoNothing()
+        .returning({ id: smsEvents.id });
+      if (claimed) {
+        claimedId = claimed.id;
+      } else {
+        const [retry] = await db
+          .update(smsEvents)
+          .set({ outcome: 'processing', detail: 'retry after failed processing' })
+          .where(and(eq(smsEvents.providerSid, sid), eq(smsEvents.outcome, 'failed')))
+          .returning({ id: smsEvents.id });
+        if (!retry) return null;
+        claimedId = retry.id;
+      }
+    }
+
+    const record = async (
+      outcome: string,
+      detail: string,
+      matchedUserId?: string | null,
+      matchedOfferId?: string | null,
+    ) => {
+      const fields = {
+        signatureValid: true,
+        matchedUserId: matchedUserId ?? null,
+        matchedOfferId: matchedOfferId ?? null,
+        outcome,
+        detail: ctx.channel === 'whatsapp' ? `whatsapp: ${detail}` : detail,
+      };
+      if (claimedId) {
+        await db.update(smsEvents).set(fields).where(eq(smsEvents.id, claimedId));
+        return;
+      }
+      await db
+        .insert(smsEvents)
+        .values({ direction: 'inbound', fromNumber: from, toNumber: ctx.to, body: body.slice(0, 500), providerSid: sid, ...fields })
         .onConflictDoNothing();
     };
+
+    try {
+      return await processInboundText(ctx, record);
+    } catch (err) {
+      if (claimedId) {
+        await db
+          .update(smsEvents)
+          .set({ outcome: 'failed', detail: `processing failed: ${err instanceof Error ? err.message : String(err)}`.slice(0, 500) })
+          .where(eq(smsEvents.id, claimedId))
+          .catch(() => undefined);
+      }
+      throw err;
+    }
+}
+
+type RecordInbound = (
+  outcome: string,
+  detail: string,
+  matchedUserId?: string | null,
+  matchedOfferId?: string | null,
+) => Promise<void>;
+
+async function processInboundText(ctx: InboundText, record: RecordInbound): Promise<string | null> {
+    const { from, body, sid } = ctx;
 
     if (!from) {
       await record('unmatched', 'unparseable sender');

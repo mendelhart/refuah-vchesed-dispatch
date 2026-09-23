@@ -23,6 +23,7 @@ import twilio from 'twilio';
 import { eq, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { smsEvents, tripOffers, trips } from '../db/schema.js';
+import { handleInboundText } from '../routes/webhooks.routes.js';
 import { api, createTestUser, getApp, resetDb, sampleTrip, shutdown, type TestUser } from './harness.js';
 
 const WEBHOOK_URL = 'http://localhost:8080/webhooks/twilio/sms';
@@ -212,5 +213,86 @@ describe('inbound SMS webhook', () => {
     const events = await db.select().from(smsEvents).where(eq(smsEvents.direction, 'inbound'));
     expect(events.length).toBeGreaterThan(0);
     expect(events.every((e) => e.outcome !== null)).toBe(true);
+  });
+
+  describe('idempotency (provider message id is claimed before any side effect)', () => {
+    const accepted = () => db.select().from(tripOffers).where(sql`trip_id = ${tripId} and status = 'accepted'`);
+
+    it('runs the command once when the same message arrives five times at once', async () => {
+      const messageSid = sid();
+      const params = { From: volunteer.phone, To: '+15145550000', Body: `YES ${code}`, MessageSid: messageSid };
+      const results = await Promise.all(Array.from({ length: 5 }, () => postSms(params)));
+      expect(results.every((r) => r.status === 200)).toBe(true);
+      expect(await accepted()).toHaveLength(1);
+      const confirmations = results.filter((r) => /is yours/i.test(String(r.raw.body)));
+      expect(confirmations).toHaveLength(1);
+      const events = await db.select().from(smsEvents).where(eq(smsEvents.providerSid, messageSid));
+      expect(events).toHaveLength(1);
+      expect(events[0]!.outcome).toBe('accepted');
+    });
+
+    it('ignores a redelivery with the same id even if the body differs', async () => {
+      const messageSid = sid();
+      await postSms({ From: volunteer.phone, To: '+15145550000', Body: 'running late', MessageSid: messageSid });
+      const second = await postSms({ From: volunteer.phone, To: '+15145550000', Body: `YES ${code}`, MessageSid: messageSid });
+      expect(second.status).toBe(200);
+      expect(await accepted()).toHaveLength(0);
+      const [event] = await db.select().from(smsEvents).where(eq(smsEvents.providerSid, messageSid));
+      expect(event!.outcome).toBe('conversation');
+    });
+
+    it('does nothing for a redelivery while the first delivery is still processing', async () => {
+      const messageSid = sid();
+      await db.insert(smsEvents).values({
+        direction: 'inbound', fromNumber: volunteer.phone, providerSid: messageSid, signatureValid: true, outcome: 'processing',
+      });
+      const res = await postSms({ From: volunteer.phone, To: '+15145550000', Body: `YES ${code}`, MessageSid: messageSid });
+      expect(res.status).toBe(200);
+      expect(String(res.raw.body)).toBe('<Response/>');
+      expect(await accepted()).toHaveLength(0);
+    });
+
+    it('lets a retry re-run a delivery whose first processing failed, exactly once', async () => {
+      const messageSid = sid();
+      await db.insert(smsEvents).values({
+        direction: 'inbound', fromNumber: volunteer.phone, providerSid: messageSid, signatureValid: true, outcome: 'failed',
+      });
+      const params = { From: volunteer.phone, To: '+15145550000', Body: `YES ${code}`, MessageSid: messageSid };
+      const [a, b] = await Promise.all([postSms(params), postSms(params)]);
+      expect([a.status, b.status]).toEqual([200, 200]);
+      expect(await accepted()).toHaveLength(1);
+      const [event] = await db.select().from(smsEvents).where(eq(smsEvents.providerSid, messageSid));
+      expect(event!.outcome).toBe('accepted');
+    });
+
+    it('a forged request cannot use up a real message id', async () => {
+      const messageSid = sid();
+      const params = { From: volunteer.phone, To: '+15145550000', Body: `YES ${code}`, MessageSid: messageSid };
+      const forged = await postSms(params, { signature: 'bogus' });
+      expect(forged.status).toBe(403);
+      const real = await postSms(params);
+      expect(String(real.raw.body)).toMatch(/is yours/i);
+      expect(await accepted()).toHaveLength(1);
+    });
+
+    it('applies the same rule to WhatsApp and SMS replies', async () => {
+      const ctx = {
+        channel: 'whatsapp' as const, from: volunteer.phone, to: null, body: `YES ${code}`,
+        sid: `waha:${sid()}`, ip: '127.0.0.1', requestId: 'test',
+      };
+      const replies = await Promise.all([handleInboundText(ctx), handleInboundText(ctx), handleInboundText(ctx)]);
+      expect(replies.filter((r) => r && /is yours/i.test(r))).toHaveLength(1);
+      expect(replies.filter((r) => r === null)).toHaveLength(2);
+      expect(await accepted()).toHaveLength(1);
+    });
+
+    it('a duplicate decline is recorded once', async () => {
+      const messageSid = sid();
+      const params = { From: volunteer.phone, To: '+15145550000', Body: `NO ${code}`, MessageSid: messageSid };
+      await Promise.all([postSms(params), postSms(params)]);
+      const events = await db.select().from(smsEvents).where(eq(smsEvents.providerSid, messageSid));
+      expect(events).toHaveLength(1);
+      expect(events[0]!.outcome).toBe('declined');
+    });
   });
 });
