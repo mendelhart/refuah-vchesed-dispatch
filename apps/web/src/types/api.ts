@@ -122,6 +122,8 @@ export interface DirectoryPerson {
   phone: string | null;
   /** False until they set a password (never invited, or invite not used). */
   activated?: boolean;
+  /** How offers reach them; null for non-staff viewers. */
+  notificationPreference?: string | null;
 }
 export interface UserListResponse {
   users: DirectoryPerson[];

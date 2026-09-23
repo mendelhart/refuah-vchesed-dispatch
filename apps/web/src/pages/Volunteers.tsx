@@ -13,6 +13,7 @@
  * be fixable while the volunteer is still on the line, by the person taking the
  * call, without an email to an administrator.
  */
+import { channelOptions, channelShort } from '@/lib/channels';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -605,6 +606,15 @@ function VolunteerDrawer({
     onError: (error: unknown) => toast.error(errorMessage(error)),
   });
 
+  const saveChannel = useMutation({
+    mutationFn: (value: string) => api.patch<unknown>(`/api/users/${row.id}`, { notificationPreference: value }),
+    onSuccess: (_data, value) => {
+      invalidate();
+      toast.success(`${row.full_name} will be reached by ${channelShort(value)}.`);
+    },
+    onError: (error: unknown) => toast.error(errorMessage(error)),
+  });
+
   const saveCapabilities = useMutation({
     mutationFn: (payload: string[]) =>
       api.put<{ capabilities: string[] }>(`/api/volunteers/${row.id}/capabilities`, { capabilities: payload }),
@@ -682,6 +692,28 @@ function VolunteerDrawer({
               {row.service_area ? ` · works in ${row.service_area}` : ''}
             </p>
           ) : null}
+        </section>
+
+        <section>
+          <label htmlFor={`reach-${row.id}`} className="font-semibold text-slate-900 dark:text-white">
+            How we reach them
+          </label>
+          <select
+            id={`reach-${row.id}`}
+            className={`${inputClass} mt-2 sm:w-64`}
+            value={row.notification_preference ?? 'sms'}
+            disabled={saveChannel.isPending}
+            onChange={(event) => saveChannel.mutate(event.target.value)}
+          >
+            {channelOptions(row.notification_preference).map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Ride offers go this way. They can also change it in their own Settings.
+          </p>
         </section>
 
         <section>

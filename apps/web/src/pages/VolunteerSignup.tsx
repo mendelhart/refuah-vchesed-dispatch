@@ -54,10 +54,10 @@ const CAPABILITY_LABELS: Record<VolunteerCapability, string> = {
 const LANGUAGE_OPTIONS = ['English', 'French', 'Yiddish', 'Hebrew', 'Russian', 'Spanish'] as const;
 
 const CONTACT_OPTIONS = [
-  { value: 'sms', label: 'Text message' },
+  { value: 'sms', label: 'Text message (SMS)' },
   { value: 'whatsapp', label: 'WhatsApp' },
-  { value: 'email', label: 'Email' },
-  { value: 'all', label: 'Whichever reaches me fastest' },
+  { value: 'voice', label: 'Phone call (English)' },
+  { value: 'push', label: 'App notifications' },
 ] as const;
 
 const STEPS = ['Who you are', 'What you can help with', 'When you are around', 'Confirm'] as const;

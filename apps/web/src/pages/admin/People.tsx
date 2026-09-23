@@ -3,6 +3,7 @@
  * the admin passes on by hand until transactional email is wired up, which is
  * why the link is displayed rather than assumed sent.
  */
+import { channelOptions, channelShort } from '@/lib/channels';
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -96,6 +97,16 @@ export function PeoplePage(): React.JSX.Element {
     onError: (error: unknown) => toast.error(errorMessage(error)),
   });
 
+  const changeChannel = useMutation({
+    mutationFn: (vars: { id: string; name: string; value: string }) =>
+      api.patch<unknown>(`/api/users/${vars.id}`, { notificationPreference: vars.value }),
+    onSuccess: (_d, vars) => {
+      void queryClient.invalidateQueries();
+      toast.success(`${vars.name} will be reached by ${channelShort(vars.value)}.`);
+    },
+    onError: (error: unknown) => toast.error(errorMessage(error)),
+  });
+
   const deactivate = useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => api.post(`/api/users/${id}/deactivate`, { reason }),
     onSuccess: () => {
@@ -182,6 +193,21 @@ export function PeoplePage(): React.JSX.Element {
                   {ROLES.map((role) => (
                     <option key={role} value={role}>
                       {titleCase(role)}
+                    </option>
+                  ))}
+                </select>
+                <label className="sr-only" htmlFor={`reach-${person.id}`}>
+                  How to reach {person.fullName}
+                </label>
+                <select
+                  id={`reach-${person.id}`}
+                  className={`${inputClass} w-44`}
+                  value={person.notificationPreference ?? 'sms'}
+                  onChange={(event) => changeChannel.mutate({ id: person.id, name: person.fullName, value: event.target.value })}
+                >
+                  {channelOptions(person.notificationPreference).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
                   ))}
                 </select>

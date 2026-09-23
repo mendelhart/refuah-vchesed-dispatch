@@ -6,7 +6,8 @@ import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { BellOff, BellRing, Eye, EyeOff, Moon, Sun } from 'lucide-react';
-import { NOTIFICATION_PREFERENCES, type NotificationPreference } from '@rvc/shared';
+import type { NotificationPreference } from '@rvc/shared';
+import { channelOptions } from '@/lib/channels';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
 import { useAuth } from '@/lib/auth';
@@ -20,22 +21,10 @@ import {
 import type { MeStatusResponse, MuteResponse, SessionResponse } from '@/types/api';
 
 /**
- * How a volunteer wants to hear from us.
- *
- * Two things this list deliberately does not promise. WhatsApp is always paired
- * with another channel, because a paired session can drop without anybody
- * noticing. And "neither" does not silence a trip they have already accepted
- * being cancelled — that always reaches them.
+ * How a volunteer wants to hear from us: App, SMS, WhatsApp or a phone call.
+ * A cancelled trip they already accepted always reaches them by text as well.
  */
-const PREFERENCE_LABELS: Record<NotificationPreference, string> = {
-  sms: 'Text message only',
-  push: 'Push notification only',
-  whatsapp: 'WhatsApp (with push as a backup)',
-  email: 'Email only',
-  both: 'Both text and push',
-  all: 'Every channel — text, push, WhatsApp and email',
-  none: 'Neither — I will check the app',
-};
+
 
 /** 0 clears the mute; the server turns hours into a timestamp. */
 const MUTE_OPTIONS = [
@@ -52,7 +41,7 @@ export function SettingsPage(): React.JSX.Element {
 
   const [fullName, setFullName] = useState(user?.fullName ?? '');
   const [phone, setPhone] = useState(user?.phone ?? '');
-  const [preference, setPreference] = useState<NotificationPreference>(user?.notificationPreference ?? 'both');
+  const [preference, setPreference] = useState<NotificationPreference>(user?.notificationPreference ?? 'sms');
   const [pushOn, setPushOn] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
 
@@ -173,9 +162,9 @@ export function SettingsPage(): React.JSX.Element {
               value={preference}
               onChange={(event) => setPreference(event.target.value as NotificationPreference)}
             >
-              {NOTIFICATION_PREFERENCES.map((option) => (
-                <option key={option} value={option}>
-                  {PREFERENCE_LABELS[option]}
+              {channelOptions(user?.notificationPreference).map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>

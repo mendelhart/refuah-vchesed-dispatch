@@ -253,6 +253,7 @@ export async function listUsers(viewerRole: Role, args: ListUsersArgs) {
   const rows = await db.select({
     id: users.id, fullName: users.fullName, email: users.email, phone: users.phone,
     role: users.role, status: users.status, photoUrl: users.photoUrl,
+    notificationPreference: users.notificationPreference,
     // Has this person ever set a password? Volunteers added with only a
     // phone and never invited get offers by text but have no app account.
     activated: raw<boolean>`(${users.passwordHash} is not null)`,
@@ -274,6 +275,7 @@ export async function listUsers(viewerRole: Role, args: ListUsersArgs) {
     // Volunteers see who else is on the roster, not how to contact them.
     email: privileged ? r.email : null,
     phone: privileged ? r.phone : null,
+    notificationPreference: privileged ? r.notificationPreference : null,
   }));
 }
 
