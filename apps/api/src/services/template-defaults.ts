@@ -80,6 +80,7 @@ Expires {{expiresClock}}`,
 Needs: {{needs}}
 
 Accept: {{acceptUrl}}
+Or reply: YES {{smsCode}}
 Expires {{expiresClock}}`,
   },
   {
