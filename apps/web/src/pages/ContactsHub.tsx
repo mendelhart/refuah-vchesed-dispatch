@@ -25,7 +25,7 @@ const ContactsPage = React.lazy(() => import('@/pages/Contacts').then((m) => ({ 
 const TABS = [
   { id: 'all', label: 'All' },
   { id: 'callers', label: 'Callers' },
-  { id: 'places', label: 'Hospitals & services' },
+  { id: 'places', label: 'Hospitals' },
   { id: 'team', label: 'Team' },
 ] as const;
 
@@ -187,7 +187,7 @@ export function ContactsHubPage(): React.JSX.Element {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Contacts</h1>
-      <div role="tablist" aria-label="Show" className="flex flex-wrap gap-2">
+      <div role="tablist" aria-label="Show" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
         {TABS.map((item) => (
           <button
             key={item.id}
@@ -196,7 +196,7 @@ export function ContactsHubPage(): React.JSX.Element {
             aria-selected={item.id === tab}
             onClick={() => setParams(item.id === 'all' ? {} : { tab: item.id }, { replace: true })}
             className={cn(
-              'min-h-[44px] whitespace-nowrap rounded-full px-3 text-sm font-medium transition-colors',
+              'min-h-[44px] flex-shrink-0 whitespace-nowrap rounded-full px-3 text-sm font-medium transition-colors',
               item.id === tab
                 ? 'bg-[#EA0029] text-white'
                 : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
