@@ -30,6 +30,7 @@ import {
 import type { GroupsResponse } from '@/types/api';
 import { useAuth } from '@/lib/auth';
 import { AddPersonModal } from '@/components/AddPersonModal';
+import { PhotoRequests } from '@/components/PhotoRequests';
 import { VolunteerActions } from '@/components/VolunteerActions';
 import { roleLabel } from '@rvc/shared';
 
@@ -175,6 +176,7 @@ export function VolunteersPage(): React.JSX.Element {
         }
       />
       <AddPersonModal open={adding} onClose={() => setAdding(false)} title="Add volunteer" />
+      <PhotoRequests />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="relative sm:col-span-2">

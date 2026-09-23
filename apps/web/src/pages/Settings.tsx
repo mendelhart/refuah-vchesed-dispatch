@@ -20,6 +20,7 @@ import {
 } from '@/components/states';
 import type { MeStatusResponse, MuteResponse, SessionResponse } from '@/types/api';
 import { roleLabel } from '@rvc/shared';
+import { MyPhotoSettings } from '@/components/MyPhotoSettings';
 
 /**
  * How a volunteer wants to hear from us: App, SMS, WhatsApp or a phone call.
@@ -122,6 +123,8 @@ export function SettingsPage(): React.JSX.Element {
   return (
     <div className="space-y-6">
       <PageHeader title="Settings" subtitle="Your details and how we reach you" />
+
+      <MyPhotoSettings isAdmin={user?.role === 'admin'} />
 
       <section className={cardClass}>
         <form

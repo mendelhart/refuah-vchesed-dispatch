@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, sql as raw } from 'drizzle-orm';
 import {
   changeRoleSchema, createUserSchema, pushSubscriptionSchema, resendInviteSchema,
   updateMeSchema, updateUserSchema, uuidSchema, directMessageSchema, suspendUserSchema,
@@ -34,15 +34,104 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     });
   };
 
+  // A volunteer's (or coordinator's) own photo change is a request: it is held
+  // until a dispatcher or admin approves it, so the face on an ID card shown at
+  // hospital desks is one somebody has checked. Admins change their own directly.
+  const requestPhotoChange = async (req: Parameters<typeof actorFrom>[0], photo: string | null) => {
+    const me = currentUser(req as never);
+    if (me.role === 'admin') {
+      await setPhoto(req, me.id, photo);
+      return { ok: true, pending: false };
+    }
+    if (photo !== null) parsePhotoDataUrl(photo);
+    await db.update(users).set({
+      pendingPhoto: photo,
+      pendingPhotoAction: photo === null ? 'remove' : 'set',
+      pendingPhotoAt: new Date(),
+    }).where(eq(users.id, me.id));
+    await recordAudit({
+      actor: actorFrom(req), action: 'user.photo_change_requested', entityType: 'user', entityId: me.id,
+      metadata: { change: photo === null ? 'remove' : 'set' },
+    });
+    return { ok: true, pending: true };
+  };
+
   app.put('/api/me/photo', { preHandler: requireAuth }, async (req) => {
     const { photo } = photoBody.parse(req.body);
-    await setPhoto(req, currentUser(req).id, photo);
+    return requestPhotoChange(req, photo);
+  });
+  app.delete('/api/me/photo', { preHandler: requireAuth }, async (req) => requestPhotoChange(req, null));
+
+  /** My current photo and any change still waiting for approval. */
+  app.get('/api/me/photo', { preHandler: requireAuth }, async (req) => {
+    const [row] = await db.select({
+      photo: users.photoUrl, pendingPhoto: users.pendingPhoto,
+      action: users.pendingPhotoAction, at: users.pendingPhotoAt,
+    }).from(users).where(eq(users.id, currentUser(req).id)).limit(1);
+    return {
+      photo: isStoredPhoto(row?.photo ?? null) ? row!.photo : null,
+      pending: row?.action ? { action: row.action, requestedAt: row.at, photo: row.pendingPhoto } : null,
+    };
+  });
+  app.delete('/api/me/photo/pending', { preHandler: requireAuth }, async (req) => {
+    await db.update(users).set({ pendingPhoto: null, pendingPhotoAction: null, pendingPhotoAt: null })
+      .where(eq(users.id, currentUser(req).id));
     return { ok: true };
   });
-  app.delete('/api/me/photo', { preHandler: requireAuth }, async (req) => {
-    await setPhoto(req, currentUser(req).id, null);
+
+  // --- photo change approvals (dispatchers and admins) -----------------------
+  app.get('/api/photo-requests', { preHandler: requireDispatcher }, async (req) => {
+    const me = currentUser(req);
+    const rows = await db.select({
+      userId: users.id, fullName: users.fullName, role: users.role, action: users.pendingPhotoAction,
+      requestedAt: users.pendingPhotoAt, pendingPhoto: users.pendingPhoto, currentPhoto: users.photoUrl,
+    }).from(users)
+      .where(and(isNull(users.deletedAt), raw`${users.pendingPhotoAction} is not null`))
+      .orderBy(users.pendingPhotoAt)
+      .limit(100);
+    // Coordinators review volunteers only, never themselves; admins review everyone else.
+    const visible = rows.filter((r) => r.userId !== me.id && (me.role === 'admin' || r.role === 'volunteer'));
+    return {
+      requests: visible.map((r) => ({
+        userId: r.userId, fullName: r.fullName, action: r.action, requestedAt: r.requestedAt,
+        newPhoto: r.action === 'set' ? r.pendingPhoto : null,
+        currentPhoto: isStoredPhoto(r.currentPhoto) ? r.currentPhoto : null,
+      })),
+    };
+  });
+
+  const decide = async (req: Parameters<typeof actorFrom>[0], userId: string, approve: boolean) => {
+    const me = currentUser(req as never);
+    await assertCanManagePerson(me, userId, { verb: 'approve a photo for', coordinatorMay: 'volunteers' });
+    const [row] = await db.select({ action: users.pendingPhotoAction, pendingPhoto: users.pendingPhoto, at: users.pendingPhotoAt })
+      .from(users).where(eq(users.id, userId)).limit(1);
+    if (!row?.action || !row.at) throw Errors.conflict('There is no photo change waiting for this person.');
+    const action = row.action;
+    const at = row.at;
+    await db.transaction(async (tx) => {
+      const [claimed] = await tx.update(users).set({
+        ...(approve ? { photoUrl: action === 'set' ? row.pendingPhoto : null } : {}),
+        pendingPhoto: null, pendingPhotoAction: null, pendingPhotoAt: null,
+      // Only the exact request that was reviewed; a newer upload in between is left for review.
+      }).where(and(eq(users.id, userId), eq(users.pendingPhotoAction, action), eq(users.pendingPhotoAt, at))).returning({ id: users.id });
+      if (!claimed) throw Errors.conflict('Someone else already dealt with this photo change.');
+      await recordAudit({
+        actor: actorFrom(req), action: approve ? 'user.photo_change_approved' : 'user.photo_change_rejected',
+        entityType: 'user', entityId: userId, metadata: { change: action },
+      }, tx);
+    });
+  };
+  app.post('/api/photo-requests/:id/approve', { preHandler: requireDispatcher }, async (req) => {
+    const { id } = idParam.parse(req.params);
+    await decide(req, id, true);
     return { ok: true };
   });
+  app.post('/api/photo-requests/:id/reject', { preHandler: requireDispatcher }, async (req) => {
+    const { id } = idParam.parse(req.params);
+    await decide(req, id, false);
+    return { ok: true };
+  });
+
   app.put('/api/users/:id/photo', { preHandler: requireAdmin }, async (req) => {
     const { id } = idParam.parse(req.params);
     const { photo } = photoBody.parse(req.body);

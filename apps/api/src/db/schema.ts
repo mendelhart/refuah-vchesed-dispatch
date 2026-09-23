@@ -60,6 +60,10 @@ export const users = pgTable(
     notificationPreference: text('notification_preference').notNull().default('sms'),
     preferredVehicleType: text('preferred_vehicle_type'),
     photoUrl: text('photo_url'),
+    /** A volunteer's requested photo change, applied only when a dispatcher/admin approves it. */
+    pendingPhoto: text('pending_photo'),
+    pendingPhotoAction: text('pending_photo_action'),
+    pendingPhotoAt: timestamp('pending_photo_at', { withTimezone: true }),
     addressLine: text('address_line'),
     emergencyContactName: text('emergency_contact_name'),
     emergencyContactPhone: text('emergency_contact_phone'),

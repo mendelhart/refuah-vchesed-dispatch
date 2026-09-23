@@ -11,6 +11,7 @@
  * card shown at a desk with no signal still has to scan, and sending a
  * volunteer's verification link to a third-party chart API would leak it.
  */
+import { Link } from 'react-router-dom';
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -19,7 +20,6 @@ import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
 import { formatMonthYear, titleCase, formatPhone } from '@/lib/format';
 import { ErrorState, ListSkeleton, PageHeader, primaryButtonClass, secondaryButtonClass } from '@/components/states';
-import { PhotoButton } from '@/components/PhotoButton';
 
 interface IdCardData {
   volunteerNumber: string;
@@ -444,7 +444,6 @@ export function MyIdCardPage(): React.JSX.Element {
         subtitle="Show this at a reception desk when you are asked who you are with"
         actions={
           <span className="flex flex-wrap gap-2">
-            <PhotoButton endpoint="/api/me/photo" hasPhoto={Boolean(card.photo)} onChanged={() => void idCard.refetch()} />
             <button type="button" className={secondaryButtonClass} onClick={() => window.print()}>
               <Printer className="h-4 w-4" aria-hidden="true" />
               Print
@@ -472,7 +471,8 @@ export function MyIdCardPage(): React.JSX.Element {
       ) : null}
       {!card.photo ? (
         <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
-          Add a clear photo of your face so reception desks can match you to your card.
+          Add a clear photo of your face so reception desks can match you to your card. You can add or change it in{' '}
+          <Link to="/settings" className="font-semibold underline">Settings</Link>.
         </p>
       ) : null}
 
