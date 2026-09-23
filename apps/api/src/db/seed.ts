@@ -36,7 +36,7 @@ export async function seed(): Promise<void> {
   for (const p of PEOPLE) {
     const [user] = await db.insert(users).values({
       email: p.email, fullName: p.name, role: p.role, phone: p.phone,
-      status: 'active', passwordHash, notificationPreference: 'both',
+      status: 'active', passwordHash, notificationPreference: 'sms',
     }).onConflictDoNothing().returning();
     const id = user?.id ?? (await db.select({ id: users.id }).from(users).where(eq(users.email, p.email)))[0]?.id;
     if (!id) continue;
