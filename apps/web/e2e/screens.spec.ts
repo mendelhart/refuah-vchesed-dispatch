@@ -58,6 +58,24 @@ test.describe('phone screenshots', () => {
     await context.close();
   });
 
+  test('dispatcher-volunteer-card-actions', async ({ browser }) => {
+    const context = await browser.newContext({
+      storageState: STATE_FILES.dispatcher, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
+    });
+    const page = await context.newPage();
+    await page.goto('/volunteers');
+    await page.getByText('Yaakov').first().click();
+    await page.getByRole('button', { name: 'Edit details' }).waitFor({ timeout: 15_000 });
+    await page.screenshot({ path: 'screenshots/dispatcher-volunteer-card.png' });
+    await page.getByRole('button', { name: 'Edit details' }).click();
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: 'screenshots/dispatcher-volunteer-edit.png' });
+    await page.getByRole('button', { name: 'WhatsApp' }).click();
+    await page.getByRole('textbox').last().fill('Can you drive Thursday at 10?');
+    await page.screenshot({ path: 'screenshots/dispatcher-volunteer-whatsapp.png' });
+    await context.close();
+  });
+
   test('admin-view-as-volunteer', async ({ browser }) => {
     const context = await browser.newContext({
       storageState: STATE_FILES.admin, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
