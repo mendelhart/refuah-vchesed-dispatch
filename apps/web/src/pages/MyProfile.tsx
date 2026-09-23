@@ -55,7 +55,6 @@ interface IdCardSummary {
 const CAPABILITY_LABELS: Record<VolunteerCapability, string> = {
   wheelchair: 'Wheelchair',
   stretcher: 'Stretcher',
-  walker: 'Walker',
   oxygen: 'Oxygen',
   attendant: 'Passenger brings an attendant',
 };
@@ -63,7 +62,6 @@ const CAPABILITY_LABELS: Record<VolunteerCapability, string> = {
 const CAPABILITY_HINTS: Record<VolunteerCapability, string> = {
   wheelchair: 'You can load and secure a folding wheelchair, or your vehicle takes one.',
   stretcher: 'You can carry a passenger who has to stay lying down.',
-  walker: 'You can stow a walker and give an arm between the door and the car.',
   oxygen: 'You are comfortable travelling with a portable oxygen cylinder.',
   attendant: 'You have room for a family member or carer to come along.',
 };

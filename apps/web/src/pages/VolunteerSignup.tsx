@@ -46,7 +46,6 @@ const DAY_PARTS = [
 const CAPABILITY_LABELS: Record<VolunteerCapability, string> = {
   wheelchair: 'A folding wheelchair',
   stretcher: 'Somebody who has to stay lying down',
-  walker: 'A walker, and an arm to the car',
   oxygen: 'A portable oxygen cylinder',
   attendant: 'An extra seat for a carer or family member',
 };
@@ -545,7 +544,7 @@ function StepWhatYouCanDo({
           </div>
         ) : (
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            That is fine. There is plenty to do that does not involve driving, such as phone duty and visits.
+            That is fine. There is plenty to do that does not involve driving, such as phone duty and hospital food.
           </p>
         )}
       </fieldset>

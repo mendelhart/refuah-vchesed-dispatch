@@ -85,7 +85,7 @@ export const NAV_ITEMS: NavItem[] = [
   // Top level for coordinators (user asked for it to be more prominent); volunteers never see it.
   { to: '/calls', label: 'Call log', icon: Phone, roles: ['dispatcher', 'admin'], hint: 'Calls placed through the app' },
   { to: '/recurring', label: 'Standing rides', icon: Repeat, roles: ['dispatcher', 'admin'] },
-  { to: '/equipment', label: 'Equipment', icon: Package, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'more', hint: 'Loans of wheelchairs, walkers and other equipment' },
+  { to: '/equipment', label: 'Equipment', icon: Package, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'more', hint: 'Loans of wheelchairs and other equipment' },
 
   { to: '/my-trips', label: 'My rides', icon: Car, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'profile' },
   { to: '/me', label: 'My profile', icon: IdCard, roles: ['volunteer', 'dispatcher', 'admin'] },

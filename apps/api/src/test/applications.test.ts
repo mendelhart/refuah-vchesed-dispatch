@@ -37,7 +37,7 @@ describe('volunteer applications', () => {
     serviceArea: 'Outremont, Mile End, Snowdon',
     requestedServices: ['ride'],
     requestedGroups: ['chesed_on_the_go'],
-    capabilities: ['walker'],
+    capabilities: ['wheelchair'],
     hasVehicle: true,
     vehicleType: 'sedan',
     vehicleSeats: 4,
@@ -204,7 +204,7 @@ describe('volunteer applications', () => {
     expect(user!.role).toBe('volunteer');
     expect(user!.status).toBe('active');
     expect(user!.mustChangePassword).toBe(true);
-    expect(user!.capabilities).toContain('walker');
+    expect(user!.capabilities).toContain('wheelchair');
     expect(user!.applicationId).toBe(row!.id);
 
     // Services and availability came across.

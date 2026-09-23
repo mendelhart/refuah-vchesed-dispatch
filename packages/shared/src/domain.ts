@@ -101,7 +101,6 @@ export type AssignmentMode = (typeof ASSIGNMENT_MODES)[number];
 export const MOBILITY_NEEDS = [
   'wheelchair',
   'stretcher',
-  'walker',
   'oxygen',
   'attendant',
   'none',
@@ -457,14 +456,12 @@ export const SEED_SERVICES = [
   { slug: 'equipment_delivery', name: 'Equipment delivery', dispatchable: true, description: 'Delivering or collecting loaned medical equipment.' },
   { slug: 'hospital_food', name: 'Hospital food', dispatchable: true, description: 'Bringing meals to patients and families.' },
   { slug: 'phone_duty', name: 'Phone duty', dispatchable: false, description: 'Taking the organisation line during a rostered shift.' },
-  { slug: 'visits', name: 'Visits', dispatchable: false, description: 'Visiting patients at home or in hospital.' },
 ] as const;
 
 /** Physical capabilities a volunteer can cover, mirroring MOBILITY_NEEDS. */
 export const VOLUNTEER_CAPABILITIES = [
   'wheelchair',
   'stretcher',
-  'walker',
   'oxygen',
   'attendant',
 ] as const;

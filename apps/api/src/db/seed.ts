@@ -56,7 +56,7 @@ export async function seed(): Promise<void> {
     const dispatcher = (await db.select({ id: users.id }).from(users).where(eq(users.email, 'dispatch@refuahvchesed.test')))[0];
     const group = bySlug.get('chesed_on_the_go')!;
     for (const sample of [
-      { caller: 'Sara Klein', phone: '+15145559001', from: '1234 Avenue Bernard', to: '3755 Chemin de la Côte-Sainte-Catherine', hours: 3, needs: ['walker'] },
+      { caller: 'Sara Klein', phone: '+15145559001', from: '1234 Avenue Bernard', to: '3755 Chemin de la Côte-Sainte-Catherine', hours: 3, needs: ['wheelchair'] },
       { caller: 'David Roth', phone: '+15145559002', from: '5600 Avenue Durocher', to: '1650 Avenue Cedar', hours: 26, needs: [] },
     ]) {
       const [pickupAddr] = await db.insert(addresses).values({ line1: sample.from, city: 'Montreal' }).returning();

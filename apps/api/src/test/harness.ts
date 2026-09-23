@@ -228,7 +228,7 @@ export const sampleTrip = (over: Record<string, unknown> = {}) => ({
   priority: 'routine',
   groupSlug: 'chesed_on_the_go',
   assignmentMode: 'auto',
-  mobilityNeeds: ['walker'],
+  mobilityNeeds: ['wheelchair'],
   passengerNotes: 'Needs help with the door.',
   ...over,
 });

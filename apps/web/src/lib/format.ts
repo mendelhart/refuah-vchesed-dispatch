@@ -134,7 +134,6 @@ export const tripTypeLabel = (type: TripType): string => TRIP_TYPE_LABELS[type] 
 const MOBILITY_LABELS: Record<MobilityNeed, string> = {
   wheelchair: 'Wheelchair',
   stretcher: 'Stretcher',
-  walker: 'Walker',
   oxygen: 'Oxygen',
   attendant: 'Attendant',
   none: 'No special needs',
