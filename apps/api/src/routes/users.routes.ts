@@ -15,10 +15,51 @@ import { recordAudit } from '../lib/audit.js';
 import { normalizePhone } from '../lib/phone.js';
 import { vapidPublicKey } from '../services/providers/index.js';
 import { Errors } from '../lib/errors.js';
+import { isStoredPhoto, parsePhotoDataUrl } from '../lib/photo.js';
 
 const idParam = z.object({ id: uuidSchema });
 
 export async function userRoutes(app: FastifyInstance): Promise<void> {
+  // --- ID card photos -------------------------------------------------------
+  const photoBody = z.object({ photo: z.string().max(600_000) });
+  const setPhoto = async (actorReq: Parameters<typeof actorFrom>[0], userId: string, photo: string | null) => {
+    if (photo !== null) parsePhotoDataUrl(photo);
+    const [row] = await db.update(users).set({ photoUrl: photo }).where(eq(users.id, userId)).returning({ id: users.id });
+    if (!row) throw Errors.notFound('Person');
+    await recordAudit({
+      actor: actorFrom(actorReq), action: photo ? 'user.photo_set' : 'user.photo_removed', entityType: 'user', entityId: userId,
+    });
+  };
+
+  app.put('/api/me/photo', { preHandler: requireAuth }, async (req) => {
+    const { photo } = photoBody.parse(req.body);
+    await setPhoto(req, currentUser(req).id, photo);
+    return { ok: true };
+  });
+  app.delete('/api/me/photo', { preHandler: requireAuth }, async (req) => {
+    await setPhoto(req, currentUser(req).id, null);
+    return { ok: true };
+  });
+  app.put('/api/users/:id/photo', { preHandler: requireAdmin }, async (req) => {
+    const { id } = idParam.parse(req.params);
+    const { photo } = photoBody.parse(req.body);
+    await setPhoto(req, id, photo);
+    return { ok: true };
+  });
+  app.delete('/api/users/:id/photo', { preHandler: requireAdmin }, async (req) => {
+    const { id } = idParam.parse(req.params);
+    await setPhoto(req, id, null);
+    return { ok: true };
+  });
+  app.get('/api/users/:id/photo', { preHandler: requireAuth }, async (req, reply) => {
+    const { id } = idParam.parse(req.params);
+    const [row] = await db.select({ photo: users.photoUrl }).from(users).where(eq(users.id, id)).limit(1);
+    if (!row || !isStoredPhoto(row.photo)) throw Errors.notFound('Photo');
+    const { mime, bytes } = parsePhotoDataUrl(row.photo);
+    reply.header('Content-Type', mime).header('Cache-Control', 'private, max-age=86400');
+    return reply.send(bytes);
+  });
+
   app.get('/api/users', { preHandler: requireAuth }, async (req) => {
     const q = z.object({
       role: z.enum(['volunteer', 'dispatcher', 'admin']).optional(),

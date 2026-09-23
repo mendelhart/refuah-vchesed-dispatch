@@ -93,8 +93,27 @@ function VolunteerHome(): React.JSX.Element {
     .filter((trip) => !['completed', 'cancelled'].includes(trip.status))
     .sort((a, b) => new Date(a.pickupAt).getTime() - new Date(b.pickupAt).getTime())[0];
 
+  // Always shown, in every state (offers or not, next ride or not, and in
+  // "View as"): a volunteer's own numbers are the first thing on Home.
+  const totals = impact.data?.totals;
+  const statTiles = [
+    { label: 'Rides completed', value: totals?.completed },
+    { label: 'This month', value: totals?.completedThisMonth },
+    { label: 'Coming up', value: totals?.upcoming },
+  ];
+
   return (
     <div className="space-y-6">
+      <section aria-label="Your stats" className="grid grid-cols-3 gap-3">
+        {statTiles.map((tile) => (
+          <div key={tile.label} className={`${cardClass} p-3`}>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{tile.label}</p>
+            <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
+              {impact.isError ? '—' : (tile.value ?? '…')}
+            </p>
+          </div>
+        ))}
+      </section>
       <section className={cardClass}>
         <div className="p-5 md:p-6">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Your next ride</h2>
@@ -128,11 +147,6 @@ function VolunteerHome(): React.JSX.Element {
                   ? "No open rides right now — we'll let you know."
                   : `${offers.length} ride${offers.length === 1 ? '' : 's'} waiting for an answer`}
             </h2>
-            {impact.data ? (
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                {impact.data.totals.completed} completed · {impact.data.totals.completedThisMonth} this month
-              </p>
-            ) : null}
           </div>
           <Link to="/my-trips" className={primaryButtonClass}>
             See my rides

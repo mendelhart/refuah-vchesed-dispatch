@@ -326,6 +326,8 @@ export interface IdCard {
   volunteerNumber: string;
   fullName: string;
   role: string;
+  /** Data URL of the volunteer photo, or null. */
+  photo: string | null;
   groups: string[];
   services: string[];
   capabilities: string[];
@@ -345,7 +347,7 @@ export interface IdCard {
 export async function buildIdCard(userId: string): Promise<IdCard> {
   const { number, cardToken } = await ensureVolunteerNumber(userId);
   const rows = (await db.execute(raw`
-    select u.full_name, u.role, u.created_at, u.capabilities,
+    select u.full_name, u.role, u.created_at, u.capabilities, u.photo_url,
            coalesce(array_agg(distinct g.name) filter (where g.name is not null), '{}') as groups,
            coalesce(array_agg(distinct st.name) filter (where st.name is not null), '{}') as services,
            (select name from organization_info limit 1)  as org_name,
@@ -356,12 +358,13 @@ export async function buildIdCard(userId: string): Promise<IdCard> {
     left join volunteer_services vs on vs.user_id = u.id
     left join service_types st on st.id = vs.service_type_id
     where u.id = ${userId}::uuid
-    group by u.id, u.full_name, u.role, u.created_at, u.capabilities
+    group by u.id, u.full_name, u.role, u.created_at, u.capabilities, u.photo_url
   `)) as unknown as Array<{
     full_name: string;
     role: string;
     created_at: Date;
     capabilities: string[];
+    photo_url: string | null;
     groups: string[];
     services: string[];
     org_name: string | null;
@@ -375,6 +378,7 @@ export async function buildIdCard(userId: string): Promise<IdCard> {
     volunteerNumber: number,
     fullName: row.full_name,
     role: row.role,
+    photo: row.photo_url && row.photo_url.startsWith('data:image/') ? row.photo_url : null,
     groups: row.groups ?? [],
     services: row.services ?? [],
     capabilities: row.capabilities ?? [],

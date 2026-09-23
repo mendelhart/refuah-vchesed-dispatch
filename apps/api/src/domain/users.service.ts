@@ -1,4 +1,5 @@
 import { and, asc, eq, inArray, isNull, sql as raw } from 'drizzle-orm';
+import { photoUrlFor } from '../lib/photo.js';
 import type { InviteChannel, Role } from '@rvc/shared';
 import { db, type Executor } from '../db/client.js';
 import { authTokens, organizationInfo, sessions, userGroups, users, volunteerGroups } from '../db/schema.js';
@@ -271,7 +272,7 @@ export async function listUsers(viewerRole: Role, args: ListUsersArgs) {
 
   return filtered.map((r) => ({
     id: r.id, fullName: r.fullName, role: r.role, status: r.status,
-    photoUrl: r.photoUrl, groupSlugs: r.groupSlugs, activated: Boolean(r.activated),
+    photoUrl: photoUrlFor(r.id, r.photoUrl), groupSlugs: r.groupSlugs, activated: Boolean(r.activated),
     // Volunteers see who else is on the roster, not how to contact them.
     email: privileged ? r.email : null,
     phone: privileged ? r.phone : null,
