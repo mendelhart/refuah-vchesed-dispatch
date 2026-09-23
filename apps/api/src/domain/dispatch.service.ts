@@ -892,7 +892,7 @@ export interface ClaimArgs {
   tripId?: string;
   /** Raw offer code from a deep link or SMS. */
   code?: string;
-  channel: 'app' | 'sms' | 'push' | 'dispatcher';
+  channel: 'app' | 'sms' | 'whatsapp' | 'push' | 'dispatcher';
   /** Present for SMS: the verified sending number, which must match the offer. */
   verifiedPhone?: string;
 }
@@ -966,7 +966,7 @@ export async function claimTrip(actor: TripActor, args: ClaimArgs): Promise<Clai
     // The code identifies the offer; it does not by itself prove who is using
     // it. Whoever presents it must also be the volunteer it was issued to —
     // by authenticated session, or by a Twilio-verified sending number.
-    if (args.channel === 'sms') {
+    if (args.channel === 'sms' || args.channel === 'whatsapp') {
       if (!args.verifiedPhone) return { ok: false, reason: 'not_your_offer' };
       const [owner] = await tx
         .select({ phone: users.phone })
@@ -1045,7 +1045,7 @@ export async function claimTrip(actor: TripActor, args: ClaimArgs): Promise<Clai
       tripId: trip.id,
       volunteerId: offerRow.volunteerId,
       assignedById: null,
-      source: args.channel === 'sms' ? 'sms' : 'claim',
+      source: args.channel === 'sms' || args.channel === 'whatsapp' ? 'sms' : 'claim',
     });
 
     const [volunteer] = await tx
@@ -1057,7 +1057,7 @@ export async function claimTrip(actor: TripActor, args: ClaimArgs): Promise<Clai
     await recordAudit(
       {
         actor:
-          args.channel === 'sms'
+          args.channel === 'sms' || args.channel === 'whatsapp'
             ? { ...actor.audit, userId: offerRow.volunteerId, name: volunteer?.fullName ?? 'Volunteer', role: 'volunteer' }
             : actor.audit,
         action: 'trip.claimed',

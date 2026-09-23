@@ -228,7 +228,7 @@ export const OFFER_STATUSES = [
 ] as const;
 export type OfferStatus = (typeof OFFER_STATUSES)[number];
 
-export const OFFER_RESPONSE_CHANNELS = ['app', 'sms', 'push', 'dispatcher'] as const;
+export const OFFER_RESPONSE_CHANNELS = ['app', 'sms', 'whatsapp', 'push', 'dispatcher'] as const;
 export type OfferResponseChannel = (typeof OFFER_RESPONSE_CHANNELS)[number];
 
 // ---------------------------------------------------------------------------

@@ -4,7 +4,7 @@ import { db } from '../db/client.js';
 import { notificationDeliveries, users } from '../db/schema.js';
 import { notify } from '../services/notification.service.js';
 import { captured, capturedExtra, extraFaults } from '../services/providers/inmemory.js';
-import { createTestUser, drainJobs, getApp, resetDb, shutdown } from './harness.js';
+import { api, createTestUser, drainJobs, getApp, resetDb, shutdown } from './harness.js';
 
 /**
  * WhatsApp goes through WAHA first; when WAHA fails the same text goes by SMS
@@ -12,7 +12,6 @@ import { createTestUser, drainJobs, getApp, resetDb, shutdown } from './harness.
  */
 describe('WhatsApp -> SMS fallback', () => {
   beforeAll(async () => { await getApp(); });
-  afterAll(async () => { await shutdown(); });
   beforeEach(async () => { await resetDb(); });
 
   async function whatsappVolunteer() {
@@ -54,5 +53,37 @@ describe('WhatsApp -> SMS fallback', () => {
     await notify({ userId: v.id, event: 'announcement.broadcast', title: 't', body: 'once only' });
     await drainJobs();
     expect(captured.sms.filter((m) => m.body === 'once only').length).toBe(1);
+  });
+});
+
+describe('incoming WhatsApp (WAHA webhook)', () => {
+  afterAll(async () => { await shutdown(); });
+  beforeEach(async () => { await resetDb(); });
+
+  const msg = (from: string, body: string, extra: Record<string, unknown> = {}) => ({
+    event: 'message',
+    session: 'default',
+    payload: { id: `false_${from}_${Math.random()}`, from: `${from.replace('+', '')}@c.us`, fromMe: false, body, ...extra },
+  });
+
+  it('handles STOP 2H from WhatsApp like SMS and replies on WhatsApp', async () => {
+    const v = await createTestUser({ role: 'volunteer' });
+    const res = await api('POST', '/webhooks/waha', { payload: msg(v.phone, 'stop 2h') });
+    expect(res.status).toBe(200);
+    const [row] = await db.select({ mutedUntil: users.mutedUntil }).from(users).where(eq(users.id, v.id));
+    expect(row?.mutedUntil).not.toBeNull();
+    expect(capturedExtra.whatsapp.some((m) => m.to === v.phone)).toBe(true);
+  });
+
+  it('ignores our own messages and group chats', async () => {
+    const v = await createTestUser({ role: 'volunteer' });
+    const own = await api('POST', '/webhooks/waha', { payload: msg(v.phone, 'stop 2h', { fromMe: true }) });
+    expect(own.body.ignored).toBe(true);
+    const group = await api('POST', '/webhooks/waha', {
+      payload: { event: 'message', payload: { id: 'g1', from: '12345@g.us', fromMe: false, body: 'stop 2h' } },
+    });
+    expect(group.body.ignored).toBe(true);
+    const [row] = await db.select({ mutedUntil: users.mutedUntil }).from(users).where(eq(users.id, v.id));
+    expect(row?.mutedUntil).toBeNull();
   });
 });

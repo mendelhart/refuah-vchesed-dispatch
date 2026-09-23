@@ -61,6 +61,9 @@ const envSchema = z.object({
   WAHA_BASE_URL: z.string().url().optional(),
   WAHA_API_KEY: z.string().optional(),
   WAHA_SESSION: z.string().default('default'),
+  /** HMAC key set on the WAHA session webhook; incoming WhatsApp replies are
+   *  rejected in production unless signed with it. */
+  WAHA_WEBHOOK_SECRET: z.string().optional(),
 
   // --- File storage ---------------------------------------------------------
   FILE_STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
