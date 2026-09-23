@@ -11,6 +11,8 @@ const SHOTS: Array<{ role: keyof typeof STATE_FILES; path: string; name: string 
   { role: 'dispatcher', path: '/more', name: 'dispatcher-more' },
   { role: 'dispatcher', path: '/contacts', name: 'dispatcher-contacts-all' },
   { role: 'dispatcher', path: '/volunteers', name: 'dispatcher-volunteers' },
+  { role: 'dispatcher', path: '/admin/announcements', name: 'dispatcher-broadcast' },
+  { role: 'volunteer', path: '/my-id-card', name: 'volunteer-id-card' },
   { role: 'admin', path: '/admin', name: 'admin-hub' },
   { role: 'admin', path: '/impact', name: 'admin-org-impact' },
   { role: 'admin', path: '/admin/settings', name: 'admin-dispatch-settings' },
@@ -77,6 +79,13 @@ test.describe('phone screenshots', () => {
     await page.getByRole('button', { name: 'WhatsApp' }).click();
     await page.getByRole('textbox').last().fill('Can you drive Thursday at 10?');
     await page.screenshot({ path: 'screenshots/dispatcher-volunteer-whatsapp.png' });
+    await page.getByRole('button', { name: 'Remove', exact: true }).click();
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: 'screenshots/dispatcher-volunteer-remove.png' });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Open menu' }).click();
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: 'screenshots/dispatcher-menu.png' });
     await context.close();
   });
 
