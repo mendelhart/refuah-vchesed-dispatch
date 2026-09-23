@@ -8,15 +8,15 @@
  */
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   ArrowLeft, CalendarClock, CheckCircle2, Clock, Copy, DoorOpen, FileText, MapPin, MessageSquare, Navigation, Phone,
-  PhoneCall, Repeat, Send, SquareParking, User, UserCheck, UserPlus } from 'lucide-react';
+  PhoneCall, Repeat, Send, SquareParking, User, UserCheck, UserPlus, Check } from 'lucide-react';
 import { TRIP_PRIORITIES, type TripPriority } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { saveCallerFromTrip } from '@/lib/save-caller';
-import { qk } from '@/lib/query';
+import { invalidateTrips, qk } from '@/lib/query';
 import { useAuth } from '@/lib/auth';
 import { markInstallEligible } from '@/lib/install-prompt';
 import { useCompleteTrip } from '@/lib/trip-actions';
@@ -102,13 +102,20 @@ function AccessLines({ entrance, parking }: { entrance: string | null; parking: 
 }
 
 export function TripDetailPage(): React.JSX.Element {
-
+  const queryClient = useQueryClient();
   const saveCaller = useMutation({
     mutationFn: async () => {
       if (!isFullTrip(trip)) throw new Error('Only a full trip can be saved.');
-      await saveCallerFromTrip(trip);
+      return saveCallerFromTrip(trip);
     },
-    onSuccess: () => toast.success('Caller saved to the directory. Future trips will find them by phone.'),
+    onSuccess: (saved) => {
+      invalidateTrips(queryClient, id);
+      toast.success(
+        saved.alreadyOnFile
+          ? 'That number was already in Contacts - this trip is now linked to it.'
+          : 'Saved to Contacts. Next time, typing their name or number fills in the trip.',
+      );
+    },
     onError: (error: unknown) => toast.error(errorMessage(error)),
   });
   const { id = '' } = useParams<{ id: string }>();
@@ -334,15 +341,24 @@ export function TripDetailPage(): React.JSX.Element {
                       {formatPhone(trip.callerPhone)}
                     </a>
                   ) : null}
-                  {isFullTrip(trip) && !trip.callerId && (trip.callerName || trip.callerPhone) ? (
+                  {isDispatch && isFullTrip(trip) && trip.callerId ? (
+                    <Link
+                      to={`/contacts?tab=callers&caller=${trip.callerId}`}
+                      className="inline-flex min-h-[44px] items-center gap-1 text-xs font-medium text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
+                    >
+                      <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                      In Contacts
+                    </Link>
+                  ) : null}
+                  {isDispatch && isFullTrip(trip) && !trip.callerId && (trip.callerName || trip.callerPhone) ? (
                     <button
                       type="button"
-                      className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-slate-300 px-2 text-xs text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+                      className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg bg-[#EA0029] px-3 text-sm font-medium text-white hover:bg-[#c70023] disabled:opacity-60"
                       disabled={saveCaller.isPending}
                       onClick={() => saveCaller.mutate()}
                     >
-                      <UserPlus className="h-3.5 w-3.5" aria-hidden="true" />
-                      Save to directory
+                      <UserPlus className="h-4 w-4" aria-hidden="true" />
+                      {saveCaller.isPending ? 'Saving…' : 'Save to Contacts'}
                     </button>
                   ) : null}
                 </dd>

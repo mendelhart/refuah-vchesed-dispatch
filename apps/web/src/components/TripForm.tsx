@@ -380,10 +380,10 @@ export function TripForm({
       if (!trip && isFullTrip(saved) && !saved.callerId && (saved.callerName || saved.callerPhone)) {
         toast.success('Trip created.', {
           action: {
-            label: 'Save caller to directory',
+            label: 'Save caller to Contacts',
             onClick: () => {
               saveCallerFromTrip(saved).then(
-                () => toast.success('Caller saved to the directory.'),
+                () => toast.success('Caller saved to Contacts.'),
                 (error: unknown) => toast.error(errorMessage(error)),
               );
             },
