@@ -23,6 +23,7 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
   const { user } = useAuth();
   const canManage = user?.role === 'dispatcher' || user?.role === 'admin';
   const [adding, setAdding] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'dispatcher' | 'volunteer'>('all');
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
 
@@ -36,6 +37,19 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
     queryFn: () =>
       api.get<UserListResponse>('/api/users', { status: 'active', ...(search ? { search } : {}), limit: 200 }),
   });
+
+  // Admins, then dispatchers (the coordinators), then volunteers; A-Z within.
+  const ROLE_ORDER: Record<string, number> = { admin: 0, dispatcher: 1, volunteer: 2 };
+  const roster = (people.data?.users ?? [])
+    .filter((p) => roleFilter === 'all' || p.role === roleFilter)
+    .slice()
+    .sort((a, b) => (ROLE_ORDER[a.role] ?? 9) - (ROLE_ORDER[b.role] ?? 9) || a.fullName.localeCompare(b.fullName));
+  const ROLE_CHIPS = [
+    { id: 'all', label: 'All' },
+    { id: 'admin', label: 'Admins' },
+    { id: 'dispatcher', label: 'Dispatchers / coordinators' },
+    { id: 'volunteer', label: 'Volunteers' },
+  ] as const;
 
   return (
     <div className="space-y-6">
@@ -65,11 +79,28 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
         />
       </div>
 
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]" role="group" aria-label="Filter by role">
+        {ROLE_CHIPS.map((chip) => (
+          <button
+            key={chip.id}
+            type="button"
+            onClick={() => setRoleFilter(chip.id)}
+            className={
+              roleFilter === chip.id
+                ? 'min-h-[44px] flex-shrink-0 whitespace-nowrap rounded-lg border border-[#EA0029] bg-[#EA0029]/10 px-3 text-sm font-medium text-[#EA0029]'
+                : 'min-h-[44px] flex-shrink-0 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200'
+            }
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
+
       {people.isPending ? (
         <ListSkeleton rows={4} lines={2} />
       ) : people.isError ? (
         <ErrorState error={people.error} onRetry={() => void people.refetch()} what="the directory" />
-      ) : people.data.users.length === 0 ? (
+      ) : roster.length === 0 ? (
         <EmptyState
           icon={Users}
           title={search ? `Nobody on the roster matches "${search}".` : 'The roster is empty.'}
@@ -77,7 +108,7 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
         />
       ) : (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {people.data.users.map((person) => (
+          {roster.map((person) => (
             <li key={person.id} className={`${cardClass} p-4`}>
               <div className="flex items-start gap-3">
                 <span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full bg-red-50 text-sm font-semibold text-[#EA0029] dark:bg-red-950/40">
