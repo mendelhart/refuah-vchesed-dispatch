@@ -87,10 +87,10 @@ test.describe('phone screenshots', () => {
     const page = await context.newPage();
     await page.goto('/volunteers');
     await page.getByRole('button', { name: 'Add volunteer' }).click();
-    await page.getByLabel('Full name').fill('Screenshot Driver');
-    await page.getByLabel(/Mobile number/).fill('514 555 7321');
-    await page.getByLabel(/Email/).fill('shot.driver@example.test');
-    await page.getByRole('checkbox', { name: /Email/ }).check();
+    await page.locator('#person-name').fill('Screenshot Driver');
+    await page.locator('#person-phone').fill('514 555 7321');
+    await page.locator('#person-email').fill('shot.driver@example.test');
+    await page.getByRole('checkbox', { name: /^Email/ }).check();
     await page.screenshot({ path: 'screenshots/dispatcher-add-volunteer-form.png' });
     await page.getByRole('button', { name: 'Add and invite' }).click();
     await page.getByText('Set-up link (valid 7 days)').waitFor({ timeout: 15_000 });
