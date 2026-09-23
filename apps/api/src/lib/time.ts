@@ -154,6 +154,14 @@ export function minuteToClock(minuteOfDay: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
+/** 12-hour clock for people: 870 -> "2:30 PM", 1440 -> "12:00 AM". */
+export function minuteToClock12(minuteOfDay: number): string {
+  const wrapped = ((minuteOfDay % 1440) + 1440) % 1440;
+  const h = Math.floor(wrapped / 60);
+  const m = wrapped % 60;
+  return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+}
+
 export function clockToMinute(clock: string): number {
   const [h, m] = clock.split(':').map(Number);
   if (h === undefined || m === undefined || Number.isNaN(h) || Number.isNaN(m)) {
@@ -164,8 +172,9 @@ export function clockToMinute(clock: string): number {
 
 /** Human date+time for messages, always in the organisation's zone. */
 export function formatWhen(instant: Date, timeZone: string = ORG_TIMEZONE): string {
-  return instant.toLocaleString('en-CA', {
+  return instant.toLocaleString('en-US', {
     timeZone,
+    hour12: true,
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -175,8 +184,9 @@ export function formatWhen(instant: Date, timeZone: string = ORG_TIMEZONE): stri
 }
 
 export function formatClock(instant: Date, timeZone: string = ORG_TIMEZONE): string {
-  return instant.toLocaleTimeString('en-CA', {
+  return instant.toLocaleTimeString('en-US', {
     timeZone,
+    hour12: true,
     hour: 'numeric',
     minute: '2-digit',
   });

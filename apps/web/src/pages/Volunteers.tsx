@@ -21,7 +21,7 @@ import { CalendarDays, List, Phone, Plus, Search, Trash2, Users } from 'lucide-r
 import { VOLUNTEER_CAPABILITIES, type VolunteerCapability } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
-import { formatDate, formatDateTime, relativeTime, telHref, titleCase, formatPhone } from '@/lib/format';
+import { formatDate, formatDateTime, formatMinuteOfDay, relativeTime, telHref, titleCase, formatPhone } from '@/lib/format';
 import { Modal } from '@/components/Modal';
 import {
   EmptyState, ErrorState, InlineSpinner, ListSkeleton, PageHeader, cardClass, inputClass, labelClass,
@@ -473,7 +473,7 @@ function FortnightView({ rows }: { rows: VolunteerRow[] }): React.JSX.Element {
           hours:
             windows.length > 0
               ? windows
-                  .map((window) => `${minutesToTime(window.startMinute)}–${minutesToTime(window.endMinute)}`)
+                  .map((window) => `${formatMinuteOfDay(window.startMinute)}–${formatMinuteOfDay(window.endMinute)}`)
                   .join(', ')
               : 'Free by arrangement',
         });

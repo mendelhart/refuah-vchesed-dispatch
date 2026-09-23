@@ -4,14 +4,16 @@
  */
 import type { MobilityNeed, TripPriority, TripStatus, TripType } from '@rvc/shared';
 
-const dateTimeFormat = new Intl.DateTimeFormat('en-CA', {
+// Times are 12-hour with AM/PM everywhere (Mendel's call, Sept 2026).
+const dateTimeFormat = new Intl.DateTimeFormat('en-US', {
+  hour12: true,
   weekday: 'short',
   month: 'short',
   day: 'numeric',
   hour: 'numeric',
   minute: '2-digit',
 });
-const timeFormat = new Intl.DateTimeFormat('en-CA', { hour: 'numeric', minute: '2-digit' });
+const timeFormat = new Intl.DateTimeFormat('en-US', { hour12: true, hour: 'numeric', minute: '2-digit' });
 const dateFormat = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
 const monthYearFormat = new Intl.DateTimeFormat('en-CA', { month: 'long', year: 'numeric' });
 
@@ -161,4 +163,12 @@ export function titleCase(value: string): string {
   return value
     .replace(/[_.]/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** A minute of the day as a 12-hour clock: 870 -> "2:30 PM". */
+export function formatMinuteOfDay(minuteOfDay: number): string {
+  const wrapped = ((minuteOfDay % 1440) + 1440) % 1440;
+  const h = Math.floor(wrapped / 60);
+  const m = wrapped % 60;
+  return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 }

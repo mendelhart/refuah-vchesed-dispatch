@@ -18,7 +18,7 @@ import {
 } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
-import { formatDate, formatDateTime, mobilityLabel, priorityLabel, statusClass, statusLabel, titleCase, tripTypeLabel } from '@/lib/format';
+import { formatDate, formatDateTime, formatMinuteOfDay, mobilityLabel, priorityLabel, statusClass, statusLabel, titleCase, tripTypeLabel } from '@/lib/format';
 import { Modal } from '@/components/Modal';
 import { AddressFields, emptyAddress, toAddressInput, type AddressDraft } from '@/components/AddressAutocomplete';
 import {
@@ -93,11 +93,6 @@ const RIDE_STATUS_CLASSES: Record<string, string> = {
   ended: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
 };
 
-function minutesToTime(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  return `${String(hours).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
-}
-
 /** Null rather than NaN, so a half-typed time never reaches the API as 0. */
 function timeToMinutes(value: string): number | null {
   const match = /^(\d{1,2}):(\d{2})$/.exec(value);
@@ -109,7 +104,7 @@ function timeToMinutes(value: string): number | null {
 }
 
 function describeSchedule(ride: RecurringRideCore): string {
-  const time = minutesToTime(ride.pickupMinute);
+  const time = formatMinuteOfDay(ride.pickupMinute);
   if (ride.frequency === 'monthly') {
     return `${FREQUENCY_LABELS.monthly ?? 'Monthly'} on day ${ride.byMonthDay ?? '—'} at ${time}`;
   }

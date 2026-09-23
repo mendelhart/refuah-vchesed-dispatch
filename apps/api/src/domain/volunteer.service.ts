@@ -15,7 +15,7 @@ import {
 } from '../db/schema.js';
 import { Errors } from '../lib/errors.js';
 import { recordAudit, type AuditActor } from '../lib/audit.js';
-import { minuteToClock } from '../lib/time.js';
+import { minuteToClock12 } from '../lib/time.js';
 import { generateToken } from '../lib/crypto.js';
 
 /**
@@ -102,7 +102,7 @@ export async function setAvailability(
 }
 
 function describeWindow(w: { weekday: number; startMinute: number; endMinute: number }): string {
-  return `${WEEKDAYS[w.weekday] ?? w.weekday} ${minuteToClock(w.startMinute)}–${minuteToClock(w.endMinute)}`;
+  return `${WEEKDAYS[w.weekday] ?? w.weekday} ${minuteToClock12(w.startMinute)}–${minuteToClock12(w.endMinute)}`;
 }
 
 export async function getAvailability(userId: string, exec: Executor = db) {

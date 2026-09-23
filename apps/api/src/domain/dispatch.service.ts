@@ -169,7 +169,7 @@ async function offerWindowMinutes(exec: Executor, priority: string): Promise<num
 async function resolveCaller(
   exec: Executor,
   input: { callerId?: string | null; callerName?: string | null; callerPhone?: string | null },
-  actorUserId: string | null,
+  _actorUserId: string | null,
 ): Promise<{ callerId: string | null; callerName: string | null; callerPhone: string | null }> {
   const phone = normalizePhone(input.callerPhone ?? null);
   const name = input.callerName?.trim() || null;
@@ -205,15 +205,9 @@ async function resolveCaller(
     return { callerId: existing.id, callerName: name ?? existing.name, callerPhone: phone };
   }
 
-  // A new number with a name attached becomes a directory entry. Without a
-  // name there is nothing worth filing, so the trip keeps the number alone.
-  if (!name) return { callerId: null, callerName: null, callerPhone: phone };
-
-  const [created] = await exec
-    .insert(callers)
-    .values({ name, primaryPhone: phone, createdById: actorUserId })
-    .returning();
-  return { callerId: created!.id, callerName: name, callerPhone: phone };
+  // A number not on file stays on the trip only. Dispatch saves the caller to
+  // Contacts deliberately, with the "Save to Contacts" button on the trip.
+  return { callerId: null, callerName: name, callerPhone: phone };
 }
 
 /** Remembers an address against a caller so it is offered next time. */
@@ -1081,7 +1075,7 @@ export async function claimTrip(actor: TripActor, args: ClaimArgs): Promise<Clai
           `You have trip ${trip.reference}.\n` +
           `Caller: ${trip.callerName ?? 'n/a'} ${trip.callerPhone ?? ''}\n` +
           `Pickup: ${pickup!.line1}${pickup!.unit ? ` #${pickup!.unit}` : ''}, ${pickup!.city}\n` +
-          `When: ${trip.pickupAt.toLocaleString('en-CA', { timeZone: 'America/Toronto' })}` +
+          `When: ${formatWhen(trip.pickupAt)}` +
           (trip.passengerNotes ? `\nNotes: ${trip.passengerNotes}` : ''),
         tripId: trip.id,
         payload: { reference: trip.reference },
@@ -1194,7 +1188,7 @@ export async function assignTrip(
         title: `Assigned — ${updated.reference}`,
         body:
           `${actor.user.fullName} assigned you trip ${updated.reference} for ` +
-          `${updated.pickupAt.toLocaleString('en-CA', { timeZone: 'America/Toronto' })}.` +
+          `${formatWhen(updated.pickupAt)}.` +
           `\nOpen the app for full details.`,
         tripId,
         forceChannels: ['sms', 'push'],
@@ -1284,7 +1278,7 @@ export async function reassignTrip(
         userId: volunteerId,
         event: 'trip.assigned',
         title: `Assigned — ${updated!.reference}`,
-        body: `${actor.user.fullName} assigned you trip ${updated!.reference} for ${updated!.pickupAt.toLocaleString('en-CA', { timeZone: 'America/Toronto' })}.`,
+        body: `${actor.user.fullName} assigned you trip ${updated!.reference} for ${formatWhen(updated!.pickupAt)}.`,
         tripId,
         forceChannels: ['sms', 'push'],
       },
@@ -1419,7 +1413,7 @@ export async function cancelTrip(actor: TripActor, tripId: string, reason: strin
           event: 'trip.cancelled',
           title: `Cancelled — ${updated!.reference}`,
           body:
-            `Trip ${updated!.reference} (${updated!.pickupAt.toLocaleString('en-CA', { timeZone: 'America/Toronto' })}) ` +
+            `Trip ${updated!.reference} (${formatWhen(updated!.pickupAt)}) ` +
             `was cancelled by ${actor.user.fullName}.\nReason: ${reason}`,
           tripId,
         },
@@ -1559,7 +1553,7 @@ export async function expireOffer(offerId: string): Promise<void> {
           event: 'trip.expired',
           title: `No answer — ${trip.reference}`,
           body:
-            `Nobody accepted trip ${trip.reference} (pickup ${trip.pickupAt.toLocaleString('en-CA', { timeZone: 'America/Toronto' })}). ` +
+            `Nobody accepted trip ${trip.reference} (pickup ${formatWhen(trip.pickupAt)}). ` +
             `It needs a direct assignment or a wider broadcast.`,
           tripId: trip.id,
         },
