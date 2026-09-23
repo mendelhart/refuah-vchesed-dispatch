@@ -86,6 +86,11 @@ services:
       - key: COOKIE_SECURE
         value: 'true'
 
+      # Two-step sign-in stays off until the app has its own domain (email
+      # codes and authenticator enrolment depend on it). Flip to 'true' then.
+      - key: MFA_REQUIRED
+        value: 'false'
+
       # The browser only ever addresses the web service; nginx there forwards
       # /api and /webhooks. So the public origin, as far as anything user-facing
       # is concerned, is the WEB host — and that is what invitation links, reset

@@ -82,6 +82,9 @@ const envSchema = z.object({
    * those features refuse to store anything rather than storing it in clear.
    */
   FIELD_ENCRYPTION_KEY: z.string().optional(),
+  FIELD_ENCRYPTION_KEY_ID: z.string().regex(/^[A-Za-z0-9_-]{1,32}$/).optional(),
+  FIELD_ENCRYPTION_OLD_KEYS: z.string().optional(),
+  FIELD_ENCRYPTION_ROTATE_ON_BOOT: bool(false),
 
   // --- Driver licence verification -----------------------------------------
   // There is no default provider and no built-in verification. With this unset,
@@ -157,6 +160,14 @@ function load(): Env {
       throw new Error(
         `FIELD_ENCRYPTION_KEY must decode to exactly 32 bytes (got ${bytes.length}). Generate one with: openssl rand -base64 32`,
       );
+    }
+  }
+  if (env.FIELD_ENCRYPTION_OLD_KEYS) {
+    for (const part of env.FIELD_ENCRYPTION_OLD_KEYS.split(',').map((p) => p.trim()).filter(Boolean)) {
+      const i = part.indexOf(':');
+      if (i <= 0 || Buffer.from(part.slice(i + 1), 'base64').length !== 32) {
+        throw new Error('FIELD_ENCRYPTION_OLD_KEYS must be a comma list of id:base64key, each key 32 bytes');
+      }
     }
   }
 

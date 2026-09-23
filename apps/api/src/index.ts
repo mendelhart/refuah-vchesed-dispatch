@@ -8,6 +8,7 @@ import { runMigrations } from './db/migrate.js';
 import { logProviderSelection } from './services/providers/index.js';
 import { bootstrapReferenceData } from './db/bootstrap.js';
 import { bootstrapAdmin } from './db/bootstrap-admin.js';
+import { rotateFieldKeys } from './lib/key-rotation.js';
 import { initMonitoring, installProcessHandlers } from './lib/monitoring.js';
 
 async function main(): Promise<void> {
@@ -17,6 +18,10 @@ async function main(): Promise<void> {
   await bootstrapReferenceData();
   await bootstrapAdmin();
   logProviderSelection();
+  if (env.FIELD_ENCRYPTION_ROTATE_ON_BOOT) {
+    // Non-destructive and idempotent; a failure is logged, never fatal to boot.
+    void rotateFieldKeys().catch((err: unknown) => logger.error({ err }, 'field key rotation failed'));
+  }
 
   const app = await buildServer();
   await startEventBridge();
