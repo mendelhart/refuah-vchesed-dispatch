@@ -78,6 +78,27 @@ no operational reason. See [SECURITY.md](SECURITY.md#retention).
 If 24 hours of loss is ever judged unacceptable, the answer is WAL archiving /
 point-in-time recovery on the Postgres cluster, not more frequent `pg_dump`.
 
+**Is 24 hours right for live dispatch? (audit, September 2026)** For a first
+season it is workable only because dispatchers keep paper notes: losing a day
+means re-entering that day's rides from paper and re-checking who is driving
+tomorrow. It is not equivalent to point-in-time recovery, and this document
+does not claim it is. What exists today:
+
+- nightly encrypted `pg_dump` via GitHub Actions (`.github/workflows/backup.yml`) —
+  **not running yet**: the `BACKUP_DATABASE_URL` and `BACKUP_PASSPHRASE`
+  repository secrets are not set, so every nightly run fails at its first step
+  (visible in the Actions tab);
+- uploaded files (licence photos) live in the database (`FILE_STORAGE_DRIVER=db`),
+  so the same dump covers them;
+- encryption keys are *not* in the dump by design — recovery needs the
+  `FIELD_ENCRYPTION_KEY` (and any `FIELD_ENCRYPTION_OLD_KEYS`) from the owner's
+  vault; see KEY_ROTATION.md.
+
+Production-hardening enhancement, not done: WAL archiving / PITR (a paid
+Postgres tier on Render, or a managed provider). Until then, the recovery point
+is "last successful nightly dump", and backup failures show on the Actions tab
+only — add an email notification for failed workflow runs in GitHub settings.
+
 ---
 
 ## Setting up the nightly backup
