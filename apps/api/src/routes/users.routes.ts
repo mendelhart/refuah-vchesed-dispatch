@@ -93,6 +93,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   app.post('/api/users/:id/message', { preHandler: requireDispatcher }, async (req) => {
     const { id } = idParam.parse(req.params);
     const body = directMessageSchema.parse(req.body);
+    await assertCanManagePerson(currentUser(req), id, { verb: 'message' });
     return messageVolunteer(actorFrom(req), id, body.channel, body.body);
   });
 

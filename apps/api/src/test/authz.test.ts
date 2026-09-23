@@ -127,6 +127,25 @@ describe('authorization', () => {
     })).status).toBe(200);
   });
 
+  it('keeps coordinators to volunteers only (one shared rule)', async () => {
+    const other = await createTestUser({ role: 'dispatcher', groups: [] });
+    for (const [url, payload] of [
+      [`/api/users/${other.id}/message`, { channel: 'sms', body: 'hi' }],
+      [`/api/users/${other.id}/suspend`, {}],
+      [`/api/users/${other.id}/deactivate`, { reason: 'x' }],
+      [`/api/users/${admin.id}/message`, { channel: 'sms', body: 'hi' }],
+      [`/api/users/${dispatcher.id}/deactivate`, { reason: 'x' }],
+    ] as const) {
+      expect((await api('POST', url, { cookie: dispatcher.cookie, payload })).status, url).toBe(403);
+    }
+    expect((await api('PATCH', `/api/users/${admin.id}`, {
+      cookie: dispatcher.cookie, payload: { fullName: 'Nope' },
+    })).status).toBe(403);
+    expect((await api('POST', `/api/users/${other.id}/message`, {
+      cookie: admin.cookie, payload: { channel: 'sms', body: 'hi' },
+    })).status).toBe(200);
+  });
+
   it('will not let a volunteer promote themselves', async () => {
     const res = await api('POST', `/api/users/${volunteer.id}/role`, {
       cookie: volunteer.cookie, payload: { role: 'admin' },
