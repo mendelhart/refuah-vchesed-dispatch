@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { errorMessage, api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { inputClass, labelClass, primaryButtonClass } from '@/components/states';
+import { PasswordInput } from '@/components/PasswordInput';
 
 interface LocationState {
   from?: string;
@@ -86,9 +87,8 @@ export function LoginPage(): React.JSX.Element {
             <label htmlFor="password" className={labelClass}>
               Password
             </label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
               autoComplete="current-password"
               required
               className={inputClass}

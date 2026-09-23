@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { resetPasswordSchema } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { inputClass, labelClass, primaryButtonClass } from '@/components/states';
+import { PasswordInput } from '@/components/PasswordInput';
 
 export function ResetPasswordPage(): React.JSX.Element {
   const [params] = useSearchParams();
@@ -58,9 +59,8 @@ export function ResetPasswordPage(): React.JSX.Element {
               <label htmlFor="reset-password" className={labelClass}>
                 New password
               </label>
-              <input
+              <PasswordInput
                 id="reset-password"
-                type="password"
                 autoComplete="new-password"
                 className={inputClass}
                 value={password}

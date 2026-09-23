@@ -6,6 +6,7 @@ import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { inputClass, labelClass, primaryButtonClass } from '@/components/states';
 import type { SessionResponse } from '@/types/api';
+import { PasswordInput } from '@/components/PasswordInput';
 
 export function AcceptInvitePage(): React.JSX.Element {
   const [params] = useSearchParams();
@@ -93,9 +94,8 @@ export function AcceptInvitePage(): React.JSX.Element {
           <label htmlFor="new-password" className={labelClass}>
             Choose a password
           </label>
-          <input
+          <PasswordInput
             id="new-password"
-            type="password"
             autoComplete="new-password"
             className={inputClass}
             value={password}
