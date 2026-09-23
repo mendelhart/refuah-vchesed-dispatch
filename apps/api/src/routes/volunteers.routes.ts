@@ -41,6 +41,7 @@ import { storeFile, readFile } from '../services/files.service.js';
 import { db } from '../db/client.js';
 import { users } from '../db/schema.js';
 import { and, eq, isNull, sql as raw } from 'drizzle-orm';
+import { assertCanManagePerson } from '../auth/permissions.js';
 
 const idParam = z.object({ id: uuidSchema });
 
@@ -315,11 +316,7 @@ export async function volunteerRoutes(app: FastifyInstance): Promise<void> {
   // Coordinators may reissue a volunteer's card (or their own); admins anyone's.
   app.post('/api/volunteers/:id/card/reissue', { preHandler: requireDispatcher }, async (req) => {
     const { id } = idParam.parse(req.params);
-    const me = currentUser(req);
-    if (me.role !== 'admin' && id !== me.id) {
-      const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id)).limit(1);
-      if (!target || target.role !== 'volunteer') throw Errors.forbidden('Only an admin can reissue a coordinator or admin card.');
-    }
+    await assertCanManagePerson(currentUser(req), id, { verb: 'reissue the card of', allowSelf: true });
     await reissueCardToken(actorFrom(req), id);
     return { ok: true };
   });

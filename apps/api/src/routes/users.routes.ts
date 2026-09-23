@@ -13,6 +13,7 @@ import { volunteerImpact, organizationImpact } from '../domain/impact.js';
 import { loadSessionUser } from '../auth/session.js';
 import { recordAudit } from '../lib/audit.js';
 import { revokeAllSessionsForUser } from '../auth/session.js';
+import { assertCanManagePerson } from '../auth/permissions.js';
 import { normalizePhone } from '../lib/phone.js';
 import { channelStatus, vapidPublicKey } from '../services/providers/index.js';
 import { Errors } from '../lib/errors.js';
@@ -99,10 +100,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const { id } = idParam.parse(req.params);
     const body = updateUserSchema.parse(req.body);
     const actor = currentUser(req);
-    if (actor.role !== 'admin' && id !== actor.id) {
-      const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id)).limit(1);
-      if (target && target.role === 'admin') throw Errors.forbidden('Only an admin can change an admin.');
-    }
+    await assertCanManagePerson(actor, id, { verb: 'change', coordinatorMay: 'non-admins', allowSelf: true });
     // Dispatchers may maintain the roster; only admins may change status.
     if (actor.role !== 'admin' && body.status) throw Errors.forbidden('Only administrators can change account status.');
     const updated = await updateUser(actorFrom(req), id, body as Record<string, unknown>);
@@ -128,14 +126,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     return { user: { id: updated.id, role: updated.role } };
   });
 
-  const volunteerOnlyForCoordinators = async (req: Parameters<typeof currentUser>[0], id: string, verb: string) => {
-    const me = currentUser(req);
-    if (me.role === 'admin') return;
-    const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id)).limit(1);
-    if (!target || target.role !== 'volunteer' || id === me.id) {
-      throw Errors.forbidden(`Only an admin can ${verb} a coordinator or admin.`);
-    }
-  };
+  const volunteerOnlyForCoordinators = (req: Parameters<typeof currentUser>[0], id: string, verb: string) =>
+    assertCanManagePerson(currentUser(req), id, { verb });
   app.post('/api/users/:id/suspend', { preHandler: requireDispatcher }, async (req) => {
     const { id } = idParam.parse(req.params);
     const body = suspendUserSchema.parse(req.body);
@@ -154,13 +146,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   app.post('/api/users/:id/deactivate', { preHandler: requireDispatcher }, async (req) => {
     const { id } = idParam.parse(req.params);
     const body = z.object({ reason: z.string().trim().min(1).max(500) }).parse(req.body);
-    const me = currentUser(req);
-    if (me.role !== 'admin') {
-      const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id)).limit(1);
-      if (!target || target.role !== 'volunteer' || id === me.id) {
-        throw Errors.forbidden('Only an admin can remove a coordinator or admin.');
-      }
-    }
+    await assertCanManagePerson(currentUser(req), id, { verb: 'remove' });
     await deactivateUser(actorFrom(req), id, body.reason);
     return { ok: true };
   });
