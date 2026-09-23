@@ -132,14 +132,20 @@ services:
       - key: BOOTSTRAP_ADMIN_NAME
         value: Administrator
 
-      # Nothing is wired to the outside world. With Twilio, WAHA, VAPID and SMTP
-      # all absent, the API selects its in-memory providers: every message is
-      # recorded as a delivery row and logged, and none is sent. That is the
+      # Nothing is wired to the outside world. MESSAGING_TEST_MODE makes every
+      # channel without credentials (Twilio, WAHA, VAPID, SMTP) use the
+      # in-memory provider: every message is recorded as a delivery row in
+      # Admin > Notifications and logged, and none is sent. Remove it (or set
+      # 'false') once real credentials are in; configured channels send for
+      # real either way. That is the
       # honest state for a preview — a trial deployment that quietly texts real
       # volunteers would be worse than one that sends nothing.
       #
       # Public signup is off for the same reason: this URL is guessable, and an
       # applicant who fills the form here would be applying to nothing.
+      - key: MESSAGING_TEST_MODE
+        value: 'true'
+
       - key: PUBLIC_SIGNUP_ENABLED
         value: 'false'
 

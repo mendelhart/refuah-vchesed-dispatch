@@ -98,6 +98,15 @@ const envSchema = z.object({
   BOOTSTRAP_ADMIN_EMAIL: z.string().email().optional(),
   BOOTSTRAP_ADMIN_NAME: z.string().default('Administrator'),
 
+  /**
+   * Test mode for a trial deployment. When true, any messaging channel without
+   * real credentials (SMS, voice, WhatsApp, email, push) uses the in-memory
+   * provider: the message is recorded as delivered in the notification log and
+   * nothing leaves the server. Configured channels still send for real.
+   * Without this flag a production server with no Twilio/WAHA fails every send.
+   */
+  MESSAGING_TEST_MODE: bool(false),
+
   // --- Public signup --------------------------------------------------------
   PUBLIC_SIGNUP_ENABLED: bool(true),
   SIGNUP_MAX_PER_IP_PER_HOUR: z.coerce.number().int().min(1).max(100).default(5),

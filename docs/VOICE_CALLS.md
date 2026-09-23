@@ -20,12 +20,15 @@ is going unanswered.
 | Voice    | Twilio Voice             | SMS after the call fails or goes unanswered |
 | Push     | Web Push                 | -                                         |
 
-## Volunteer preference
+## Volunteer preference (decided)
 
-- New value `voice` for `notification_preference`, set by the volunteer
-  (profile) or by a dispatcher (People / Volunteers).
-- Optional quiet hours for calls (default: no calls 22:00-07:00 unless the trip
-  is marked urgent). Texts are not affected.
+- Every volunteer picks their own channel: **App** (push + in-app),
+  **SMS**, **WhatsApp** or **Voice call**. New value `voice` for
+  `notification_preference`.
+- The volunteer sets it in Settings; a dispatcher or admin can switch it for
+  any volunteer from People / Volunteers at any time. No channel is reserved
+  for specific people - who gets calls is whatever the org sets up.
+- Quiet hours for calls: open question (see below). Texts are not affected.
 - Calls are never the only carrier: push + in-app always go too, and an
   unanswered call falls back to SMS (below).
 
@@ -37,7 +40,7 @@ is going unanswered.
    `machineDetection=DetectMessageEnd`, a status callback, and a 30s ring timeout.
 3. When answered by a person, Twilio fetches TwiML from
    `POST /webhooks/twilio/voice-offer/:deliveryId` (signature-checked like the
-   SMS webhook). The call says, in English (French/Yiddish recordings later):
+   SMS webhook). The call says, in English (English only - decided):
 
    > "Hello Yaakov, this is Refuah V'Chesed dispatch. Trip 1 2 4 7.
    > Pickup Côte-des-Neiges, at 2:30 this afternoon, going to the Jewish
@@ -99,10 +102,11 @@ is going unanswered.
 
 1. `CallingProvider.placeAnnouncementCall()` in the Twilio adapter + memory
    double for tests (about 1h).
-2. `voice` channel in notify/deliver, preference value, quiet hours (1-2h).
+2. `voice` channel in notify/deliver, preference value, quiet hours if wanted (1-2h).
 3. Voice webhooks: offer TwiML, answer handling via `claimTrip`, status
    callback, retry/fallback job (2-3h).
-4. UI: preference option in profile and People, timeline entries (1h).
+4. UI: channel picker in Settings and a dispatcher override in People /
+   Volunteers, timeline entries (1h).
 5. Tests: accept by keypress, accept by speech, taken-first, no-answer ->
    retry -> SMS, voicemail, signature rejection (1-2h).
 
@@ -112,8 +116,10 @@ call to a volunteer's phone.
 
 ## Decisions needed
 
-1. Languages for the spoken message (English only first, or also French /
-   Yiddish recordings?).
-2. Quiet hours for calls (proposed 22:00-07:00, urgent trips excepted).
-3. Should voice be offered to every volunteer, or only switched on by a
-   dispatcher for specific people?
+Decided (Sep 22):
+- Language: English only.
+- Who gets calls: every volunteer can choose SMS, voice, WhatsApp or the app,
+  and dispatchers can switch it for them.
+
+Still open:
+1. Quiet hours for calls (proposed 22:00-07:00, urgent trips excepted).

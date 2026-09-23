@@ -33,10 +33,28 @@ import type {
  * Provider selection happens once, here. Nothing else in the codebase knows
  * which vendor is in use.
  */
-const useMemory = isTest || env.NODE_ENV === 'development';
+const isDevOrTest = isTest || env.NODE_ENV === 'development';
+const useMemory = isDevOrTest || env.MESSAGING_TEST_MODE;
+
+if (env.MESSAGING_TEST_MODE && !isDevOrTest) {
+  logger.warn(
+    'MESSAGING_TEST_MODE is on: unconfigured channels are recorded in the notification log and not sent.',
+  );
+}
+
+/**
+ * The in-memory providers accept every webhook signature, which is right in
+ * tests and wrong on a public server. In test mode on a real deployment,
+ * refuse inbound webhooks for channels that are not really configured.
+ */
+function noWebhooks<T extends { validateWebhookSignature: (...a: never[]) => boolean }>(p: T): T {
+  return isDevOrTest ? p : { ...p, validateWebhookSignature: () => false };
+}
+const memSms = noWebhooks(memorySmsProvider);
+const memCalling = noWebhooks(memoryCallingProvider);
 
 export const smsProvider: SmsProvider =
-  twilioSmsProvider.enabled ? twilioSmsProvider : useMemory ? memorySmsProvider : twilioSmsProvider;
+  twilioSmsProvider.enabled ? twilioSmsProvider : useMemory ? memSms : twilioSmsProvider;
 
 export const pushProvider: PushProvider =
   webPushProvider.enabled ? webPushProvider : useMemory ? memoryPushProvider : webPushProvider;
@@ -45,7 +63,7 @@ export const callingProvider: CallingProvider =
   twilioCallingProvider.enabled
     ? twilioCallingProvider
     : useMemory
-      ? memoryCallingProvider
+      ? memCalling
       : twilioCallingProvider;
 
 export const geocodingProvider: GeocodingProvider = nominatimProvider;
