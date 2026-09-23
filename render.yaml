@@ -86,6 +86,11 @@ services:
       - key: COOKIE_SECURE
         value: 'true'
 
+      # Render free disks are wiped on every deploy and restart, so uploaded
+      # files (licence images) live in Postgres and ride along in its backups.
+      - key: FILE_STORAGE_DRIVER
+        value: db
+
       # Two-step sign-in stays off until the app has its own domain (email
       # codes and authenticator enrolment depend on it). Flip to 'true' then.
       - key: MFA_REQUIRED

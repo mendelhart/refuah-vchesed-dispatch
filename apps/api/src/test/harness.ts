@@ -77,7 +77,7 @@ export async function resetDb(): Promise<void> {
       trip_offers, trip_assignments, recurring_ride_occurrences, recurring_rides,
       trips, caller_addresses, callers, addresses,
       availability_rules, availability_exceptions, volunteer_services, service_types,
-      driver_licences, volunteer_applications, stored_files, data_exports, announcements,
+      driver_licences, volunteer_applications, stored_files, stored_file_blobs, data_exports, announcements,
       duty_shifts, message_template_versions, message_templates,
       equipment_loans, equipment, equipment_categories, vehicles, contacts,
       organization_info, jobs, auth_tokens, sessions, user_groups, users,

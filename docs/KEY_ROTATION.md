@@ -20,6 +20,32 @@ anything.
 | `FIELD_ENCRYPTION_OLD_KEYS` | Retired keys, decrypt-only: `k1:BASE64,k0:BASE64`. |
 | `FIELD_ENCRYPTION_ROTATE_ON_BOOT` | `true` runs the re-encrypt pass once in the background at startup. |
 
+## Storing and backing up the key
+
+- The key lives only in the host's secret settings (Render: rvc-api > Environment).
+  It is never committed; `.env` is git-ignored and `.env.example` has no value.
+- Keep a second copy in the organisation's password manager, labelled with its
+  key id and the date it became current. Do the same for every retired key for
+  as long as backups made while it was current still exist (30 days).
+- Never paste it into chat, email or a ticket.
+
+## Emergency recovery
+
+- Host lost, key in password manager: set it on the new host, restore the
+  database, run `npm run files:check`.
+- Key possibly leaked: rotate (below). Old ciphertext stays readable during the
+  rotation; after the pass, remove the leaked key. Backups taken earlier are still
+  readable with the leaked key, so treat them as exposed until they age out.
+
+## Total key loss
+
+If no copy of a key survives, everything encrypted with it is gone for good. That
+is the point of encryption and there is no back door. What is lost: driver licence
+numbers and images, and authenticator secrets. What is not: every trip,
+volunteer, schedule and audit record. Recovery: generate a new key, set it, run
+`npm run files:check` (affected files show as `corrupt`), ask volunteers to
+re-upload licences, and reset two-step sign-in for coordinators and admins.
+
 ## Rotating (nothing is destroyed at any step)
 
 1. Generate a new key: `openssl rand -base64 32`.

@@ -14,6 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "worker": "node dist/jobs/worker.js",
+    "files:check": "tsx --env-file-if-exists=../../.env src/db/check-files.ts",
     "keys:rotate": "tsx --env-file-if-exists=../../.env src/db/rotate-keys.ts"
   },
   "dependencies": {

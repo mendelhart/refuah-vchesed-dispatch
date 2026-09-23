@@ -19,6 +19,7 @@
 import {
   bigint,
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -1183,6 +1184,24 @@ export const storedFiles = pgTable(
     purgeIdx: index('stored_files_purge_idx').on(t.purgeAfter),
   }),
 );
+
+/**
+ * File bytes for FILE_STORAGE_DRIVER=db. Keeping the (already encrypted) bytes
+ * in Postgres means the nightly database backup is also the file backup, and a
+ * host with an ephemeral disk (Render free) cannot silently lose them.
+ */
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType: () => 'bytea',
+  toDriver: (v) => v,
+  fromDriver: (v) => Buffer.from(v),
+});
+
+export const storedFileBlobs = pgTable('stored_file_blobs', {
+  storageKey: text('storage_key').primaryKey(),
+  contentType: text('content_type').notNull(),
+  body: bytea('body').notNull(),
+  createdAt: createdAt(),
+});
 
 // ---------------------------------------------------------------------------
 // Driver licences

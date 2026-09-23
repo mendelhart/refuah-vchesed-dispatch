@@ -152,8 +152,23 @@ export async function readFile(
     .limit(1);
   if (!row) throw Errors.notFound('That file is no longer available.');
 
-  const raw_ = await objectStore.get(row.storageKey);
-  const buffer = row.encrypted ? decryptBuffer(raw_) : raw_;
+  let raw_: Buffer;
+  try {
+    raw_ = await objectStore.get(row.storageKey);
+  } catch (err) {
+    // The row survived but the bytes did not (a lost disk, a restore of the
+    // database without the files). Say so plainly instead of a bare 500; the
+    // consistency check (npm run files:check) lists every such file.
+    logger.error({ fileId, err }, 'stored file is missing from object storage');
+    throw Errors.notFound('That file is missing from storage. An administrator can ask the person to upload it again.');
+  }
+  let buffer: Buffer;
+  try {
+    buffer = row.encrypted ? decryptBuffer(raw_) : raw_;
+  } catch (err) {
+    logger.error({ fileId, err }, 'stored file could not be decrypted with any configured key');
+    throw Errors.upstream('That file could not be decrypted. Check FIELD_ENCRYPTION_KEY / FIELD_ENCRYPTION_OLD_KEYS.');
+  }
 
   // Integrity check. A file whose bytes no longer match what was stored is a
   // corrupted backup restore or tampering, and either way must not be served
@@ -202,4 +217,53 @@ export async function purgeExpiredFiles(): Promise<number> {
   }
   if (due.length) logger.info({ purged: due.length }, 'expired files purged');
   return due.length;
+}
+
+export interface FileConsistencyReport {
+  driver: string;
+  checked: number;
+  /** Database rows whose bytes are gone. */
+  missingObjects: { id: string; storageKey: string; createdAt: Date }[];
+  /** Bytes present but failing decryption or the sha256 check. */
+  corrupt: { id: string; storageKey: string; reason: string }[];
+  /** Blobs with no database row (db driver only; other drivers cannot list cheaply). */
+  orphanObjects: string[];
+}
+
+/**
+ * After a restore (or at any time): does every live file row still have
+ * readable bytes that match its checksum? Read-only; it changes nothing.
+ */
+export async function checkFileConsistency(opts: { verifyContent?: boolean } = {}): Promise<FileConsistencyReport> {
+  const verify = opts.verifyContent ?? true;
+  const rows = await db
+    .select({ id: storedFiles.id, storageKey: storedFiles.storageKey, sha256: storedFiles.sha256,
+      encrypted: storedFiles.encrypted, createdAt: storedFiles.createdAt })
+    .from(storedFiles)
+    .where(isNull(storedFiles.deletedAt));
+  const report: FileConsistencyReport = {
+    driver: objectStore.name, checked: rows.length, missingObjects: [], corrupt: [], orphanObjects: [],
+  };
+  for (const r of rows) {
+    if (!(await objectStore.exists(r.storageKey))) {
+      report.missingObjects.push({ id: r.id, storageKey: r.storageKey, createdAt: r.createdAt });
+      continue;
+    }
+    if (!verify) continue;
+    try {
+      const raw_ = await objectStore.get(r.storageKey);
+      const buf = r.encrypted ? decryptBuffer(raw_) : raw_;
+      if (sha256Hex(buf) !== r.sha256) report.corrupt.push({ id: r.id, storageKey: r.storageKey, reason: 'checksum mismatch' });
+    } catch {
+      report.corrupt.push({ id: r.id, storageKey: r.storageKey, reason: 'cannot decrypt' });
+    }
+  }
+  if (objectStore.name === 'db') {
+    const orphans = await db.execute<{ storage_key: string }>(raw`
+      select b.storage_key from stored_file_blobs b
+      left join stored_files f on f.storage_key = b.storage_key
+      where f.id is null`);
+    report.orphanObjects = [...orphans].map((o) => o.storage_key);
+  }
+  return report;
 }

@@ -13,7 +13,7 @@ import {
 } from './inmemory.js';
 import { smtpEmailProvider } from './email.js';
 import { wahaWhatsAppProvider } from './waha.js';
-import { localObjectStore, s3ObjectStore } from './objectstore.js';
+import { dbObjectStore, localObjectStore, s3ObjectStore } from './objectstore.js';
 import {
   httpLicenceVerificationProvider,
   nullLicenceVerificationProvider,
@@ -35,6 +35,12 @@ import type {
  */
 const isDevOrTest = isTest || env.NODE_ENV === 'development';
 const useMemory = isDevOrTest || env.MESSAGING_TEST_MODE;
+
+if (env.NODE_ENV === 'production' && env.FILE_STORAGE_DRIVER === 'local') {
+  logger.warn(
+    'FILE_STORAGE_DRIVER=local in production: uploaded files are only as durable as this machine\'s disk and are NOT in the database backup. Use db (or s3) unless the disk is a persistent volume.',
+  );
+}
 
 if (env.MESSAGING_TEST_MODE && !isDevOrTest) {
   logger.warn(
@@ -82,7 +88,9 @@ export const objectStore: ObjectStore = isTest
   ? memoryObjectStore
   : env.FILE_STORAGE_DRIVER === 's3'
     ? s3ObjectStore
-    : localObjectStore;
+    : env.FILE_STORAGE_DRIVER === 'db'
+      ? dbObjectStore
+      : localObjectStore;
 
 /**
  * Licence verification. The null provider is the default and is not a

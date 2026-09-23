@@ -27,6 +27,26 @@ The database is the entire system of record. There is no other copy of:
 Losing a day of this is not an inconvenience. It is a list of rides the
 organisation no longer knows it promised.
 
+### A database dump alone is not a complete backup
+
+Three things together make a restorable system:
+
+| Piece | Where it lives | How it is backed up |
+| --- | --- | --- |
+| Rows (everything above) | Postgres | nightly dump (this document) |
+| Uploaded files (licence images, broadcast pictures) | `FILE_STORAGE_DRIVER`: **`db`** on Render → table `stored_file_blobs`; `s3` → bucket; `local` → disk | `db`: inside the same dump, nothing extra. `s3`: bucket versioning + object lock. `local`: only safe on a persistent volume, and the volume needs its own snapshot |
+| Encryption key(s) | `FIELD_ENCRYPTION_KEY` (+ `FIELD_ENCRYPTION_OLD_KEYS`) in the host's secret settings, **never in the repo** | a copy kept by the administrator outside the host (password manager). See [KEY_ROTATION.md](KEY_ROTATION.md) |
+
+Nonces and authentication tags are stored inside each encrypted value and file
+(see KEY_ROTATION.md), so nothing about them needs separate backup. Without the
+key, a restored database still has every trip and volunteer, but licence numbers,
+licence images and authenticator secrets are unreadable forever.
+
+Render's free plan wipes the disk on every deploy and restart, which is why
+render.yaml sets `FILE_STORAGE_DRIVER=db`. Files stored before that change on the
+old `local` driver are gone from disk; `npm run files:check` lists them so the
+volunteer can be asked to upload the licence again.
+
 ---
 
 ## Schedule and retention
@@ -210,6 +230,37 @@ too: `next_trip_reference()`, the `audit_events` immutability triggers,
 `trip_offers_one_accepted_uq`, `trips_engaged_requires_volunteer_chk`. A schema
 restored without them is a silently weaker system, which is worse than an
 obviously broken one.
+
+### Restore order
+
+1. Recover the encryption key(s) from the password manager and set
+   `FIELD_ENCRYPTION_KEY`, `FIELD_ENCRYPTION_KEY_ID` and any
+   `FIELD_ENCRYPTION_OLD_KEYS` **before** the app starts on the restored data.
+   A backup taken before a key rotation needs the key that was current then.
+2. Restore the database (above). With the `db` driver this also restores files.
+3. With `s3`: point at the bucket (or restore the bucket version from the same
+   time as the dump). With `local`: restore the volume snapshot.
+4. Run the migrations (the app does this on boot).
+5. Verify consistency:
+
+   ```sh
+   npm run files:check -w apps/api
+   ```
+
+   It is read-only and reports, per file:
+   - `missingObjects` - **row exists, bytes missing.** The app answers with a
+     clear "file is missing from storage" (404), never a crash, and never serves
+     anything else in its place. Fix: restore the bytes from a matching
+     backup, or ask the person to upload again and delete the old row.
+   - `corrupt` - bytes present but they fail decryption (wrong or missing key)
+     or the sha256 check. Never served. Fix: set the right key; otherwise treat
+     as missing.
+   - `orphanObjects` (db driver) - **bytes exist, no row.** Harmless and never
+     reachable through the app (every read goes through a row). Delete them once
+     you are sure the matching rows are not coming from a later restore.
+
+   Exit code 0 means every live file row has readable bytes matching its
+   checksum.
 
 ### Then: reconcile
 

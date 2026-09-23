@@ -141,3 +141,41 @@ export const s3ObjectStore: ObjectStore = {
     return res.ok;
   },
 };
+
+/**
+ * Postgres driver (FILE_STORAGE_DRIVER=db).
+ *
+ * For a host whose disk does not survive a deploy or restart (Render free):
+ * the bytes, already encrypted for restricted files, live in
+ * `stored_file_blobs`, so they are inside every database backup and restore
+ * together with the rows that point at them. Fine for this volume (a few
+ * hundred licence images, each capped by the upload limit); move to s3 if that
+ * ever stops being true.
+ */
+import { eq as eqDb } from 'drizzle-orm';
+import { db } from '../../db/client.js';
+import { storedFileBlobs } from '../../db/schema.js';
+
+export const dbObjectStore: ObjectStore = {
+  name: 'db',
+  async put(key, body, contentType) {
+    await db
+      .insert(storedFileBlobs)
+      .values({ storageKey: key, contentType, body })
+      .onConflictDoUpdate({ target: storedFileBlobs.storageKey, set: { body, contentType } });
+  },
+  async get(key) {
+    const [row] = await db.select({ body: storedFileBlobs.body }).from(storedFileBlobs)
+      .where(eqDb(storedFileBlobs.storageKey, key)).limit(1);
+    if (!row) throw Object.assign(new Error(`object not found: ${key}`), { code: 'ENOENT' });
+    return row.body;
+  },
+  async delete(key) {
+    await db.delete(storedFileBlobs).where(eqDb(storedFileBlobs.storageKey, key));
+  },
+  async exists(key) {
+    const [row] = await db.select({ k: storedFileBlobs.storageKey }).from(storedFileBlobs)
+      .where(eqDb(storedFileBlobs.storageKey, key)).limit(1);
+    return !!row;
+  },
+};

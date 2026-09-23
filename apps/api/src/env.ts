@@ -68,7 +68,7 @@ const envSchema = z.object({
   WAHA_WEBHOOK_SECRET: z.string().optional(),
 
   // --- File storage ---------------------------------------------------------
-  FILE_STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
+  FILE_STORAGE_DRIVER: z.enum(['local', 's3', 'db']).default('local'),
   FILE_STORAGE_PATH: z.string().default('./var/files'),
   S3_ENDPOINT: z.string().url().optional(),
   S3_REGION: z.string().default('us-east-1'),
