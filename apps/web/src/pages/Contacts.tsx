@@ -12,7 +12,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ClipboardList, MapPin, PhoneCall, Plus, Trash2 } from 'lucide-react';
+import { ClipboardList, MapPin, Pencil, PhoneCall, Plus, Trash2 } from 'lucide-react';
 import { contactSchema } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
@@ -22,23 +22,24 @@ import {
   EmptyState, ErrorState, ListSkeleton, PageHeader, cardClass, inputClass, labelClass, primaryButtonClass,
   secondaryButtonClass,
 } from '@/components/states';
-import type { ContactsResponse, StartCallResponse } from '@/types/api';
+import type { ContactRow, ContactsResponse, StartCallResponse } from '@/types/api';
 import { formatPhone } from '@/lib/format';
 
 const HOSPITAL_ROLE = 'Hospital';
 type Filter = 'all' | 'hospitals' | 'other';
 
 const FILTERS: { value: Filter; label: string }[] = [
-  { value: 'all', label: 'All' },
   { value: 'hospitals', label: 'Hospitals' },
-  { value: 'other', label: 'Everything else' },
+  { value: 'other', label: 'Other services' },
+  { value: 'all', label: 'All' },
 ];
 
 export function ContactsPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [filter, setFilter] = useState<Filter>('all');
-  const [form, setForm] = useState({ name: '', phone: '', role: '', notes: '' });
+  const [filter, setFilter] = useState<Filter>('hospitals');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: '', phone: '', role: HOSPITAL_ROLE, notes: '' });
   const [address, setAddress] = useState<AddressDraft>(emptyAddress());
 
   const contacts = useQuery({
@@ -46,21 +47,45 @@ export function ContactsPage(): React.JSX.Element {
     queryFn: () => api.get<ContactsResponse>('/api/contacts'),
   });
 
+  const openNew = (): void => {
+    setEditingId(null);
+    setForm({ name: '', phone: '', role: filter === 'other' ? '' : HOSPITAL_ROLE, notes: '' });
+    setAddress(emptyAddress());
+    setOpen(true);
+  };
+
+  const openEdit = (contact: ContactRow): void => {
+    setEditingId(contact.id);
+    setForm({ name: contact.name, phone: contact.phone, role: contact.role ?? '', notes: contact.notes ?? '' });
+    const a = contact.address;
+    setAddress(
+      a
+        ? {
+            line1: a.line1 ?? '', unit: a.unit ?? '', city: a.city ?? 'Montreal', province: a.province ?? 'QC',
+            postalCode: a.postalCode ?? '', country: a.country ?? 'CA', notes: a.notes ?? '',
+            latitude: a.latitude ?? null, longitude: a.longitude ?? null,
+          }
+        : emptyAddress(),
+    );
+    setOpen(true);
+  };
+
   const create = useMutation({
-    mutationFn: () =>
-      api.post('/api/contacts', {
+    mutationFn: () => {
+      const body = {
         name: form.name.trim(),
         phone: form.phone.trim(),
         role: form.role.trim() || null,
         notes: form.notes.trim() || null,
         address: address.line1.trim() ? toAddressInput(address) : null,
-      }),
+      };
+      return editingId ? api.patch(`/api/contacts/${editingId}`, body) : api.post('/api/contacts', body);
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: qk.contacts.list() });
-      toast.success('Contact saved.');
+      toast.success(editingId ? 'Changes saved.' : 'Contact saved.');
       setOpen(false);
-      setForm({ name: '', phone: '', role: '', notes: '' });
-      setAddress(emptyAddress());
+      setEditingId(null);
     },
     onError: (error: unknown) => toast.error(errorMessage(error)),
   });
@@ -92,10 +117,10 @@ export function ContactsPage(): React.JSX.Element {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Contacts"
-        subtitle="Numbers dispatch calls regularly"
+        title="Hospitals"
+        subtitle="Hospitals, clinics and other numbers dispatch calls"
         actions={
-          <button type="button" className={primaryButtonClass} onClick={() => setOpen(true)}>
+          <button type="button" className={primaryButtonClass} onClick={openNew}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             Add contact
           </button>
@@ -159,6 +184,14 @@ export function ContactsPage(): React.JSX.Element {
                 </button>
                 <button
                   type="button"
+                  aria-label={`Edit ${contact.name}`}
+                  className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+                  onClick={() => openEdit(contact)}
+                >
+                  <Pencil className="h-4 w-4" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
                   aria-label={`Remove ${contact.name}`}
                   className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
                   onClick={() => {
@@ -173,7 +206,7 @@ export function ContactsPage(): React.JSX.Element {
         </ul>
       )}
 
-      <Modal open={open} title="Add a contact" onClose={() => setOpen(false)}>
+      <Modal open={open} title={editingId ? `Edit ${form.name || 'contact'}` : 'Add a contact'} onClose={() => setOpen(false)}>
         <form
           className="space-y-4"
           onSubmit={(event) => {

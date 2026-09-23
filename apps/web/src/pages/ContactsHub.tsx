@@ -22,11 +22,13 @@ const CallersPage = React.lazy(() => import('@/pages/Callers').then((m) => ({ de
 const DirectoryPage = React.lazy(() => import('@/pages/Directory').then((m) => ({ default: m.DirectoryPage })));
 const ContactsPage = React.lazy(() => import('@/pages/Contacts').then((m) => ({ default: m.ContactsPage })));
 
+// Separate lists first (patients, hospitals, volunteers); "Search all" finds
+// anyone across the three.
 const TABS = [
-  { id: 'all', label: 'All' },
-  { id: 'callers', label: 'Callers' },
+  { id: 'callers', label: 'Patients' },
   { id: 'places', label: 'Hospitals' },
-  { id: 'team', label: 'Team' },
+  { id: 'team', label: 'Volunteers' },
+  { id: 'all', label: 'Search all' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -47,7 +49,7 @@ interface Row {
   phone: string | null;
 }
 
-const KIND_LABEL: Record<Kind, string> = { caller: 'Caller', place: 'Hospital / service', team: 'Team' };
+const KIND_LABEL: Record<Kind, string> = { caller: 'Patient', place: 'Hospital / service', team: 'Volunteer' };
 const KIND_ICON: Record<Kind, typeof UserRound> = { caller: UserRound, place: Building2, team: Users };
 
 function AllContacts({ onOpenCaller }: { onOpenCaller: (id: string) => void }): React.JSX.Element {
@@ -181,7 +183,7 @@ function AllContacts({ onOpenCaller }: { onOpenCaller: (id: string) => void }): 
 export function ContactsHubPage(): React.JSX.Element {
   const [params, setParams] = useSearchParams();
   const requested = params.get('tab');
-  const tab: TabId = TABS.some((t) => t.id === requested) ? (requested as TabId) : 'all';
+  const tab: TabId = TABS.some((t) => t.id === requested) ? (requested as TabId) : 'callers';
   const callerId = params.get('caller');
 
   return (
@@ -194,7 +196,7 @@ export function ContactsHubPage(): React.JSX.Element {
             type="button"
             role="tab"
             aria-selected={item.id === tab}
-            onClick={() => setParams(item.id === 'all' ? {} : { tab: item.id }, { replace: true })}
+            onClick={() => setParams(item.id === 'callers' ? {} : { tab: item.id }, { replace: true })}
             className={cn(
               'min-h-[44px] flex-shrink-0 whitespace-nowrap rounded-full px-3 text-sm font-medium transition-colors',
               item.id === tab
@@ -214,7 +216,7 @@ export function ContactsHubPage(): React.JSX.Element {
         ) : tab === 'places' ? (
           <ContactsPage />
         ) : (
-          <DirectoryPage />
+          <DirectoryPage title="Volunteers" />
         )}
       </React.Suspense>
     </div>

@@ -6,8 +6,10 @@
  * renders whatever it is given and asks for nothing extra.
  */
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
-import { Mail, Phone, Search, Users } from 'lucide-react';
+import { Mail, Pencil, Phone, Search, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { qk } from '@/lib/query';
 import { telHref, titleCase, formatPhone } from '@/lib/format';
@@ -16,7 +18,9 @@ import {
   EmptyState, ErrorState, ListSkeleton, PageHeader, cardClass, inputClass,
 } from '@/components/states';
 
-export function DirectoryPage(): React.JSX.Element {
+export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}): React.JSX.Element {
+  const { user } = useAuth();
+  const canManage = user?.role === 'dispatcher' || user?.role === 'admin';
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
 
@@ -33,7 +37,7 @@ export function DirectoryPage(): React.JSX.Element {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Directory" subtitle="Everyone on the roster" />
+      <PageHeader title={title} subtitle="Everyone on the roster" />
 
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
@@ -88,6 +92,15 @@ export function DirectoryPage(): React.JSX.Element {
                     </a>
                   ) : null}
                 </div>
+                {canManage && person.role === 'volunteer' ? (
+                  <Link
+                    to={`/volunteers?open=${person.id}`}
+                    aria-label={`Edit ${person.fullName}`}
+                    className="ml-auto grid h-11 w-11 flex-shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+                  >
+                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                  </Link>
+                ) : null}
               </div>
             </li>
           ))}

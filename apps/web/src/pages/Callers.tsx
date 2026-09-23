@@ -257,6 +257,16 @@ export function CallersPage({ initialCallerId = null }: { initialCallerId?: stri
     onError: (error: unknown) => toast.error(errorMessage(error)),
   });
 
+  const removeCaller = useMutation({
+    mutationFn: (id: string) => api.del(`/api/callers/${id}`),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: qk.callers.all() });
+      setSelectedId(null);
+      toast.success('Patient deleted from Contacts. Past trips keep their details.');
+    },
+    onError: (error: unknown) => toast.error(errorMessage(error)),
+  });
+
   const openEdit = (caller: CallerRow): void => {
     setCallerForm({
       name: caller.name,
@@ -275,8 +285,8 @@ export function CallersPage({ initialCallerId = null }: { initialCallerId?: stri
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Callers"
-        subtitle="Who has called before, where they go, and how to get in"
+        title="Patients"
+        subtitle="Everyone we drive: numbers, addresses, how to get in"
         actions={
           <button
             type="button"
@@ -287,7 +297,7 @@ export function CallersPage({ initialCallerId = null }: { initialCallerId?: stri
             }}
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
-            New caller
+            New patient
           </button>
         }
       />
@@ -394,6 +404,18 @@ export function CallersPage({ initialCallerId = null }: { initialCallerId?: stri
                     <button type="button" className={secondaryButtonClass} onClick={() => setAddressOpen(true)}>
                       <Plus className="h-4 w-4" aria-hidden="true" />
                       Add address
+                    </button>
+                    <button
+                      type="button"
+                      className={secondaryButtonClass}
+                      disabled={removeCaller.isPending}
+                      onClick={() => {
+                        const c = profile.data.caller;
+                        if (window.confirm(`Delete ${c.name} from Contacts? Past trips keep their details.`)) removeCaller.mutate(c.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
+                      Delete
                     </button>
                   </div>
                 </div>

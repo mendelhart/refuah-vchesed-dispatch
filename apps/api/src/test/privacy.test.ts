@@ -36,6 +36,17 @@ describe('privacy boundaries', () => {
     expect((await api('GET', '/api/callers/search?q=Sara', { cookie: volunteer.cookie })).status).toBe(403);
   });
 
+  it('lets only dispatch delete a patient, and hides them afterwards', async () => {
+    const created = await api('POST', '/api/callers', {
+      cookie: dispatcher.cookie,
+      payload: { name: 'Rivka Stern', primaryPhone: '514-555-9002' },
+    });
+    const id = (created.body as { caller: { id: string } }).caller.id;
+    expect((await api('DELETE', `/api/callers/${id}`, { cookie: volunteer.cookie })).status).toBe(403);
+    expect((await api('DELETE', `/api/callers/${id}`, { cookie: dispatcher.cookie })).status).toBe(200);
+    expect((await api('GET', `/api/callers/${id}`, { cookie: dispatcher.cookie })).status).toBe(404);
+  });
+
   it('keeps the caller’s identity out of an offer', async () => {
     const created = await api('POST', '/api/trips', {
       cookie: dispatcher.cookie,

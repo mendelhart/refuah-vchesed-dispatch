@@ -117,7 +117,8 @@ export function VolunteersPage(): React.JSX.Element {
   const [serviceSlug, setServiceSlug] = useState('');
   const [status, setStatus] = useState<'active' | 'all'>('active');
   const [view, setView] = useState<'list' | 'calendar'>('list');
-  const [openId, setOpenId] = useState<string | null>(null);
+  // ?open=<id> (from Contacts > Volunteers) opens that volunteer straight away.
+  const [openId, setOpenId] = useState<string | null>(() => new URLSearchParams(window.location.search).get('open'));
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSearch(searchInput.trim()), 300);

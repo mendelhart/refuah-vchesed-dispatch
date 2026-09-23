@@ -399,3 +399,14 @@ export async function callerTripCount(callerId: string): Promise<number> {
     .where(and(eq(trips.callerId, callerId), isNull(trips.deletedAt)));
   return row?.n ?? 0;
 }
+
+/** Soft delete: past trips keep the name and number they were booked with. */
+export async function deleteCaller(actor: AuditActor, callerId: string) {
+  const [row] = await db
+    .update(callers)
+    .set({ deletedAt: new Date() })
+    .where(and(eq(callers.id, callerId), isNull(callers.deletedAt)))
+    .returning();
+  if (!row) throw Errors.notFound('Caller');
+  await recordAudit({ actor, action: 'caller.deleted', entityType: 'caller', entityId: callerId, previous: { name: row.name } });
+}

@@ -10,6 +10,7 @@ import {
 import { actorFrom, requireDispatcher } from '../auth/guards.js';
 import {
   createCaller,
+  deleteCaller,
   getCallerProfile,
   listCallers,
   removeCallerAddress,
@@ -59,6 +60,12 @@ export async function callerRoutes(app: FastifyInstance): Promise<void> {
     const { id } = idParam.parse(req.params);
     const body = updateCallerSchema.parse(req.body);
     return { caller: await updateCaller(actorFrom(req), id, body) };
+  });
+
+  app.delete('/api/callers/:id', { preHandler: requireDispatcher }, async (req) => {
+    const { id } = idParam.parse(req.params);
+    await deleteCaller(actorFrom(req), id);
+    return { ok: true };
   });
 
   app.post('/api/callers/:id/addresses', { preHandler: requireDispatcher }, async (req, reply) => {
