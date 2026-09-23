@@ -101,6 +101,10 @@ ENV NODE_ENV=production \
 WORKDIR /app
 
 COPY --from=prod-deps --chown=root:root /app/node_modules ./node_modules
+# npm does not always hoist every production dependency to the root
+# node_modules: drizzle-orm 0.45 lands in apps/api/node_modules instead.
+# Node's resolution walks up from dist/, so the nested tree must ship too.
+COPY --from=prod-deps --chown=root:root /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build     --chown=root:root /app/package.json ./package.json
 
 # @rvc/shared: the patched manifest plus its compiled output.
