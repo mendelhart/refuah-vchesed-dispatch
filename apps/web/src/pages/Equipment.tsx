@@ -11,7 +11,7 @@ import { Package, PackageCheck, Plus } from 'lucide-react';
 import { equipmentSchema, loanEquipmentSchema } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
-import { formatDate, titleCase } from '@/lib/format';
+import { formatDate, titleCase, formatPhone } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
 import { Modal } from '@/components/Modal';
 import {
@@ -137,7 +137,7 @@ export function EquipmentPage(): React.JSX.Element {
                         {row.itemCode ? ` · ${row.itemCode}` : ''}
                       </p>
                       <p className="text-sm text-slate-600 dark:text-slate-400">
-                        {row.borrowerName} · {row.borrowerPhone}
+                        {row.borrowerName} · {formatPhone(row.borrowerPhone)}
                       </p>
                       <p className={`text-xs ${overdue ? 'font-medium text-[#E31E24]' : 'text-slate-500 dark:text-slate-400'}`}>
                         {row.expectedReturnAt ? `${overdue ? 'Overdue since' : 'Due back'} ${formatDate(row.expectedReturnAt)}` : 'No return date set'}

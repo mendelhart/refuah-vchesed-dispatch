@@ -23,6 +23,7 @@ import {
   secondaryButtonClass,
 } from '@/components/states';
 import type { ContactsResponse, StartCallResponse } from '@/types/api';
+import { formatPhone } from '@/lib/format';
 
 const HOSPITAL_ROLE = 'Hospital';
 type Filter = 'all' | 'hospitals' | 'other';
@@ -136,7 +137,7 @@ export function ContactsPage(): React.JSX.Element {
                 <p className="font-medium text-slate-900 dark:text-white">{contact.name}</p>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   {contact.role ? `${contact.role} · ` : ''}
-                  {contact.phone}
+                  {formatPhone(contact.phone)}
                 </p>
                 {contact.address ? (
                   <p className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">

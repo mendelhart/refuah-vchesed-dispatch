@@ -16,7 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Printer } from 'lucide-react';
 import { api } from '@/lib/api';
 import { qk } from '@/lib/query';
-import { formatMonthYear, titleCase } from '@/lib/format';
+import { formatMonthYear, titleCase, formatPhone } from '@/lib/format';
 import { ErrorState, ListSkeleton, PageHeader, secondaryButtonClass } from '@/components/states';
 
 interface IdCardData {
@@ -500,7 +500,7 @@ export function MyIdCardPage(): React.JSX.Element {
             <span>
               {card.memberSince ? `Volunteering since ${formatMonthYear(card.memberSince)}` : 'Volunteer'}
             </span>
-            {card.organization.phone ? <span>Office {card.organization.phone}</span> : null}
+            {card.organization.phone ? <span>Office {formatPhone(card.organization.phone)}</span> : null}
           </div>
         </div>
       </div>

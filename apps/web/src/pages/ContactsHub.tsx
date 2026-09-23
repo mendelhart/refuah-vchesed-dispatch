@@ -18,8 +18,8 @@ const ContactsPage = React.lazy(() => import('@/pages/Contacts').then((m) => ({ 
 
 const TABS = [
   { id: 'callers', label: 'Callers' },
-  { id: 'places', label: 'Hospitals & services' },
-  { id: 'team', label: 'Volunteers & team' },
+  { id: 'places', label: 'Phone book' },
+  { id: 'team', label: 'Team' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];

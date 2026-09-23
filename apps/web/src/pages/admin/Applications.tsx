@@ -203,7 +203,7 @@ export function ApplicationsPage(): React.JSX.Element {
                       <div className="min-w-0">
                         <p className="truncate font-medium text-slate-900 dark:text-white">{row.fullName}</p>
                         <p className="truncate text-sm text-slate-600 dark:text-slate-400">
-                          {row.city ?? 'No city given'} · {row.phone}
+                          {row.city ?? 'No city given'} · {formatPhone(row.phone)}
                         </p>
                         <p className="font-mono text-xs text-slate-400 dark:text-slate-500">{row.reference}</p>
                       </div>

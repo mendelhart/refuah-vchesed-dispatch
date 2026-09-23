@@ -10,7 +10,7 @@ import { Copy, UserPlus, Users } from 'lucide-react';
 import { ROLES, createUserSchema, type Role } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
-import { titleCase } from '@/lib/format';
+import { titleCase, formatPhone } from '@/lib/format';
 import { Modal } from '@/components/Modal';
 import {
   EmptyState, ErrorState, ListSkeleton, PageHeader, cardClass, inputClass, labelClass, primaryButtonClass,
@@ -135,7 +135,7 @@ export function PeoplePage(): React.JSX.Element {
                 <p className="font-medium text-slate-900 dark:text-white">{person.fullName}</p>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   {person.email ?? 'No email on file'}
-                  {person.phone ? ` · ${person.phone}` : ''}
+                  {person.phone ? ` · ${formatPhone(person.phone)}` : ''}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {titleCase(person.status)}

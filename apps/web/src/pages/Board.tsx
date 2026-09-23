@@ -727,7 +727,7 @@ export function BoardPage(): React.JSX.Element {
                   {(volunteers.data?.users ?? []).map((person) => (
                     <option key={person.id} value={person.id}>
                       {person.fullName}
-                      {person.phone ? ` · ${person.phone}` : ''}
+                      {person.phone ? ` · ${formatPhone(person.phone)}` : ''}
                     </option>
                   ))}
                 </select>
