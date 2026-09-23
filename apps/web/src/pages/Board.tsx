@@ -95,7 +95,7 @@ interface BulkResponse {
 const SEGMENTS: Segment[] = [
   {
     id: 'needs-driver',
-    label: 'Needs driver',
+    label: 'Need driver',
     status: ['new', 'pending', 'expired'],
     empty: { title: 'Every ride has a driver right now.', hint: 'New requests will appear here the moment they come in.' },
   },
@@ -113,7 +113,7 @@ const SEGMENTS: Segment[] = [
   },
   {
     id: 'in-progress',
-    label: 'In progress',
+    label: 'Active',
     status: ['en_route', 'in_progress'],
     empty: { title: 'Nobody is on the road at the moment.' },
   },
@@ -132,7 +132,7 @@ const SEGMENTS: Segment[] = [
   },
   {
     id: 'all',
-    label: 'All open',
+    label: 'All',
     empty: { title: 'The board is clear.', hint: 'Every open ride is handled.' },
   },
 ];
@@ -145,8 +145,10 @@ function dayBounds(): { from: string; to: string } {
   return { from: start.toISOString(), to: end.toISOString() };
 }
 
+// Context, not controls: smaller on a phone so the strip takes one or two
+// lines instead of pushing the rides down. Full size from lg up.
 const chipClass =
-  'inline-flex min-h-[44px] max-w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200';
+  'inline-flex min-h-[36px] max-w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs lg:min-h-[44px] lg:px-3 lg:text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200';
 
 /**
  * The strip above the board.
@@ -179,9 +181,9 @@ function BoardContextStrip(): React.JSX.Element | null {
             <span>
               <span className="font-medium text-slate-900 dark:text-white">{hebrew.hebrewDate}</span>
               {hebrew.parsha ? (
-                <span className="block text-xs text-slate-500 dark:text-slate-400">{hebrew.parsha}</span>
+                <span className="ml-1 text-slate-500 lg:ml-0 lg:block lg:text-xs dark:text-slate-400">{hebrew.parsha}</span>
               ) : hebrew.holidays.length > 0 ? (
-                <span className="block text-xs text-slate-500 dark:text-slate-400">{hebrew.holidays.join(' · ')}</span>
+                <span className="ml-1 text-slate-500 lg:ml-0 lg:block lg:text-xs dark:text-slate-400">{hebrew.holidays.join(' · ')}</span>
               ) : null}
             </span>
           </span>
@@ -192,7 +194,7 @@ function BoardContextStrip(): React.JSX.Element | null {
             <Flame className="h-4 w-4 flex-shrink-0 text-amber-500" aria-hidden="true" />
             <span>
               <span className="font-medium text-slate-900 dark:text-white">{nextRest.label}</span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">
+              <span className="ml-1 text-slate-500 lg:ml-0 lg:block lg:text-xs dark:text-slate-400">
                 Candles {formatDateTime(nextRest.startsAt)} · out {formatTime(nextRest.endsAt)}
               </span>
             </span>
@@ -204,7 +206,7 @@ function BoardContextStrip(): React.JSX.Element | null {
           {data.onDutyNow ? (
             <span>
               <span className="font-medium text-slate-900 dark:text-white">{data.onDutyNow.fullName}</span>
-              <span className="block text-xs text-slate-500 dark:text-slate-400">
+              <span className="ml-1 text-slate-500 lg:ml-0 lg:block lg:text-xs dark:text-slate-400">
                 on the phone until {formatTime(data.onDutyNow.endsAt)}
               </span>
             </span>
@@ -528,11 +530,25 @@ export function BoardPage(): React.JSX.Element {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+      <div className="relative flex-1">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+        <input
+          type="search"
+          className={`${inputClass} pl-10`}
+          placeholder="Search name, phone, reference or address…"
+          value={searchInput}
+          onChange={(event) => setSearchInput(event.target.value)}
+          aria-label="Search trips"
+        />
+      </div>
         <button
           type="button"
           aria-pressed={selectMode}
           className={cn(
-            'inline-flex min-h-[44px] flex-shrink-0 items-center gap-1 rounded-full px-3 text-sm font-medium',
+            'inline-flex min-h-[44px] flex-shrink-0 items-center gap-1 rounded-lg px-3 text-sm font-medium',
             selectMode
               ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
               : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
@@ -545,18 +561,6 @@ export function BoardPage(): React.JSX.Element {
           <CheckSquare className="h-4 w-4" aria-hidden="true" />
           {selectMode ? 'Done' : 'Select'}
         </button>
-      </div>
-
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-        <input
-          type="search"
-          className={`${inputClass} pl-10`}
-          placeholder="Search name, phone, reference or address…"
-          value={searchInput}
-          onChange={(event) => setSearchInput(event.target.value)}
-          aria-label="Search trips"
-        />
       </div>
 
       {trips.isPending ? (
