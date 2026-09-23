@@ -322,6 +322,24 @@ export async function ensureVolunteerNumber(
   return { number, cardToken };
 }
 
+/**
+ * A lost card: give it a new QR code. The old card's link stops working at
+ * once (the check page says it is not valid), the volunteer number stays.
+ */
+export async function reissueCardToken(actor: AuditActor, userId: string): Promise<{ cardToken: string }> {
+  const [row] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+    .limit(1);
+  if (!row) throw Errors.notFound('That person is no longer on file.');
+  await ensureVolunteerNumber(userId);
+  const cardToken = generateToken(15);
+  await db.update(users).set({ cardToken }).where(eq(users.id, userId));
+  await recordAudit({ actor, action: 'id_card.reissued', entityType: 'user', entityId: userId });
+  return { cardToken };
+}
+
 export interface IdCard {
   volunteerNumber: string;
   fullName: string;

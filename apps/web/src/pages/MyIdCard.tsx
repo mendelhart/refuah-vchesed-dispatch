@@ -11,13 +11,14 @@
  * card shown at a desk with no signal still has to scan, and sending a
  * volunteer's verification link to a third-party chart API would leak it.
  */
-import React, { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Printer } from 'lucide-react';
-import { api } from '@/lib/api';
+import React, { useMemo, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { Printer, RefreshCw } from 'lucide-react';
+import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
 import { formatMonthYear, titleCase, formatPhone } from '@/lib/format';
-import { ErrorState, ListSkeleton, PageHeader, secondaryButtonClass } from '@/components/states';
+import { ErrorState, ListSkeleton, PageHeader, primaryButtonClass, secondaryButtonClass } from '@/components/states';
 import { PhotoButton } from '@/components/PhotoButton';
 
 interface IdCardData {
@@ -415,6 +416,16 @@ export function MyIdCardPage(): React.JSX.Element {
     queryKey: qk.meExtras.idCard(),
     queryFn: () => api.get<{ card: IdCardData }>('/api/me/id-card'),
   });
+  const [confirmReissue, setConfirmReissue] = useState(false);
+  const reissue = useMutation({
+    mutationFn: () => api.post<{ card: IdCardData }>('/api/me/id-card/reissue', {}),
+    onSuccess: () => {
+      setConfirmReissue(false);
+      void idCard.refetch();
+      toast.success('New card code issued. The old card no longer checks out. Print the new one.');
+    },
+    onError: (error: unknown) => toast.error(errorMessage(error)),
+  });
 
   if (idCard.isPending) return <ListSkeleton rows={2} lines={4} />;
   if (idCard.isError) {
@@ -438,9 +449,27 @@ export function MyIdCardPage(): React.JSX.Element {
               <Printer className="h-4 w-4" aria-hidden="true" />
               Print
             </button>
+            <button type="button" className={secondaryButtonClass} onClick={() => setConfirmReissue((v) => !v)}>
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              Lost card?
+            </button>
           </span>
         }
       />
+      {confirmReissue ? (
+        <div className="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-700">
+          <p className="text-slate-700 dark:text-slate-200">
+            Lost your card? Get a new QR code. Anyone scanning the old card will see it is not valid. Your volunteer
+            number stays the same. Print the new card afterwards.
+          </p>
+          <div className="mt-2 flex gap-2">
+            <button type="button" className={primaryButtonClass} disabled={reissue.isPending} onClick={() => reissue.mutate()}>
+              {reissue.isPending ? 'Issuing…' : 'Issue a new code'}
+            </button>
+            <button type="button" className={secondaryButtonClass} onClick={() => setConfirmReissue(false)}>Cancel</button>
+          </div>
+        </div>
+      ) : null}
       {!card.photo ? (
         <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
           Add a clear photo of your face so reception desks can match you to your card.

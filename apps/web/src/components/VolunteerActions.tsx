@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { MessageCircle, MessageSquare, PauseCircle, Pencil, PlayCircle, Trash2, X } from 'lucide-react';
+import { IdCard, MessageCircle, MessageSquare, PauseCircle, Pencil, PlayCircle, Trash2, X } from 'lucide-react';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
 import { inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '@/components/states';
@@ -17,7 +17,7 @@ interface Person {
   suspension_reason?: string | null;
 }
 
-type Panel = 'none' | 'edit' | 'sms' | 'whatsapp' | 'pause';
+type Panel = 'none' | 'edit' | 'sms' | 'whatsapp' | 'pause' | 'remove' | 'card';
 
 function tomorrow(): string {
   const d = new Date(Date.now() + 86_400_000);
@@ -25,7 +25,7 @@ function tomorrow(): string {
 }
 
 /**
- * Edit, message and remove, on a volunteer's card.
+ * Edit, message, pause, reissue the ID card and remove, on a volunteer's card.
  *
  * Shown to coordinators and admins only; the server checks the same rule, so a
  * volunteer cannot do any of this even by calling the API directly.
@@ -38,6 +38,7 @@ export function VolunteerActions({ person, onRemoved }: { person: Person; onRemo
   const [pauseMode, setPauseMode] = useState<'open' | 'until'>('until');
   const [pauseUntil, setPauseUntil] = useState(tomorrow());
   const [pauseReason, setPauseReason] = useState('');
+  const [removeReason, setRemoveReason] = useState('No longer volunteering');
   const paused = person.status === 'inactive';
 
   const refresh = (): void => {
@@ -113,12 +114,15 @@ export function VolunteerActions({ person, onRemoved }: { person: Person; onRemo
     onError: (error: unknown) => toast.error(errorMessage(error)),
   });
 
-  const confirmRemove = (): void => {
-    if (!window.confirm(`Remove ${person.full_name}? They will no longer get ride offers or be able to sign in.`)) return;
-    const reason = window.prompt('Reason (kept in the audit log):', 'No longer volunteering');
-    if (reason === null) return;
-    remove.mutate(reason.trim() || 'No longer volunteering');
-  };
+  const reissue = useMutation({
+    mutationFn: () => api.post<unknown>(`/api/volunteers/${person.id}/card/reissue`, {}),
+    onSuccess: () => {
+      setPanel('none');
+      void queryClient.invalidateQueries({ queryKey: qk.volunteers.all() });
+      toast.success(`New card code for ${person.full_name}. The old card no longer checks out.`);
+    },
+    onError: (error: unknown) => toast.error(errorMessage(error)),
+  });
 
   const toggle = (next: Panel): void => setPanel((current) => (current === next ? 'none' : next));
   const noPhone = !person.phone;
@@ -160,11 +164,15 @@ export function VolunteerActions({ person, onRemoved }: { person: Person; onRemo
             Pause
           </button>
         ) : null}
+        <button type="button" className={secondaryButtonClass} onClick={() => toggle('card')}>
+          <IdCard className="h-4 w-4" aria-hidden="true" />
+          Lost card
+        </button>
         <button
           type="button"
           className={`${secondaryButtonClass} !border-red-300 !text-red-700 dark:!border-red-500/50 dark:!text-red-300`}
           disabled={remove.isPending}
-          onClick={confirmRemove}
+          onClick={() => toggle('remove')}
         >
           <Trash2 className="h-4 w-4" aria-hidden="true" />
           {remove.isPending ? 'Removing…' : 'Remove'}
@@ -242,6 +250,47 @@ export function VolunteerActions({ person, onRemoved }: { person: Person; onRemo
           <div className="flex gap-2">
             <button type="submit" className={primaryButtonClass} disabled={pause.isPending}>
               {pause.isPending ? 'Pausing…' : 'Pause'}
+            </button>
+            <button type="button" className={secondaryButtonClass} onClick={() => setPanel('none')}>Cancel</button>
+          </div>
+        </form>
+      ) : null}
+
+      {panel === 'card' ? (
+        <div className="space-y-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+          <p className="text-sm text-slate-700 dark:text-slate-200">
+            Issue a new QR code for {person.full_name}&apos;s ID card. Anyone scanning the old card will see it is not
+            valid. Their volunteer number stays the same; they print the new card from My ID card.
+          </p>
+          <div className="flex gap-2">
+            <button type="button" className={primaryButtonClass} disabled={reissue.isPending} onClick={() => reissue.mutate()}>
+              {reissue.isPending ? 'Issuing…' : 'Issue a new code'}
+            </button>
+            <button type="button" className={secondaryButtonClass} onClick={() => setPanel('none')}>Cancel</button>
+          </div>
+        </div>
+      ) : null}
+
+      {panel === 'remove' ? (
+        <form
+          className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-950/30"
+          onSubmit={(event) => {
+            event.preventDefault();
+            remove.mutate(removeReason.trim() || 'No longer volunteering');
+          }}
+        >
+          <p className="text-sm font-medium text-slate-900 dark:text-white">
+            Remove {person.full_name}? They will no longer get ride offers or be able to sign in. Their phone and email
+            are cleared. To keep them on file, use Pause instead.
+          </p>
+          <div>
+            <label htmlFor={`remove-reason-${person.id}`} className={labelClass}>Reason (kept in the audit log)</label>
+            <input id={`remove-reason-${person.id}`} className={inputClass} value={removeReason} maxLength={300}
+              onChange={(event) => setRemoveReason(event.target.value)} />
+          </div>
+          <div className="flex gap-2">
+            <button type="submit" className={`${primaryButtonClass} !bg-red-700 hover:!bg-red-800`} disabled={remove.isPending}>
+              {remove.isPending ? 'Removing…' : `Remove ${person.full_name}`}
             </button>
             <button type="button" className={secondaryButtonClass} onClick={() => setPanel('none')}>Cancel</button>
           </div>

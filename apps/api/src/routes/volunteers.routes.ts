@@ -28,6 +28,7 @@ import {
   setCapabilities,
   setVolunteerServices,
   verifyIdCard,
+  reissueCardToken,
 } from '../domain/volunteer.service.js';
 import {
   getLicenceForUser,
@@ -115,6 +116,12 @@ export async function volunteerRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/me/id-card', { preHandler: requireAuth }, async (req) => ({
     card: await buildIdCard(currentUser(req).id),
   }));
+
+  // Lost my card: new QR code, the old one stops checking out.
+  app.post('/api/me/id-card/reissue', { preHandler: requireAuth }, async (req) => {
+    await reissueCardToken(actorFrom(req), currentUser(req).id);
+    return { card: await buildIdCard(currentUser(req).id) };
+  });
 
   /**
    * Public card check.
@@ -303,6 +310,18 @@ export async function volunteerRoutes(app: FastifyInstance): Promise<void> {
       .limit(1);
     if (!row) throw Errors.notFound('That volunteer is no longer on file.');
     return { card: await buildIdCard(id) };
+  });
+
+  // Coordinators may reissue a volunteer's card (or their own); admins anyone's.
+  app.post('/api/volunteers/:id/card/reissue', { preHandler: requireDispatcher }, async (req) => {
+    const { id } = idParam.parse(req.params);
+    const me = currentUser(req);
+    if (me.role !== 'admin' && id !== me.id) {
+      const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id)).limit(1);
+      if (!target || target.role !== 'volunteer') throw Errors.forbidden('Only an admin can reissue a coordinator or admin card.');
+    }
+    await reissueCardToken(actorFrom(req), id);
+    return { ok: true };
   });
 }
 

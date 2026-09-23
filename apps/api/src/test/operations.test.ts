@@ -290,6 +290,21 @@ describe('operations: roster, equipment, exports, broadcasts, calendar', () => {
     expect(res.status).toBe(403);
   });
 
+  // --- ID card reissue -----------------------------------------------------
+
+  it('reissues a lost card: the old QR code stops checking out', async () => {
+    const volunteer = await createTestUser({ role: 'volunteer' });
+    const before = await api('GET', `/api/volunteers/${volunteer.id}/card`, { cookie: dispatcher.cookie });
+    const oldCode = (before.body.card as { verificationCode: string }).verificationCode;
+    expect((await api('GET', `/api/id-card/verify/${oldCode}`)).body.valid).toBe(true);
+    const res = await api('POST', `/api/volunteers/${volunteer.id}/card/reissue`, { cookie: dispatcher.cookie });
+    expect(res.status).toBe(200);
+    expect((await api('GET', `/api/id-card/verify/${oldCode}`)).body.valid).toBe(false);
+    const mine = await api('POST', '/api/me/id-card/reissue', { cookie: volunteer.cookie });
+    expect(mine.status).toBe(200);
+    expect((mine.body.card as { verificationCode: string }).verificationCode).not.toBe(oldCode);
+  });
+
   // --- broadcasts ----------------------------------------------------------
 
   it('shows the recipient count before anything is sent', async () => {
