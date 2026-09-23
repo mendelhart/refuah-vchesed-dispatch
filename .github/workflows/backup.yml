@@ -1,0 +1,93 @@
+# Nightly database backup, $0 edition.
+#
+# The live database is on Render's free plan: no backups, and it expires.
+# This takes a pg_dump every night, proves it restores (into a throwaway
+# Postgres inside the runner), encrypts it with a passphrase only the
+# organisation holds, and keeps it as a private workflow artifact for 30 days.
+#
+# Secrets (Settings > Secrets and variables > Actions):
+#   BACKUP_DATABASE_URL  the live database's EXTERNAL connection string
+#   BACKUP_PASSPHRASE    encryption passphrase (kept in the owner's vault)
+#
+# Restore: download the artifact, then
+#   gpg --batch --decrypt --passphrase '<passphrase>' rvc-*.dump.gpg > rvc.dump
+#   pg_restore --no-owner --no-privileges -d "$NEW_DATABASE_URL" rvc.dump
+# See docs/BACKUP_AND_RESTORE.md, "Free-tier backups".
+name: Backup
+
+on:
+  schedule:
+    - cron: '17 7 * * *' # 03:17 Montreal (EDT); 02:17 in winter
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      scratch:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: scratch
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Postgres 16 client
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-16
+          echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+
+      - name: Check secrets are set
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          [ -n "$DATABASE_URL" ] || { echo "::error::BACKUP_DATABASE_URL secret is not set"; exit 1; }
+          [ -n "$PASSPHRASE" ] || { echo "::error::BACKUP_PASSPHRASE secret is not set"; exit 1; }
+
+      - name: Dump (read-only) and check it is readable
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          BACKUP_DIR: ${{ runner.temp }}/backups
+          BACKUP_MIN_BYTES: '5000'
+        run: scripts/backup.sh --local-only --label nightly
+
+      - name: Prove it restores
+        env:
+          ADMIN_DATABASE_URL: postgres://postgres:scratch@localhost:5432/postgres
+        run: |
+          f=$(ls -1 "$RUNNER_TEMP"/backups/*.dump | tail -1)
+          scripts/verify-backup.sh --file "$f" --min-trips 0 --min-users 1
+
+      - name: Encrypt
+        env:
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          for f in "$RUNNER_TEMP"/backups/*.dump; do
+            gpg --batch --yes --symmetric --cipher-algo AES256 --pinentry-mode loopback \
+              --passphrase "$PASSPHRASE" -o "$RUNNER_TEMP/out/$(basename "$f").gpg" "$f"
+          done
+          rm -f "$RUNNER_TEMP"/backups/*.dump
+          ls -la "$RUNNER_TEMP/out"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: ${{ runner.temp }}/out/*.gpg
+          retention-days: 30
+          if-no-files-found: error
