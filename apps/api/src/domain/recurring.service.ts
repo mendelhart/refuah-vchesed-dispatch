@@ -452,6 +452,20 @@ export async function materialiseDueRides(now = new Date()): Promise<{
 
       const rest = isRestTime(pickupAt);
 
+      // Claim the date before creating anything. The select above is only a
+      // fast path: the scheduled job and the "run now" button can overlap, and
+      // without this claim both would create (and offer) the same ride. The
+      // unique index decides who wins; the loser moves on.
+      const [claim] = await db
+        .insert(recurringRideOccurrences)
+        .values({ recurringRideId: ride.id, occurrenceDate: cursor })
+        .onConflictDoNothing()
+        .returning({ id: recurringRideOccurrences.id });
+      if (!claim) {
+        cursor = addDaysToDateString(cursor, 1);
+        continue;
+      }
+
       const systemActor: TripActor = {
         user: {
           id: ride.createdById ?? '00000000-0000-0000-0000-000000000000',
@@ -498,15 +512,16 @@ export async function materialiseDueRides(now = new Date()): Promise<{
           skipRemember: true,
         });
 
-        await db.insert(recurringRideOccurrences).values({
-          recurringRideId: ride.id,
-          occurrenceDate: cursor,
-          tripId: trip.id,
-          skipped: rest.resting,
-          skipReason: rest.resting
-            ? `pickup falls during ${rest.period?.label ?? 'a rest period'} — created but not offered`
-            : null,
-        });
+        await db
+          .update(recurringRideOccurrences)
+          .set({
+            tripId: trip.id,
+            skipped: rest.resting,
+            skipReason: rest.resting
+              ? `pickup falls during ${rest.period?.label ?? 'a rest period'} — created but not offered`
+              : null,
+          })
+          .where(eq(recurringRideOccurrences.id, claim.id));
         created++;
 
         // Offer once the lead time is reached, and never during a rest period.
@@ -526,6 +541,12 @@ export async function materialiseDueRides(now = new Date()): Promise<{
         }
       } catch (err) {
         logger.error({ err, rideId: ride.id, date: cursor }, 'could not materialise a standing ride');
+        // Release the claim if no trip was made, so the next run tries again
+        // instead of the date being silently lost.
+        await db
+          .delete(recurringRideOccurrences)
+          .where(and(eq(recurringRideOccurrences.id, claim.id), isNull(recurringRideOccurrences.tripId)))
+          .catch((e) => logger.error({ err: e, rideId: ride.id }, 'could not release occurrence claim'));
       }
 
       cursor = addDaysToDateString(cursor, 1);

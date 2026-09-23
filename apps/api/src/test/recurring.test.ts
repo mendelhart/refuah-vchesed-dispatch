@@ -116,6 +116,21 @@ describe('standing rides and duplication', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
+  it('two overlapping runs (scheduled job + "run now") never create the same ride twice', async () => {
+    const created = await api('POST', '/api/recurring-rides', { cookie: dispatcher.cookie, payload: sampleRecurring() });
+    const rideId = (created.body.ride as { id: string }).id;
+
+    const [a, b] = await Promise.all([materialiseDueRides(), materialiseDueRides()]);
+
+    const made = await db.select().from(trips).where(eq(trips.recurringRideId, rideId));
+    const dates = made.map((t) => localDateString(t.pickupAt));
+    expect(new Set(dates).size).toBe(dates.length);
+    expect(made.length).toBe(a.created + b.created);
+    const occurrences = await db.select().from(recurringRideOccurrences)
+      .where(eq(recurringRideOccurrences.recurringRideId, rideId));
+    expect(occurrences.every((o) => o.tripId !== null || o.skipped)).toBe(true);
+  });
+
   it('respects the horizon rather than creating a year of trips', async () => {
     await api('POST', '/api/recurring-rides', { cookie: dispatcher.cookie, payload: sampleRecurring() });
     await materialiseDueRides();
