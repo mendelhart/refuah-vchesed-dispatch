@@ -9,6 +9,7 @@ import { loadSettings, setSetting } from '../lib/settings.js';
 import { deliveryHealth } from '../services/notification.service.js';
 import { deadJobCount } from '../jobs/queue.js';
 import { recordAudit } from '../lib/audit.js';
+import { Errors } from '../lib/errors.js';
 
 export async function adminRoutes(app: FastifyInstance): Promise<void> {
   /** Audit search. Read-only by construction: the table rejects writes. */
@@ -90,6 +91,25 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/settings', { preHandler: requireDispatcher }, async () => ({
     settings: await loadSettings(), defaults: DEFAULT_SETTINGS,
   }));
+
+  /**
+   * Start a "View as" preview. The preview itself is the X-View-As header
+   * (auth/view-as.ts); this records who looked at whose screens, and checks
+   * the target before the browser switches.
+   */
+  app.post('/api/admin/view-as/:id', { preHandler: requireAdmin }, async (req) => {
+    const { id } = z.object({ id: z.string().uuid() }).parse(req.params);
+    const [target] = await db.select({ id: users.id, fullName: users.fullName, role: users.role, status: users.status })
+      .from(users).where(eq(users.id, id));
+    if (!target || target.status !== 'active' || target.role === 'admin') {
+      throw Errors.forbidden('You can preview active volunteers and dispatchers only.');
+    }
+    await recordAudit({
+      actor: actorFrom(req), action: 'admin.view_as_started', entityType: 'user', entityId: target.id,
+      metadata: { targetName: target.fullName, targetRole: target.role },
+    });
+    return { user: { id: target.id, fullName: target.fullName, role: target.role } };
+  });
 
   /** Which optional screens are switched on. Everyone signed in needs this for the menu. */
   app.get('/api/features', { preHandler: requireAuth }, async () => {

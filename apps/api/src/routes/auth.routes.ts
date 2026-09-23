@@ -53,7 +53,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   app.get('/api/auth/me', async (req) => {
     if (!req.user) throw Errors.unauthorized();
-    return { user: await loadSessionUser(req.user.id) };
+    return {
+      user: await loadSessionUser(req.user.id),
+      ...(req.viewAsBy ? { viewAsBy: req.viewAsBy } : {}),
+    };
   });
 
   app.post('/api/auth/change-password', { preHandler: requireAuth }, async (req, reply) => {

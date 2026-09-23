@@ -49,6 +49,7 @@ import { cn } from '@/lib/utils';
 import { FEATURE_ROUTES, useFeatures, type Features } from '@/lib/features';
 import { BottomNavigation, bottomNavItems } from './BottomNavigation';
 import type { BoardSummaryResponse, NotificationsResponse, TripListResponse } from '@/types/api';
+import { exitViewAs, getViewAs } from '@/lib/viewAs';
 
 /** Where a screen lives: the main menu, or one tap further under More / My profile / Admin. */
 export type NavSection = 'main' | 'more' | 'profile' | 'admin';
@@ -241,6 +242,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
 
   return (
     <div className="min-h-screen bg-slate-50 transition-colors dark:bg-slate-950">
+      <ViewAsBanner />
       <header className="sticky top-0 z-50 bg-[#EA0029] text-white shadow-lg">
         <div className="flex items-center justify-between px-4 py-3">
           <Link to="/" className="flex min-w-0 items-center gap-3 min-h-[44px] py-1">
@@ -368,6 +370,27 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
           <Plus className="h-7 w-7" aria-hidden="true" />
         </Link>
       ) : null}
+    </div>
+  );
+}
+
+
+/** Shown on every screen while an admin previews the app as someone else. */
+function ViewAsBanner(): React.JSX.Element | null {
+  const preview = getViewAs();
+  if (!preview) return null;
+  return (
+    <div role="status" className="flex items-center justify-between gap-3 bg-amber-400 px-4 py-2 text-sm font-medium text-slate-900">
+      <span className="min-w-0 truncate">
+        Viewing as {preview.name} ({preview.role}) · read-only
+      </span>
+      <button
+        type="button"
+        onClick={exitViewAs}
+        className="min-h-[36px] flex-shrink-0 rounded-full bg-slate-900 px-3 text-white hover:bg-slate-700"
+      >
+        Exit
+      </button>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { applyViewAs } from './auth/view-as.js';
 import Fastify, { type FastifyBaseLogger, type FastifyInstance } from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -99,6 +100,7 @@ export async function buildServer(): Promise<FastifyInstance> {
     } catch (err) {
       req.log.error({ err }, 'session resolution failed');
     }
+    await applyViewAs(req);
   });
 
   // --- one error shape ----------------------------------------------------

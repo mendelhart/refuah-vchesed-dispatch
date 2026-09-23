@@ -8,6 +8,8 @@ import type { AuditActor } from '../lib/audit.js';
 declare module 'fastify' {
   interface FastifyRequest {
     user?: AuthenticatedUser;
+    /** Set while an administrator previews the app as another user (read-only). */
+    viewAsBy?: { id: string; fullName: string };
   }
 }
 

@@ -8,6 +8,7 @@
  * dispatchers were left staring at an empty board with no idea why.
  */
 import type { ApiError as ApiErrorEnvelope } from '@rvc/shared';
+import { getViewAs } from './viewAs';
 
 export class ApiError extends Error {
   constructor(
@@ -60,6 +61,11 @@ function isErrorEnvelope(body: unknown): body is ApiErrorEnvelope {
   );
 }
 
+function viewAsHeader(): Record<string, string> {
+  const preview = getViewAs();
+  return preview ? { 'X-View-As': preview.id } : {};
+}
+
 async function request<T>(method: Method, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   let response: Response;
   try {
@@ -67,7 +73,11 @@ async function request<T>(method: Method, path: string, body?: unknown, signal?:
       method,
       // Session lives in an httpOnly cookie; it must ride along on every call.
       credentials: 'include',
-      headers: body === undefined ? { Accept: 'application/json' } : { Accept: 'application/json', 'Content-Type': 'application/json' },
+      headers: {
+        Accept: 'application/json',
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+        ...(viewAsHeader()),
+      },
       body: body === undefined ? undefined : JSON.stringify(body),
       ...(signal ? { signal } : {}),
     });

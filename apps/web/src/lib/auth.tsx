@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Role, SessionUser } from '@rvc/shared';
 import { ApiError, api } from './api';
 import { qk } from './query';
+import { clearViewAs, getViewAs } from './viewAs';
 import type { SessionResponse } from '@/types/api';
 
 interface AuthContextValue {
@@ -63,6 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
         return data.user;
       } catch (error) {
         if (error instanceof ApiError && error.isUnauthorized) return null;
+        // The previewed person was deactivated or the preview is otherwise
+        // refused: drop the preview and come back as yourself.
+        if (error instanceof ApiError && error.status === 403 && getViewAs()) {
+          clearViewAs();
+          return (await api.get<SessionResponse>('/api/auth/me')).user;
+        }
         throw error;
       }
     },
@@ -86,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   );
 
   const logout = useCallback(async (): Promise<void> => {
+    clearViewAs();
     try {
       await api.post('/api/auth/logout');
     } finally {

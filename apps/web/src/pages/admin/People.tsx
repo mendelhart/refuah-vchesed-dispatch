@@ -18,6 +18,7 @@ import {
   secondaryButtonClass,
 } from '@/components/states';
 import type { CreateUserResponse, GroupsResponse, InviteUrlResponse, UserListResponse } from '@/types/api';
+import { setViewAs } from '@/lib/viewAs';
 
 const INVITE_OPTIONS: { channel: InviteChannel; label: string }[] = [
   { channel: 'sms', label: 'Text' },
@@ -214,6 +215,16 @@ export function PeoplePage(): React.JSX.Element {
                 <button type="button" className={secondaryButtonClass} onClick={() => resendInvite.mutate(person.id)}>
                   Invite link
                 </button>
+                {person.status === 'active' && person.role !== 'admin' ? (
+                  <button
+                    type="button"
+                    className={secondaryButtonClass}
+                    onClick={() => void startViewAs(person)}
+                    title="See the app exactly as this person sees it. Read-only."
+                  >
+                    View as
+                  </button>
+                ) : null}
                 {person.status !== 'deactivated' ? (
                   <button
                     type="button"
@@ -344,4 +355,16 @@ export function PeoplePage(): React.JSX.Element {
       </Modal>
     </div>
   );
+}
+
+
+/** Record the preview on the server (audited), then reload as that person. */
+async function startViewAs(person: { id: string; fullName: string; role: string }): Promise<void> {
+  try {
+    await api.post(`/api/admin/view-as/${person.id}`);
+    setViewAs({ id: person.id, name: person.fullName, role: person.role });
+    window.location.assign('/');
+  } catch (error) {
+    toast.error(errorMessage(error));
+  }
 }
