@@ -30,6 +30,7 @@ async function loadSessionUser(userId: string, exec: Executor = db): Promise<Ses
       status: users.status,
       phone: users.phone,
       notificationPreference: users.notificationPreference,
+      navHidden: users.navHidden,
       mustChangePassword: users.mustChangePassword,
       deletedAt: users.deletedAt,
       groupId: volunteerGroups.id,
@@ -57,6 +58,7 @@ async function loadSessionUser(userId: string, exec: Executor = db): Promise<Ses
     phone: first.phone,
     groups,
     notificationPreference: first.notificationPreference as SessionUser['notificationPreference'],
+    navHidden: first.navHidden,
     mustChangePassword: first.mustChangePassword,
   };
 }

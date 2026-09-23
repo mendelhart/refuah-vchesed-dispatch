@@ -260,6 +260,7 @@ export const changeRoleSchema = z.object({ role: z.enum(ROLES) });
 
 export const updateMeSchema = z.object({
   fullName: z.string().trim().min(2).max(120).optional(),
+  navHidden: z.array(z.string().trim().min(1).max(120)).max(80).optional(),
   phone: phoneInputSchema.optional().nullable(),
   notificationPreference: z.enum(NOTIFICATION_PREFERENCES).optional(),
   emergencyContactName: z.string().trim().max(120).optional().nullable(),

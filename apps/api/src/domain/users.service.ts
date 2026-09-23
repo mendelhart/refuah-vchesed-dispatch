@@ -121,6 +121,7 @@ export async function updateUser(actor: AuditActor, userId: string, patch: Recor
     }
     if ('emergencyContactPhone' in patch) set.emergencyContactPhone = normalizePhone(patch.emergencyContactPhone as string);
     if ('availability' in patch) set.availability = patch.availability;
+    if ('navHidden' in patch) set.navHidden = Array.isArray(patch.navHidden) ? patch.navHidden : [];
 
     const [after] = Object.keys(set).length
       ? await tx.update(users).set(set).where(eq(users.id, userId)).returning()

@@ -66,7 +66,7 @@ interface NavItem {
  * administrator touches weekly at most. A flat list beats nested menus here —
  * dispatchers navigate this under time pressure with one hand.
  */
-const NAV_ITEMS: NavItem[] = [
+export const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Home', icon: Home, roles: ['volunteer', 'dispatcher', 'admin'], end: true },
   { to: '/board', label: 'Dispatch board', icon: LayoutDashboard, roles: ['dispatcher', 'admin'] },
   { to: '/messages', label: 'Messages', icon: MessageSquare, roles: ['dispatcher', 'admin'] },
@@ -98,6 +98,20 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/admin/settings', label: 'Dispatch settings', icon: ShieldCheck, roles: ['admin'] },
 ];
 
+/**
+ * Routes nobody is allowed to hide: the way home, and the way back to the
+ * setting that hides things (otherwise the last checkbox is a one-way door).
+ */
+const ALWAYS_VISIBLE = new Set(['/', '/settings']);
+
+/** Role-eligible items minus the ones this person chose to hide. */
+export function visibleNavItems(role: Role, navHidden: string[] | undefined): NavItem[] {
+  const hidden = new Set(navHidden ?? []);
+  return NAV_ITEMS.filter(
+    (item) => item.roles.includes(role) && (ALWAYS_VISIBLE.has(item.to) || !hidden.has(item.to)),
+  );
+}
+
 function navLinkClass({ isActive }: { isActive: boolean }): string {
   return cn(
     'flex min-h-[44px] items-center gap-3 rounded-xl px-4 py-3 text-sm transition-colors',
@@ -115,7 +129,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
 
   const role: Role = user?.role ?? 'volunteer';
   const isDispatch = role === 'dispatcher' || role === 'admin';
-  const items = NAV_ITEMS.filter((item) => item.roles.includes(role));
+  const items = visibleNavItems(role, user?.navHidden);
 
   // Badge sources. Both are best-effort: a failure here must never block the
   // shell, so neither result is thrown into the tree.

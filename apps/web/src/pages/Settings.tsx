@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { BellOff, BellRing, Moon, Sun } from 'lucide-react';
+import { BellOff, BellRing, Eye, EyeOff, Moon, Sun } from 'lucide-react';
 import { NOTIFICATION_PREFERENCES, type NotificationPreference } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
@@ -13,6 +13,7 @@ import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
 import { formatDateTime } from '@/lib/format';
 import { currentSubscription, pushSupported, subscribeToPush, unsubscribeFromPush } from '@/lib/push';
+import { NAV_ITEMS } from '@/components/Layout';
 import {
   ErrorState, ListSkeleton, PageHeader, cardClass, inputClass, labelClass, primaryButtonClass, secondaryButtonClass,
 } from '@/components/states';
@@ -93,6 +94,15 @@ export function SettingsPage(): React.JSX.Element {
     onSuccess: (data, hours) => {
       void queryClient.invalidateQueries({ queryKey: qk.me.status() });
       toast.success(hours === 0 ? 'Notifications are back on.' : `Muted until ${formatDateTime(data.mutedUntil)}.`);
+    },
+    onError: (error: unknown) => toast.error(errorMessage(error)),
+  });
+
+  const saveNav = useMutation({
+    mutationFn: (navHidden: string[]) => api.patch<SessionResponse>('/api/me', { navHidden }),
+    onSuccess: async (data) => {
+      queryClient.setQueryData(qk.auth.me(), data.user);
+      toast.success('Menu updated.');
     },
     onError: (error: unknown) => toast.error(errorMessage(error)),
   });
@@ -240,6 +250,48 @@ export function SettingsPage(): React.JSX.Element {
               This browser cannot do push notifications. You will still get text messages.
             </p>
           )}
+        </div>
+      </section>
+
+      <section className={cardClass}>
+        <div className="p-5 md:p-6">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Your menu</h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Hide the screens you never use. Home and Settings always stay. Hidden screens still
+            work — you just will not see them in the menu.
+          </p>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+            {NAV_ITEMS.filter(
+              (item) =>
+                item.roles.includes(user?.role ?? 'volunteer') &&
+                item.to !== '/' &&
+                item.to !== '/settings',
+            ).map((item) => {
+              const hiddenItem = (user?.navHidden ?? []).includes(item.to);
+              const nextHidden = hiddenItem
+                ? (user?.navHidden ?? []).filter((to) => to !== item.to)
+                : [...(user?.navHidden ?? []), item.to];
+              return (
+                <li key={item.to}>
+                  <button
+                    type="button"
+                    disabled={saveNav.isPending}
+                    onClick={() => saveNav.mutate(nextHidden)}
+                    aria-pressed={hiddenItem}
+                    className={`flex min-h-[44px] w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                      hiddenItem
+                        ? 'border-slate-200 text-slate-400 dark:border-slate-700 dark:text-slate-500'
+                        : 'border-slate-300 text-slate-700 dark:border-slate-600 dark:text-slate-200'
+                    }`}
+                  >
+                    {hiddenItem ? <EyeOff className="h-4 w-4 flex-shrink-0" /> : <Eye className="h-4 w-4 flex-shrink-0" />}
+                    <span className="flex-1">{item.label}</span>
+                    <span className="text-xs">{hiddenItem ? 'Hidden' : 'Shown'}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </section>
 

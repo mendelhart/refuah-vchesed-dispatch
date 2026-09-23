@@ -21,6 +21,8 @@ export interface SessionUser {
   groups: { id: string; slug: string; name: string }[];
   notificationPreference: NotificationPreference;
   mustChangePassword: boolean;
+  /** Route paths the user hid from their menu. Empty = show everything. */
+  navHidden: string[];
 }
 
 export interface AddressDto {

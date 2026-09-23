@@ -60,6 +60,7 @@ const WEBHOOK_ACTOR: AuthenticatedUser = {
   groups: [],
   notificationPreference: 'none',
   mustChangePassword: false,
+  navHidden: [],
 };
 
 const HELP_TEXT =

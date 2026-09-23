@@ -71,6 +71,13 @@ export const users = pgTable(
 
     /** Physical needs this volunteer can handle. Empty = plain rides only. */
     capabilities: text('capabilities').array().notNull().default(sql`'{}'::text[]`),
+    /**
+     * Sidebar/feature-list entries this person chose to hide (route paths).
+     * Per-dispatcher simplification: everyone keeps only the screens they
+     * actually use in view. Empty = show everything. Settings is never hidden
+     * (enforced client-side) so the preference stays recoverable.
+     */
+    navHidden: text('nav_hidden').array().notNull().default(sql`'{}'::text[]`),
     languages: text('languages').array().notNull().default(sql`'{}'::text[]`),
     hasVehicle: boolean('has_vehicle').notNull().default(true),
     vehicleSeats: integer('vehicle_seats'),
@@ -1071,6 +1078,13 @@ export const volunteerApplications = pgTable(
     requestedServices: text('requested_services').array().notNull().default(sql`'{}'::text[]`),
     requestedGroups: text('requested_groups').array().notNull().default(sql`'{}'::text[]`),
     capabilities: text('capabilities').array().notNull().default(sql`'{}'::text[]`),
+    /**
+     * Sidebar/feature-list entries this person chose to hide (route paths).
+     * Per-dispatcher simplification: everyone keeps only the screens they
+     * actually use in view. Empty = show everything. Settings is never hidden
+     * (enforced client-side) so the preference stays recoverable.
+     */
+    navHidden: text('nav_hidden').array().notNull().default(sql`'{}'::text[]`),
 
     hasVehicle: boolean('has_vehicle').notNull().default(false),
     vehicleType: text('vehicle_type'),
