@@ -23,6 +23,11 @@ export interface SessionUser {
   mustChangePassword: boolean;
   /** Route paths the user hid from their menu. Empty = show everything. */
   navHidden: string[];
+  /**
+   * Two-step sign-in still owed on this session: 'setup' (no authenticator
+   * yet) or 'verify' (enter the code). Absent when nothing is owed.
+   */
+  mfa?: 'setup' | 'verify';
 }
 
 export interface AddressDto {

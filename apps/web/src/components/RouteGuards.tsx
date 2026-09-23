@@ -12,6 +12,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import type { Role } from '@rvc/shared';
 import { FullPageSpinner, useAuth } from '@/lib/auth';
 import { roleLabel } from '@rvc/shared';
+import { TwoStepGate } from '@/components/TwoStepGate';
 
 export function RequireAuth({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { user, isLoading } = useAuth();
@@ -23,6 +24,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }): React.
     // an SMS offer link must not dump the volunteer on a blank home page.
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
+  if (user.mfa) return <TwoStepGate mode={user.mfa} />;
   return <>{children}</>;
 }
 

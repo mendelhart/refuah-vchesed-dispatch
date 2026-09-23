@@ -358,7 +358,7 @@ function encodeQr(text: string): QrMatrix | null {
 }
 
 /** One SVG path built from horizontal runs, so a version 10 code is still small. */
-function QrCode({ text, title }: { text: string; title: string }): React.JSX.Element | null {
+export function QrCode({ text, title }: { text: string; title: string }): React.JSX.Element | null {
   const matrix = useMemo(() => encodeQr(text), [text]);
   if (!matrix) return null;
 

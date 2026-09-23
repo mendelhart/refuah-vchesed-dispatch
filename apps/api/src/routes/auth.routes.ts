@@ -3,15 +3,29 @@ import { and, eq, isNull, ne, sql as raw } from 'drizzle-orm';
 import { acceptInviteSchema, changePasswordSchema, loginSchema, resetPasswordSchema, requestPasswordResetSchema } from '@rvc/shared';
 import { env } from '../env.js';
 import { db } from '../db/client.js';
-import { authTokens, users } from '../db/schema.js';
+import { z } from 'zod';
+import { authTokens, sessions, users } from '../db/schema.js';
+import { newRecoveryCodes, newTotpSecret, otpauthUrl, verifyTotp } from '../lib/totp.js';
+import { decryptField, encryptField, fieldEncryptionAvailable } from '../lib/crypto.js';
 import { Errors } from '../lib/errors.js';
 import { hashToken } from '../lib/crypto.js';
 import { requirePhone } from '../lib/phone.js';
 import { recordAudit } from '../lib/audit.js';
 import { actorFrom, currentUser, requireAuth } from '../auth/guards.js';
 import {
-  authenticate, loadSessionUser, revokeAllSessionsForUser, revokeSession, setPassword, createSession,
+  authenticate, loadSessionUser, revokeAllSessionsForUser, revokeSession, setPassword, createSession, roleNeedsMfa,
 } from '../auth/session.js';
+
+/** Authenticator secrets are encrypted at rest when the field key is configured. */
+function sealSecret(secret: string): string {
+  return fieldEncryptionAvailable() ? `enc:${encryptField(secret)}` : `raw:${secret}`;
+}
+function openSecret(stored: string | null): string | null {
+  if (!stored) return null;
+  if (stored.startsWith('enc:')) return decryptField(stored.slice(4));
+  if (stored.startsWith('raw:')) return stored.slice(4);
+  return null;
+}
 import { verifyPassword } from '../lib/crypto.js';
 
 function cookieOptions(maxAgeSeconds: number) {
@@ -53,8 +67,13 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   app.get('/api/auth/me', async (req) => {
     if (!req.user) throw Errors.unauthorized();
+    const me = await loadSessionUser(req.user.id);
+    if (me && req.user.mfaPending) {
+      const [row] = await db.select({ on: users.totpEnabledAt }).from(users).where(eq(users.id, req.user.id));
+      me.mfa = row?.on ? 'verify' : 'setup';
+    }
     return {
-      user: await loadSessionUser(req.user.id),
+      user: me,
       ...(req.viewAsBy ? { viewAsBy: req.viewAsBy } : {}),
     };
   });
@@ -75,6 +94,74 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     const token = await createSession(user.id, { ip: req.ip, userAgent: req.headers['user-agent'] as string });
     reply.setCookie(env.SESSION_COOKIE_NAME, token, cookieOptions(60 * 60 * 24 * 14));
     return { ok: true };
+  });
+
+  // --- two-step sign-in ------------------------------------------------------
+  const codeBody = z.object({ code: z.string().trim().min(6).max(20) });
+  const mfaLimit = { config: { rateLimit: { max: 10, timeWindow: '5 minutes' } } };
+  const pendingUser = (req: Parameters<typeof currentUser>[0]) => {
+    const user = currentUser(req);
+    if (!user.mfaPending) throw Errors.conflict('Two-step sign-in is already done for this session.');
+    return user;
+  };
+  const clearPending = (sessionId: string) =>
+    db.update(sessions).set({ mfaPending: false }).where(eq(sessions.id, sessionId));
+
+  /** Start setup: a new secret to add to the authenticator app. */
+  app.post('/api/auth/mfa/setup', mfaLimit, async (req) => {
+    const user = pendingUser(req);
+    const [row] = await db.select({ on: users.totpEnabledAt, email: users.email, phone: users.phone })
+      .from(users).where(eq(users.id, user.id));
+    if (row?.on) throw Errors.conflict('Two-step sign-in is already set up. Enter the code from your app.');
+    const secret = newTotpSecret();
+    await db.update(users).set({ totpPendingSecret: sealSecret(secret) }).where(eq(users.id, user.id));
+    return { secret, otpauthUrl: otpauthUrl(secret, row?.email ?? row?.phone ?? user.fullName) };
+  });
+
+  /** Finish setup with the first code; returns recovery codes, shown once. */
+  app.post('/api/auth/mfa/enable', mfaLimit, async (req) => {
+    const user = pendingUser(req);
+    const { code } = codeBody.parse(req.body);
+    const [row] = await db.select({ pending: users.totpPendingSecret, on: users.totpEnabledAt })
+      .from(users).where(eq(users.id, user.id));
+    if (row?.on) throw Errors.conflict('Two-step sign-in is already set up.');
+    const secret = openSecret(row?.pending ?? null);
+    if (!secret) throw Errors.conflict('Start setup again.');
+    const step = verifyTotp(secret, code);
+    if (step === null) throw Errors.validation('That code did not match. Check the time on your phone and try the newest code.');
+    const recovery = newRecoveryCodes();
+    await db.update(users).set({
+      totpSecret: sealSecret(secret), totpPendingSecret: null, totpEnabledAt: new Date(), totpLastStep: step,
+      totpRecoveryHashes: recovery.map((c) => hashToken(c.replace(/[^a-z0-9]/g, ''))),
+    }).where(eq(users.id, user.id));
+    await clearPending(user.sessionId);
+    await recordAudit({ actor: actorFrom(req), action: 'auth.mfa_enabled', entityType: 'user', entityId: user.id });
+    return { recoveryCodes: recovery };
+  });
+
+  /** Sign-in step two: a code from the app, or one recovery code. */
+  app.post('/api/auth/mfa/verify', mfaLimit, async (req) => {
+    const user = pendingUser(req);
+    const { code } = codeBody.parse(req.body);
+    const [row] = await db.select({
+      secret: users.totpSecret, last: users.totpLastStep, recovery: users.totpRecoveryHashes,
+    }).from(users).where(eq(users.id, user.id));
+    const secret = openSecret(row?.secret ?? null);
+    if (!secret) throw Errors.conflict('Two-step sign-in is not set up yet.');
+    const step = verifyTotp(secret, code);
+    if (step !== null) {
+      if (row!.last !== null && step <= row!.last) throw Errors.validation('That code was already used. Wait for the next one.');
+      await db.update(users).set({ totpLastStep: step }).where(eq(users.id, user.id));
+    } else {
+      const hash = hashToken(code.toLowerCase().replace(/[^a-z0-9]/g, ''));
+      if (!row!.recovery.includes(hash)) throw Errors.validation('That code did not match.');
+      await db.update(users).set({ totpRecoveryHashes: row!.recovery.filter((h) => h !== hash) }).where(eq(users.id, user.id));
+      await recordAudit({ actor: actorFrom(req), action: 'auth.mfa_recovery_used', entityType: 'user', entityId: user.id,
+        metadata: { remaining: row!.recovery.length - 1 } });
+    }
+    await clearPending(user.sessionId);
+    await recordAudit({ actor: actorFrom(req), action: 'auth.mfa_verified', entityType: 'user', entityId: user.id });
+    return { user: await loadSessionUser(user.id) };
   });
 
   /** Invite acceptance: the volunteer sets their own password. */
@@ -108,9 +195,13 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return token.userId;
     });
 
-    const session = await createSession(result, { ip: req.ip, userAgent: req.headers['user-agent'] as string });
+    const [invited] = await db.select({ role: users.role }).from(users).where(eq(users.id, result));
+    const mfaPending = roleNeedsMfa(invited?.role ?? 'volunteer');
+    const session = await createSession(result, { ip: req.ip, userAgent: req.headers['user-agent'] as string }, { mfaPending });
     reply.setCookie(env.SESSION_COOKIE_NAME, session, cookieOptions(60 * 60 * 24 * 14));
-    return { user: await loadSessionUser(result) };
+    const acceptedUser = await loadSessionUser(result);
+    if (acceptedUser && mfaPending) acceptedUser.mfa = 'setup';
+    return { user: acceptedUser };
   });
 
   /** Always returns ok — never reveals whether an address is registered. */

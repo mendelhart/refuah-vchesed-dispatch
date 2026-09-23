@@ -17,6 +17,7 @@
  *  6. `audit_events` is append-only and server-written.
  */
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -98,6 +99,15 @@ export const users = pgTable(
      * the whole roster by counting upwards. This is 20 random characters.
      */
     cardToken: text('card_token'),
+    /** Two-step sign-in: authenticator secret (encrypted), set once confirmed. */
+    totpSecret: text('totp_secret'),
+    /** Secret shown during setup, before the first code confirms it. */
+    totpPendingSecret: text('totp_pending_secret'),
+    totpEnabledAt: timestamp('totp_enabled_at', { withTimezone: true }),
+    /** Last accepted 30-second step, so the same code cannot be used twice. */
+    totpLastStep: bigint('totp_last_step', { mode: 'number' }),
+    /** SHA-256 of unused recovery codes. */
+    totpRecoveryHashes: text('totp_recovery_hashes').array().notNull().default(sql`'{}'::text[]`),
     approvedAt: timestamp('approved_at', { withTimezone: true }),
     approvedById: uuid('approved_by_id'),
     applicationId: uuid('application_id'),
@@ -176,6 +186,8 @@ export const sessions = pgTable(
     ip: text('ip'),
     userAgent: text('user_agent'),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    /** Signed in with a password but the two-step code is still owed. */
+    mfaPending: boolean('mfa_pending').notNull().default(false),
     createdAt: createdAt(),
   },
   (t) => ({

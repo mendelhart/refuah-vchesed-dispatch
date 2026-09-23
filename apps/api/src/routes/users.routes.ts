@@ -12,6 +12,7 @@ import { changeRole, createUser, deactivateUser, suspendUser, reactivateUser, is
 import { volunteerImpact, organizationImpact } from '../domain/impact.js';
 import { loadSessionUser } from '../auth/session.js';
 import { recordAudit } from '../lib/audit.js';
+import { revokeAllSessionsForUser } from '../auth/session.js';
 import { normalizePhone } from '../lib/phone.js';
 import { channelStatus, vapidPublicKey } from '../services/providers/index.js';
 import { Errors } from '../lib/errors.js';
@@ -106,6 +107,18 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     if (actor.role !== 'admin' && body.status) throw Errors.forbidden('Only administrators can change account status.');
     const updated = await updateUser(actorFrom(req), id, body as Record<string, unknown>);
     return { user: { id: updated.id, fullName: updated.fullName, status: updated.status } };
+  });
+
+  // Lost phone: clear someone's authenticator so they set it up again at next sign-in.
+  app.post('/api/users/:id/mfa/reset', { preHandler: requireAdmin }, async (req) => {
+    const { id } = idParam.parse(req.params);
+    const [row] = await db.update(users).set({
+      totpSecret: null, totpPendingSecret: null, totpEnabledAt: null, totpLastStep: null, totpRecoveryHashes: [],
+    }).where(eq(users.id, id)).returning({ id: users.id });
+    if (!row) throw Errors.notFound('User');
+    await revokeAllSessionsForUser(id);
+    await recordAudit({ actor: actorFrom(req), action: 'auth.mfa_reset', entityType: 'user', entityId: id });
+    return { ok: true };
   });
 
   app.post('/api/users/:id/role', { preHandler: requireAdmin }, async (req) => {

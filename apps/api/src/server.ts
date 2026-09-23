@@ -100,6 +100,15 @@ export async function buildServer(): Promise<FastifyInstance> {
     } catch (err) {
       req.log.error({ err }, 'session resolution failed');
     }
+    // Two-step sign-in owed: only the sign-in endpoints answer until it is done.
+    if (req.user?.mfaPending) {
+      const path = req.url.split('?')[0] ?? '';
+      const open = path === '/api/auth/me' || path === '/api/auth/logout' || path.startsWith('/api/auth/mfa/');
+      if (path.startsWith('/api/') && !open) {
+        throw new AppError(403, 'mfa_required', 'Finish two-step sign-in first.');
+      }
+      return;
+    }
     await applyViewAs(req);
   });
 

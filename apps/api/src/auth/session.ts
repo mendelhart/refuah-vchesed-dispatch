@@ -7,12 +7,24 @@ import { generateToken, hashToken, verifyPassword, hashPassword } from '../lib/c
 import { getNumberSetting } from '../lib/settings.js';
 import { Errors } from '../lib/errors.js';
 import { normalizePhone } from '../lib/phone.js';
+import { env, isProd } from '../env.js';
+
+/** Whether coordinators and admins must pass two-step sign-in. */
+export function mfaEnforced(): boolean {
+  const v = env.MFA_REQUIRED;
+  return v === undefined ? isProd : v === 'true' || v === '1';
+}
+
+export function roleNeedsMfa(role: string): boolean {
+  return mfaEnforced() && (role === 'dispatcher' || role === 'admin');
+}
 
 const MAX_FAILED_LOGINS = 8;
 const LOCKOUT_MINUTES = 15;
 
 export interface AuthenticatedUser extends SessionUser {
   sessionId: string;
+  mfaPending?: boolean;
 }
 
 export interface LoginContext {
@@ -126,13 +138,19 @@ export async function authenticate(
     .set({ failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() })
     .where(eq(users.id, row.id));
 
-  const token = await createSession(row.id, ctx);
+  const mfaPending = roleNeedsMfa(row.role);
+  const token = await createSession(row.id, ctx, { mfaPending });
   const user = await loadSessionUser(row.id);
   if (!user) throw Errors.internal();
+  if (mfaPending) user.mfa = row.totpEnabledAt ? 'verify' : 'setup';
   return { token, user };
 }
 
-export async function createSession(userId: string, ctx: LoginContext): Promise<string> {
+export async function createSession(
+  userId: string,
+  ctx: LoginContext,
+  opts: { mfaPending?: boolean } = {},
+): Promise<string> {
   const ttlHours = await getNumberSetting(SETTING_KEYS.sessionTtlHours);
   const token = generateToken(32);
   await db.insert(sessions).values({
@@ -141,13 +159,14 @@ export async function createSession(userId: string, ctx: LoginContext): Promise<
     expiresAt: new Date(Date.now() + ttlHours * 3_600_000),
     ip: ctx.ip ?? null,
     userAgent: ctx.userAgent?.slice(0, 300) ?? null,
+    mfaPending: opts.mfaPending ?? false,
   });
   return token;
 }
 
 export async function resolveSession(token: string): Promise<AuthenticatedUser | null> {
   const [row] = await db
-    .select({ id: sessions.id, userId: sessions.userId, expiresAt: sessions.expiresAt })
+    .select({ id: sessions.id, userId: sessions.userId, expiresAt: sessions.expiresAt, mfaPending: sessions.mfaPending })
     .from(sessions)
     .where(
       and(
@@ -169,7 +188,7 @@ export async function resolveSession(token: string): Promise<AuthenticatedUser |
     .where(and(eq(sessions.id, row.id), lt(sessions.lastSeenAt, new Date(Date.now() - 60_000))))
     .catch(() => {});
 
-  return { ...user, sessionId: row.id };
+  return { ...user, sessionId: row.id, mfaPending: row.mfaPending };
 }
 
 export async function revokeSession(sessionId: string): Promise<void> {

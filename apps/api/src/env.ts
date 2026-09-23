@@ -27,6 +27,8 @@ const envSchema = z.object({
   SESSION_COOKIE_NAME: z.string().default('rvc_session'),
   SESSION_SECRET: z.string().min(32, 'SESSION_SECRET must be at least 32 characters'),
   COOKIE_SECURE: bool(false),
+  /** Two-step sign-in for coordinators and admins. Unset = on in production only. */
+  MFA_REQUIRED: z.enum(['true', 'false', '1', '0']).optional(),
 
   TWILIO_ACCOUNT_SID: z.string().optional(),
   TWILIO_AUTH_TOKEN: z.string().optional(),
