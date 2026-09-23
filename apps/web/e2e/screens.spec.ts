@@ -63,8 +63,12 @@ test.describe('phone screenshots', () => {
       storageState: STATE_FILES.dispatcher, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
     });
     const page = await context.newPage();
-    await page.goto('/volunteers');
-    await page.getByText('Yaakov').first().click();
+    await page.goto('/');
+    const id = await page.evaluate(async () => {
+      const r = await fetch('/api/users?search=Yaakov&limit=5', { headers: { Accept: 'application/json' } });
+      return ((await r.json()).users?.[0]?.id as string | undefined) ?? '';
+    });
+    await page.goto(`/volunteers?open=${id}`);
     await page.getByRole('button', { name: 'Edit details' }).waitFor({ timeout: 15_000 });
     await page.screenshot({ path: 'screenshots/dispatcher-volunteer-card.png' });
     await page.getByRole('button', { name: 'Edit details' }).click();
