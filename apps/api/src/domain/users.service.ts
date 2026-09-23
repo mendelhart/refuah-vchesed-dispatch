@@ -254,6 +254,54 @@ export async function deactivateUser(actor: AuditActor, userId: string, reason: 
   });
 }
 
+/**
+ * Pause without deleting. The account keeps everything; while status is
+ * 'inactive' it gets no offers (every offer path requires 'active') and cannot
+ * sign in. With a date, housekeeping switches it back on when the date passes.
+ */
+export async function suspendUser(actor: AuditActor, userId: string, until: Date | null, reason: string | null) {
+  if (until && until <= new Date()) throw Errors.validation('Pick a date in the future.', { field: 'until' });
+  return db.transaction(async (tx) => {
+    const [before] = await tx.select().from(users)
+      .where(and(eq(users.id, userId), isNull(users.deletedAt))).limit(1).for('update');
+    if (!before) throw Errors.notFound('User');
+    const openRows = (await tx.execute(raw`
+      select count(*)::int as open from trips
+      where assigned_volunteer_id = ${userId}
+        and status in ('assigned','accepted','en_route','in_progress') and deleted_at is null
+    `)) as unknown as Array<{ open: number }>;
+    const open = Number(openRows[0]!.open);
+    if (open > 0) throw Errors.conflict(`They still have ${open} active ride(s). Reassign them first.`);
+    const [after] = await tx.update(users)
+      .set({ status: 'inactive', suspendedUntil: until, suspensionReason: reason })
+      .where(eq(users.id, userId)).returning();
+    await revokeAllSessionsForUser(userId, tx);
+    await recordAudit({
+      actor, action: 'user.suspended', entityType: 'user', entityId: userId,
+      previous: { status: before.status }, next: { status: 'inactive', until: until?.toISOString() ?? null }, metadata: { reason },
+    }, tx);
+    return after!;
+  });
+}
+
+export async function reactivateUser(actor: AuditActor, userId: string) {
+  const [after] = await db.update(users)
+    .set({ status: 'active', suspendedUntil: null, suspensionReason: null })
+    .where(and(eq(users.id, userId), isNull(users.deletedAt), eq(users.status, 'inactive'))).returning();
+  if (!after) throw Errors.notFound('Paused account');
+  await recordAudit({ actor, action: 'user.reactivated', entityType: 'user', entityId: userId, next: { status: 'active' } });
+  return after;
+}
+
+/** Housekeeping: end pauses whose date has passed. */
+export async function endExpiredSuspensions(): Promise<number> {
+  const rows = await db.update(users)
+    .set({ status: 'active', suspendedUntil: null, suspensionReason: null })
+    .where(and(eq(users.status, 'inactive'), isNull(users.deletedAt), raw`${users.suspendedUntil} is not null and ${users.suspendedUntil} <= now()`))
+    .returning({ id: users.id });
+  return rows.length;
+}
+
 export interface ListUsersArgs { role?: Role; groupSlug?: string; status?: string; search?: string; limit: number; }
 
 /** Directory listing. Contact details are included only for dispatch roles. */

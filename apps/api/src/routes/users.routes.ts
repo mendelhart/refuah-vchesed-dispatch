@@ -3,12 +3,12 @@ import { z } from 'zod';
 import { and, eq, isNull } from 'drizzle-orm';
 import {
   changeRoleSchema, createUserSchema, pushSubscriptionSchema, resendInviteSchema,
-  updateMeSchema, updateUserSchema, uuidSchema, directMessageSchema,
+  updateMeSchema, updateUserSchema, uuidSchema, directMessageSchema, suspendUserSchema,
 } from '@rvc/shared';
 import { db } from '../db/client.js';
 import { pushSubscriptions, users, volunteerGroups } from '../db/schema.js';
 import { actorFrom, currentUser, requireAdmin, requireAuth, requireDispatcher } from '../auth/guards.js';
-import { changeRole, createUser, deactivateUser, issueAuthToken, listUsers, sendInvitation, updateUser } from '../domain/users.service.js';
+import { changeRole, createUser, deactivateUser, suspendUser, reactivateUser, issueAuthToken, listUsers, sendInvitation, updateUser } from '../domain/users.service.js';
 import { volunteerImpact, organizationImpact } from '../domain/impact.js';
 import { loadSessionUser } from '../auth/session.js';
 import { recordAudit } from '../lib/audit.js';
@@ -111,6 +111,28 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const body = changeRoleSchema.parse(req.body);
     const updated = await changeRole(actorFrom(req), id, body.role);
     return { user: { id: updated.id, role: updated.role } };
+  });
+
+  const volunteerOnlyForCoordinators = async (req: Parameters<typeof currentUser>[0], id: string, verb: string) => {
+    const me = currentUser(req);
+    if (me.role === 'admin') return;
+    const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id)).limit(1);
+    if (!target || target.role !== 'volunteer' || id === me.id) {
+      throw Errors.forbidden(`Only an admin can ${verb} a coordinator or admin.`);
+    }
+  };
+  app.post('/api/users/:id/suspend', { preHandler: requireDispatcher }, async (req) => {
+    const { id } = idParam.parse(req.params);
+    const body = suspendUserSchema.parse(req.body);
+    await volunteerOnlyForCoordinators(req, id, 'pause');
+    const u = await suspendUser(actorFrom(req), id, body.until ? new Date(body.until) : null, body.reason ?? null);
+    return { user: { id: u.id, status: u.status, suspendedUntil: u.suspendedUntil } };
+  });
+  app.post('/api/users/:id/reactivate', { preHandler: requireDispatcher }, async (req) => {
+    const { id } = idParam.parse(req.params);
+    await volunteerOnlyForCoordinators(req, id, 'reactivate');
+    const u = await reactivateUser(actorFrom(req), id);
+    return { user: { id: u.id, status: u.status } };
   });
 
   // Admins can remove anyone. Coordinators can remove volunteers only.

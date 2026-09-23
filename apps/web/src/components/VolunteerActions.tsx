@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { MessageCircle, MessageSquare, Pencil, Trash2, X } from 'lucide-react';
+import { MessageCircle, MessageSquare, PauseCircle, Pencil, PlayCircle, Trash2, X } from 'lucide-react';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
 import { inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '@/components/states';
@@ -12,9 +12,17 @@ interface Person {
   phone: string | null;
   email: string | null;
   role: string;
+  status: string;
+  suspended_until?: string | null;
+  suspension_reason?: string | null;
 }
 
-type Panel = 'none' | 'edit' | 'sms' | 'whatsapp';
+type Panel = 'none' | 'edit' | 'sms' | 'whatsapp' | 'pause';
+
+function tomorrow(): string {
+  const d = new Date(Date.now() + 86_400_000);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 
 /**
  * Edit, message and remove, on a volunteer's card.
@@ -27,6 +35,10 @@ export function VolunteerActions({ person, onRemoved }: { person: Person; onRemo
   const [panel, setPanel] = useState<Panel>('none');
   const [form, setForm] = useState({ fullName: person.full_name, phone: person.phone ?? '', email: person.email ?? '' });
   const [message, setMessage] = useState('');
+  const [pauseMode, setPauseMode] = useState<'open' | 'until'>('until');
+  const [pauseUntil, setPauseUntil] = useState(tomorrow());
+  const [pauseReason, setPauseReason] = useState('');
+  const paused = person.status === 'inactive';
 
   const refresh = (): void => {
     void queryClient.invalidateQueries({ queryKey: qk.volunteers.all() });
@@ -63,6 +75,34 @@ export function VolunteerActions({ person, onRemoved }: { person: Person; onRemo
     onError: (error: unknown) => toast.error(errorMessage(error)),
   });
 
+  const pause = useMutation({
+    mutationFn: () =>
+      api.post<unknown>(`/api/users/${person.id}/suspend`, {
+        // Back on at the start of the chosen day, local time.
+        until: pauseMode === 'until' ? new Date(`${pauseUntil}T00:00:00`).toISOString() : null,
+        reason: pauseReason.trim() || null,
+      }),
+    onSuccess: () => {
+      refresh();
+      setPanel('none');
+      toast.success(
+        pauseMode === 'until'
+          ? `${person.full_name} is paused until ${new Date(`${pauseUntil}T00:00:00`).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })}. They switch back on by themselves.`
+          : `${person.full_name} is paused until you reactivate them.`,
+      );
+    },
+    onError: (error: unknown) => toast.error(errorMessage(error)),
+  });
+
+  const reactivate = useMutation({
+    mutationFn: () => api.post<unknown>(`/api/users/${person.id}/reactivate`, {}),
+    onSuccess: () => {
+      refresh();
+      toast.success(`${person.full_name} is active again.`);
+    },
+    onError: (error: unknown) => toast.error(errorMessage(error)),
+  });
+
   const remove = useMutation({
     mutationFn: (reason: string) => api.post<unknown>(`/api/users/${person.id}/deactivate`, { reason }),
     onSuccess: () => {
@@ -85,6 +125,22 @@ export function VolunteerActions({ person, onRemoved }: { person: Person; onRemo
 
   return (
     <section className="space-y-3">
+      {paused ? (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+          <p className="font-semibold">
+            Paused
+            {person.suspended_until
+              ? ` until ${new Date(person.suspended_until).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`
+              : ' until reactivated'}
+          </p>
+          {person.suspension_reason ? <p className="mt-1">{person.suspension_reason}</p> : null}
+          <p className="mt-1 text-xs">No ride offers and no sign-in while paused. Nothing is deleted.</p>
+          <button type="button" className={`${primaryButtonClass} mt-2`} disabled={reactivate.isPending} onClick={() => reactivate.mutate()}>
+            <PlayCircle className="h-4 w-4" aria-hidden="true" />
+            {reactivate.isPending ? 'Reactivating…' : 'Reactivate now'}
+          </button>
+        </div>
+      ) : null}
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <button type="button" className={secondaryButtonClass} onClick={() => toggle('edit')}>
           <Pencil className="h-4 w-4" aria-hidden="true" />
@@ -98,6 +154,12 @@ export function VolunteerActions({ person, onRemoved }: { person: Person; onRemo
           <MessageCircle className="h-4 w-4" aria-hidden="true" />
           WhatsApp
         </button>
+        {!paused ? (
+          <button type="button" className={secondaryButtonClass} onClick={() => toggle('pause')}>
+            <PauseCircle className="h-4 w-4" aria-hidden="true" />
+            Pause
+          </button>
+        ) : null}
         <button
           type="button"
           className={`${secondaryButtonClass} !border-red-300 !text-red-700 dark:!border-red-500/50 dark:!text-red-300`}
@@ -143,6 +205,46 @@ export function VolunteerActions({ person, onRemoved }: { person: Person; onRemo
             </button>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">Services, hours and how we reach them are further down this card.</p>
+        </form>
+      ) : null}
+
+      {panel === 'pause' ? (
+        <form
+          className="space-y-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700"
+          onSubmit={(event) => {
+            event.preventDefault();
+            pause.mutate();
+          }}
+        >
+          <p className="text-sm text-slate-700 dark:text-slate-200">
+            Pausing stops ride offers and sign-in for {person.full_name}. Their details, history and ID card are kept.
+          </p>
+          <fieldset className="space-y-2">
+            <legend className={labelClass}>For how long</legend>
+            <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
+              <input type="radio" name={`pause-${person.id}`} className="h-5 w-5" checked={pauseMode === 'until'} onChange={() => setPauseMode('until')} />
+              Until a date (switches back on by itself)
+            </label>
+            {pauseMode === 'until' ? (
+              <input type="date" aria-label="Back on" className={inputClass} min={tomorrow()} value={pauseUntil} required
+                onChange={(event) => setPauseUntil(event.target.value)} />
+            ) : null}
+            <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
+              <input type="radio" name={`pause-${person.id}`} className="h-5 w-5" checked={pauseMode === 'open'} onChange={() => setPauseMode('open')} />
+              Until I reactivate them
+            </label>
+          </fieldset>
+          <div>
+            <label htmlFor={`pause-reason-${person.id}`} className={labelClass}>Reason (optional)</label>
+            <input id={`pause-reason-${person.id}`} className={inputClass} value={pauseReason} maxLength={500}
+              placeholder="Away for the winter, taking a break, …" onChange={(event) => setPauseReason(event.target.value)} />
+          </div>
+          <div className="flex gap-2">
+            <button type="submit" className={primaryButtonClass} disabled={pause.isPending}>
+              {pause.isPending ? 'Pausing…' : 'Pause'}
+            </button>
+            <button type="button" className={secondaryButtonClass} onClick={() => setPanel('none')}>Cancel</button>
+          </div>
         </form>
       ) : null}
 

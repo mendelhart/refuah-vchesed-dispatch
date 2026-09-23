@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { endExpiredSuspensions } from '../domain/users.service.js';
 import { env } from '../env.js';
 import { logger } from '../lib/logger.js';
 import { claimJobs, completeJob, enqueue, failJob, reclaimStalledJobs } from './queue.js';
@@ -96,6 +97,8 @@ export class Worker {
        * container, and no possibility of two machines materialising the same
        * standing ride because both believed they were the leader.
        */
+      const resumed = await endExpiredSuspensions();
+      if (resumed) logger.info({ resumed }, 'paused volunteers switched back on');
       const today = localDateString(new Date());
       await enqueue('recurring.materialise', {}, { dedupeKey: `recurring:${today}` });
       await enqueue('equipment.due_scan', {}, { dedupeKey: `equipment-due:${today}` });

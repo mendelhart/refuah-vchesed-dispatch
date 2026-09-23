@@ -99,6 +99,22 @@ describe('authorization', () => {
       cookie: dispatcher.cookie, payload: { channel: 'sms', body: 'Can you drive Thursday?' },
     })).status).toBe(200);
 
+    expect((await api('POST', `/api/users/${otherVolunteer.id}/suspend`, {
+      cookie: volunteer.cookie, payload: {},
+    })).status).toBe(403);
+    const until = new Date(Date.now() + 7 * 86_400_000).toISOString();
+    const paused = await api('POST', `/api/users/${otherVolunteer.id}/suspend`, {
+      cookie: dispatcher.cookie, payload: { until, reason: 'Away for a week' },
+    });
+    expect(paused.status).toBe(200);
+    expect((paused.body.user as { status: string }).status).toBe('inactive');
+    expect((await api('POST', `/api/users/${admin.id}/suspend`, {
+      cookie: dispatcher.cookie, payload: {},
+    })).status).toBe(403);
+    expect((await api('POST', `/api/users/${otherVolunteer.id}/reactivate`, {
+      cookie: dispatcher.cookie, payload: {},
+    })).status).toBe(200);
+
     expect((await api('POST', `/api/users/${otherVolunteer.id}/deactivate`, {
       cookie: dispatcher.cookie, payload: { reason: 'Moved away' },
     })).status).toBe(200);

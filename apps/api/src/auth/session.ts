@@ -107,6 +107,18 @@ export async function authenticate(
     throw genericFailure;
   }
 
+  if (row.status === 'inactive' && row.suspendedUntil && row.suspendedUntil <= new Date()) {
+    // The pause has ended; housekeeping may simply not have run yet.
+    await db.update(users).set({ status: 'active', suspendedUntil: null, suspensionReason: null }).where(eq(users.id, row.id));
+    row.status = 'active';
+  }
+  if (row.status === 'inactive') {
+    // Only reached with the right password, so this reveals nothing to a stranger.
+    const until = row.suspendedUntil
+      ? ` until ${row.suspendedUntil.toLocaleDateString('en-CA', { timeZone: 'America/Toronto', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`
+      : '';
+    throw Errors.forbidden(`Your volunteer account is paused${until}. Please contact a coordinator.`);
+  }
   if (row.status !== 'active') throw genericFailure;
 
   await db

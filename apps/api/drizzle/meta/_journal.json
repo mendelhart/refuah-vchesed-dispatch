@@ -99,6 +99,13 @@
       "when": 1790129332987,
       "tag": "0013_coordinator_cleanup",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790129392987,
+      "tag": "0014_suspend",
+      "breakpoints": true
     }
   ]
 }

@@ -305,6 +305,12 @@ export const directMessageSchema = z.object({
   body: z.string().trim().min(1, 'Write a message first.').max(1200, 'That is too long for one text. Shorten it.'),
 });
 
+/** Pause a volunteer: no offers, no sign-in, nothing deleted. No date = until reactivated. */
+export const suspendUserSchema = z.object({
+  until: z.string().datetime({ offset: true }).optional().nullable(),
+  reason: z.string().trim().max(500).optional().nullable(),
+});
+
 /** Role changes are a separate, admin-only, separately-audited operation. */
 export const changeRoleSchema = z.object({ role: z.enum(ROLES) });
 

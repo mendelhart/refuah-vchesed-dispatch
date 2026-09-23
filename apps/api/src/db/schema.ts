@@ -69,6 +69,9 @@ export const users = pgTable(
      * told when the mute lapses.
      */
     mutedUntil: timestamp('muted_until', { withTimezone: true }),
+    /** Paused by a coordinator (status 'inactive'). Null = until reactivated by hand. */
+    suspendedUntil: timestamp('suspended_until', { withTimezone: true }),
+    suspensionReason: text('suspension_reason'),
 
     /** Physical needs this volunteer can handle. Empty = plain rides only. */
     capabilities: text('capabilities').array().notNull().default(sql`'{}'::text[]`),

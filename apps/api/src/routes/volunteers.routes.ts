@@ -257,7 +257,7 @@ export async function volunteerRoutes(app: FastifyInstance): Promise<void> {
     const rows = (await db.execute(raw`
       select u.id, u.full_name, u.phone, u.email, u.role, u.status,
              u.volunteer_number, u.capabilities, u.languages, u.service_area,
-             u.muted_until, u.last_offered_at, u.notification_preference,
+             u.muted_until, u.suspended_until, u.suspension_reason, u.last_offered_at, u.notification_preference,
              coalesce(array_agg(distinct g.slug) filter (where g.slug is not null), '{}') as group_slugs,
              coalesce(array_agg(distinct g.name) filter (where g.name is not null), '{}') as group_names,
              coalesce(array_agg(distinct st.slug) filter (where st.slug is not null), '{}') as service_slugs,

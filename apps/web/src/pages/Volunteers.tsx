@@ -46,6 +46,8 @@ interface VolunteerRow {
   languages: string[];
   service_area: string | null;
   muted_until: string | null;
+  suspended_until: string | null;
+  suspension_reason: string | null;
   last_offered_at: string | null;
   notification_preference: string | null;
   group_slugs: string[];
@@ -222,7 +224,7 @@ export function VolunteersPage(): React.JSX.Element {
           aria-label="Filter by account status"
         >
           <option value="active">Active accounts</option>
-          <option value="all">Everyone, including deactivated</option>
+          <option value="all">Everyone, including paused</option>
         </select>
         <div role="tablist" aria-label="How to show the roster" className="flex gap-2">
           {([
@@ -323,7 +325,7 @@ function RosterTable({ rows, onOpen }: { rows: VolunteerRow[]; onOpen: (id: stri
             return (
               <tr key={row.id}>
                 <td className="px-4 py-3">
-                  <p className="font-medium text-slate-900 dark:text-white">{row.full_name}</p>
+                  <p className="font-medium text-slate-900 dark:text-white">{row.full_name}{row.status === 'inactive' ? <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">Paused</span> : null}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {row.volunteer_number ? `${row.volunteer_number} · ` : ''}
                     {row.phone ? (
@@ -388,7 +390,7 @@ function RosterCards({ rows, onOpen }: { rows: VolunteerRow[]; onOpen: (id: stri
           <li key={row.id} className={`${cardClass} p-4`}>
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="font-medium text-slate-900 dark:text-white">{row.full_name}</p>
+                <p className="font-medium text-slate-900 dark:text-white">{row.full_name}{row.status === 'inactive' ? <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:bg-amber-500/15 dark:text-amber-300">Paused</span> : null}</p>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   {row.volunteer_number ? `${row.volunteer_number} · ` : ''}
                   {row.group_names.length > 0 ? row.group_names.join(', ') : 'No group'}
@@ -681,7 +683,7 @@ function VolunteerDrawer({
         <section>
           <p className="text-sm text-slate-600 dark:text-slate-400">
             {row.volunteer_number ? `${row.volunteer_number} · ` : ''}
-            {roleLabel(row.role)} · {titleCase(row.status)}
+            {roleLabel(row.role)} · {row.status === 'inactive' ? 'Paused' : titleCase(row.status)}
             {row.licence_status ? ` · licence ${titleCase(row.licence_status)}` : ''}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
