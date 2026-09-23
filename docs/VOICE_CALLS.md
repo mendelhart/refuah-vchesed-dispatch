@@ -28,7 +28,8 @@ is going unanswered.
 - The volunteer sets it in Settings; a dispatcher or admin can switch it for
   any volunteer from People / Volunteers at any time. No channel is reserved
   for specific people - who gets calls is whatever the org sets up.
-- Quiet hours for calls: open question (see below). Texts are not affected.
+- Quiet hours for calls (decided): no calls 22:00-07:00; offers go by text
+  at night, except urgent trips, which may still call. Texts are not affected.
 - Calls are never the only carrier: push + in-app always go too, and an
   unanswered call falls back to SMS (below).
 
@@ -102,7 +103,7 @@ is going unanswered.
 
 1. `CallingProvider.placeAnnouncementCall()` in the Twilio adapter + memory
    double for tests (about 1h).
-2. `voice` channel in notify/deliver, preference value, quiet hours if wanted (1-2h).
+2. `voice` channel in notify/deliver, preference value, quiet hours (1-2h).
 3. Voice webhooks: offer TwiML, answer handling via `claimTrip`, status
    callback, retry/fallback job (2-3h).
 4. UI: channel picker in Settings and a dispatcher override in People /
@@ -120,6 +121,6 @@ Decided (Sep 22):
 - Language: English only.
 - Who gets calls: every volunteer can choose SMS, voice, WhatsApp or the app,
   and dispatchers can switch it for them.
+- Quiet hours: no calls 22:00-07:00, urgent trips excepted.
 
-Still open:
-1. Quiet hours for calls (proposed 22:00-07:00, urgent trips excepted).
+Nothing open.
