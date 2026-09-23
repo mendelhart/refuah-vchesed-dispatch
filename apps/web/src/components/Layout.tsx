@@ -39,6 +39,7 @@ import {
   UserPlus,
   Users,
   X,
+  Wrench,
 } from 'lucide-react';
 import type { Role } from '@rvc/shared';
 import { useAuth } from '@/lib/auth';
@@ -106,6 +107,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/impact', label: 'Organization impact', icon: HeartHandshake, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Rides, volunteers and people helped, all together' },
   { to: '/admin/exports', label: 'Exports', icon: Download, roles: ['admin'], dispatch: 'admin', hint: 'Download data' },
   { to: '/admin/audit', label: 'Audit log', icon: FileText, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Who changed what' },
+  { to: '/admin/data-fixes', label: 'Data fixes', icon: Wrench, roles: ['admin'], dispatch: 'admin', hint: 'Correct how a ride ended; tidy up accounts never set up' },
   { to: '/admin/settings', label: 'Dispatch settings', icon: ShieldCheck, roles: ['admin'], dispatch: 'admin', hint: 'Timings, limits, call quiet hours, announcements on/off' },
 ];
 

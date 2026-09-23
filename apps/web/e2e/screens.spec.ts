@@ -17,6 +17,7 @@ const SHOTS: Array<{ role: keyof typeof STATE_FILES; path: string; name: string 
   { role: 'admin', path: '/impact', name: 'admin-org-impact' },
   { role: 'admin', path: '/admin/settings', name: 'admin-dispatch-settings' },
   { role: 'admin', path: '/admin/people', name: 'admin-people' },
+  { role: 'admin', path: '/admin/data-fixes', name: 'admin-data-fixes' },
   { role: 'volunteer', path: '/', name: 'volunteer-home' },
   { role: 'volunteer', path: '/me', name: 'volunteer-my-profile' },
   { role: 'volunteer', path: '/settings', name: 'volunteer-settings' },

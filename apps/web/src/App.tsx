@@ -63,6 +63,9 @@ const TemplatesPage = React.lazy(() =>
 const AnnouncementsPage = React.lazy(() =>
   import('@/pages/admin/Announcements').then((m) => ({ default: m.AnnouncementsPage })),
 );
+const DataFixesPage = React.lazy(() =>
+  import('@/pages/admin/DataFixes').then((m) => ({ default: m.DataFixesPage })),
+);
 const ExportsPage = React.lazy(() =>
   import('@/pages/admin/Exports').then((m) => ({ default: m.ExportsPage })),
 );
@@ -395,6 +398,16 @@ export function App(): React.JSX.Element {
             <Shell>
               <RequireRole roles={DISPATCH}>
                 <AnnouncementsPage />
+              </RequireRole>
+            </Shell>
+          }
+        />
+        <Route
+          path="/admin/data-fixes"
+          element={
+            <Shell>
+              <RequireRole roles={ADMIN}>
+                <DataFixesPage />
               </RequireRole>
             </Shell>
           }
