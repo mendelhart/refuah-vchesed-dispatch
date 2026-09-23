@@ -757,6 +757,9 @@ function StepConfirm({
           />
           I have read the above and I agree.
         </label>
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          How we look after your details: <a className="underline" href="/privacy" target="_blank" rel="noreferrer">privacy notice</a>.
+        </p>
       </div>
 
       <label className="flex min-h-[44px] cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-3 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">

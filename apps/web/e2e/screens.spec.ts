@@ -20,6 +20,7 @@ const SHOTS: Array<{ role: keyof typeof STATE_FILES; path: string; name: string 
   { role: 'volunteer', path: '/', name: 'volunteer-home' },
   { role: 'volunteer', path: '/me', name: 'volunteer-my-profile' },
   { role: 'volunteer', path: '/settings', name: 'volunteer-settings' },
+  { role: 'volunteer', path: '/privacy', name: 'privacy-notice' },
 ];
 
 test.describe('phone screenshots', () => {

@@ -47,6 +47,11 @@ export function HubPage({ section }: { section: Exclude<NavSection, 'main'> }): 
           );
         })}
       </ul>
+      {section === 'more' ? (
+        <p className="pt-2 text-center text-sm text-slate-500 dark:text-slate-400">
+          <Link to="/privacy" className="underline">Privacy notice</Link>
+        </p>
+      ) : null}
     </div>
   );
 }

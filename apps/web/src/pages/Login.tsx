@@ -111,6 +111,9 @@ export function LoginPage(): React.JSX.Element {
         <p className="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
           New volunteer with an invitation? <Link className="underline" to="/accept-invite">Set up your account</Link>.
         </p>
+        <p className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
+          <Link className="underline" to="/privacy">Privacy notice</Link>
+        </p>
       </div>
     </div>
   );

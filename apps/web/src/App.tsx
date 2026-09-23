@@ -21,6 +21,7 @@ import { HubPage } from "@/pages/Hub";
 import { MyAvailabilityPage } from "@/pages/MyAvailability";
 import { MyProfilePage } from "@/pages/MyProfile";
 import { VerifyCardPage } from "@/pages/VerifyCard";
+import { PrivacyPage } from "@/pages/Privacy";
 import { InstallPrompt } from "@/lib/install-prompt";
 
 /**
@@ -122,6 +123,7 @@ export function App(): React.JSX.Element {
         }
       />
         <Route path="/verify/:token" element={<VerifyCardPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
 
         <Route
           path="/"
