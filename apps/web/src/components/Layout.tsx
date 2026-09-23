@@ -382,7 +382,7 @@ function ViewAsBanner(): React.JSX.Element | null {
   return (
     <div role="status" className="flex items-center justify-between gap-3 bg-amber-400 px-4 py-2 text-sm font-medium text-slate-900">
       <span className="min-w-0 truncate">
-        Viewing as {preview.name} ({preview.role}) · read-only
+        Viewing as {preview.name} · read-only
       </span>
       <button
         type="button"
