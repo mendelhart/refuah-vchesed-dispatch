@@ -232,6 +232,21 @@ scripts/restore.sh --help
 
 ---
 
+## Words used in the code vs. on screen
+
+A few names changed on screen after the code was written. The code and the
+database keep the old names so nothing has to be migrated.
+
+| In the code / database | On screen | Notes |
+| --- | --- | --- |
+| `dispatcher` (role) | Coordinator | Can add, edit, message, pause and remove **volunteers only**. Anything touching a coordinator or admin needs an admin. The rule lives in one place: `apps/api/src/auth/permissions.ts`. `requireDispatcher` means "coordinator or admin". |
+| `admin` (role) | Admin | Everything, including exports, settings, templates and resetting two-step sign-in. |
+| `volunteer` (role) | Volunteer | Sees only their own rides and offers. |
+| `trip` | Ride / trip | One request on the board. |
+| `recurring` | Standing rides | Templates that turn into ordinary trips. |
+| `deactivate` | Remove | Clears phone and email and blocks sign-in; kept in the audit log with a reason. |
+| `suspend` | Pause | Keeps the person on file; optional end date. |
+
 ## Layout
 
 ```
