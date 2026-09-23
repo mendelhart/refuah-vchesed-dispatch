@@ -29,7 +29,9 @@ test.describe('dispatch as a dispatcher', () => {
     const local = new Date(when.getTime() - when.getTimezoneOffset() * 60_000)
       .toISOString()
       .slice(0, 16);
-    await page.getByLabel(/pickup (time|at|date)/i).first().fill(local);
+    const [day, clock] = local.split('T');
+    await page.getByLabel(/pickup time date/i).fill(day!);
+    await page.getByLabel(/pickup time time/i).fill(clock!);
 
     await page.getByRole('button', { name: /create|save/i }).last().click();
 

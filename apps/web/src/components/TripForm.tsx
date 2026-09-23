@@ -271,6 +271,9 @@ export function TripForm({
   onClose: () => void;
 }): React.JSX.Element {
   const queryClient = useQueryClient();
+  // Creating is the fast path: caller, addresses, time, type, group. Urgency,
+  // assignment mode, mobility and notes sit one tap away under More options.
+  const [moreOpen, setMoreOpen] = useState(Boolean(trip));
   const [form, setForm] = useState<FormState>(() => (trip ? fromTrip(trip) : blankForm()));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formKey, setFormKey] = useState(trip?.id ?? 'new');
@@ -841,6 +844,14 @@ export function TripForm({
           </div>
         </div>
 
+        <details open={moreOpen} onToggle={(event) => setMoreOpen(event.currentTarget.open)}>
+          <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800/60">
+            More options
+            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+              Urgency, assignment, mobility, notes
+            </span>
+          </summary>
+          <div className="mt-4 space-y-4">
         <fieldset>
           <legend className={labelClass}>How urgent is this?</legend>
           <div className="space-y-2">
@@ -924,6 +935,8 @@ export function TripForm({
             onChange={(event) => setForm({ ...form, passengerNotes: event.target.value })}
           />
         </div>
+          </div>
+        </details>
 
         <div className="flex flex-wrap gap-2 pt-2">
           <button type="submit" className={`${primaryButtonClass} flex-1`} disabled={save.isPending}>
