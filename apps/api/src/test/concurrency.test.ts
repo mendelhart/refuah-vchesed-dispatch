@@ -116,6 +116,53 @@ describe('concurrent acceptance', () => {
     expect([claim.status, assign.status].filter((s) => s === 200).length).toBeGreaterThanOrEqual(1);
   });
 
+  it('accept racing a cancellation: never cancelled-with-a-volunteer, never accepted-after-cancel', async () => {
+    const { tripId, volunteers } = await offeredTrip(3);
+    const [claim, cancel] = await Promise.all([
+      api('POST', `/api/trips/${tripId}/claim`, { cookie: volunteers[0]!.cookie, payload: {} }),
+      api('POST', `/api/trips/${tripId}/cancel`, { cookie: dispatcher.cookie, payload: { reason: 'caller cancelled' } }),
+    ]);
+    const [row] = await db.select().from(trips).where(eq(trips.id, tripId));
+    if (row!.status === 'cancelled') {
+      expect(cancel.status).toBe(200);
+      const live = await db.select().from(tripAssignments).where(sql`trip_id = ${tripId} and unassigned_at is null`);
+      expect(live).toHaveLength(0);
+    } else {
+      expect(row!.status).toBe('accepted');
+      expect(claim.status).toBe(200);
+    }
+    const pending = await db.select().from(tripOffers).where(sql`trip_id = ${tripId} and status = 'pending'`);
+    if (row!.status === 'cancelled') expect(pending).toHaveLength(0);
+  });
+
+  it('accepts racing offer expiry: at most one winner, and only on a still-valid offer', async () => {
+    const { tripId, volunteers } = await offeredTrip(3);
+    const offers = await db.select().from(tripOffers).where(eq(tripOffers.tripId, tripId));
+    // Expire volunteer 0's offer while all three press accept.
+    const v0Offer = offers.find((o) => o.volunteerId === volunteers[0]!.id)!;
+    await db.update(tripOffers).set({ expiresAt: new Date(Date.now() - 1000) }).where(eq(tripOffers.id, v0Offer.id));
+    const results = await Promise.all(
+      volunteers.map((v) => api('POST', `/api/trips/${tripId}/claim`, { cookie: v.cookie, payload: {} })),
+    );
+    expect(results[0]!.status).toBe(409);
+    expect(results.filter((r) => r.status === 200)).toHaveLength(1);
+    const [row] = await db.select().from(trips).where(eq(trips.id, tripId));
+    expect(row!.assignedVolunteerId).not.toBe(volunteers[0]!.id);
+  });
+
+  it('losing offers are all superseded and a late accept after the win is refused', async () => {
+    const { tripId, volunteers } = await offeredTrip(4);
+    expect((await api('POST', `/api/trips/${tripId}/claim`, { cookie: volunteers[2]!.cookie, payload: {} })).status).toBe(200);
+    const byStatus = await db.select({ v: tripOffers.volunteerId, s: tripOffers.status }).from(tripOffers)
+      .where(eq(tripOffers.tripId, tripId));
+    expect(byStatus.filter((o) => o.s === 'accepted').map((o) => o.v)).toEqual([volunteers[2]!.id]);
+    expect(byStatus.filter((o) => o.s !== 'accepted').every((o) => o.s === 'superseded')).toBe(true);
+    const late = await api('POST', `/api/trips/${tripId}/claim`, { cookie: volunteers[0]!.cookie, payload: {} });
+    expect(late.status).toBe(409);
+    const [row] = await db.select().from(trips).where(eq(trips.id, tripId));
+    expect(row!.assignedVolunteerId).toBe(volunteers[2]!.id);
+  });
+
   it('concurrent edits do not silently overwrite each other', async () => {
     const created = await api('POST', '/api/trips', { cookie: dispatcher.cookie, payload: sampleTrip() });
     const trip = created.body.trip as { id: string; version: number };
