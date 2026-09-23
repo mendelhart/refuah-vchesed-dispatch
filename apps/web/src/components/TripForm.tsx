@@ -31,60 +31,12 @@ import { isFullTrip } from '@/types/api';
 import { mobilityLabel, relativeTime, tripTypeLabel } from '@/lib/format';
 import { AddressFields, type AddressDraft, type SavedPlace } from './AddressAutocomplete';
 import { Modal } from './Modal';
+import type { CallerProfileResponse, CallerSearchResponse, CallerSearchRow, SavedAddressRow } from './trip-form-directory';
 import { DateTimeFields } from './DateTimeFields';
 import { blankForm, buildTripPayload, fieldErrors, fromTrip, type FormState } from './trip-form-model';
 import { InlineSpinner, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from './states';
 import type { GroupsResponse, TripResponse } from '@/types/api';
 
-/** Directory rows. Declared here rather than imported so this dialog does not
- *  depend on the Callers screen staying mounted or staying put. */
-interface CallerSearchRow {
-  id: string;
-  name: string;
-  primaryPhone: string | null;
-  alternatePhone: string | null;
-  language: string;
-  notes: string | null;
-  accessNotes: string | null;
-  tripCount: number;
-  lastTripAt: string | null;
-}
-interface CallerSearchResponse {
-  results: CallerSearchRow[];
-}
-interface SavedAddressRow {
-  id: string;
-  label: string;
-  entrance: string | null;
-  parking: string | null;
-  isDefaultPickup: boolean;
-  useCount: number;
-  lastUsedAt: string | null;
-  address: {
-    id: string;
-    line1: string;
-    unit: string | null;
-    city: string;
-    province: string;
-    postalCode: string | null;
-    notes: string | null;
-    latitude: number | null;
-    longitude: number | null;
-  };
-}
-interface CallerProfileResponse {
-  caller: {
-    id: string;
-    name: string;
-    primaryPhone: string | null;
-    alternatePhone: string | null;
-    language: string;
-    notes: string | null;
-    accessNotes: string | null;
-  };
-  addresses: SavedAddressRow[];
-  history: unknown[];
-}
 
 
 /**
