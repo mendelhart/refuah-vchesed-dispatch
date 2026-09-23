@@ -22,7 +22,7 @@ describe('ID card photos', () => {
   it('lets a volunteer set their own photo and shows it on the card', async () => {
     expect((await api('PUT', '/api/me/photo', { cookie: volunteer.cookie, payload: { photo: PHOTO } })).status).toBe(200);
     const card = await api('GET', '/api/me/id-card', { cookie: volunteer.cookie });
-    expect((card.body.card as { photo: string | null }).photo).toMatch(new RegExp(`^/api/users/${volunteer.id}/photo`));
+    expect((card.body.card as { photo: string | null }).photo).toBe(PHOTO);
   });
 
   it('refuses a volunteer setting someone else\'s photo, allows an admin', async () => {
@@ -35,5 +35,16 @@ describe('ID card photos', () => {
   it('rejects something that is not a picture', async () => {
     const res = await api('PUT', '/api/me/photo', { cookie: volunteer.cookie, payload: { photo: 'data:text/html;base64,PGgxPg==' } });
     expect(res.status).toBe(422);
+  });
+
+  it('shows the photo on the public QR check page for a current card only', async () => {
+    await api('PUT', '/api/me/photo', { cookie: volunteer.cookie, payload: { photo: PHOTO } });
+    const card = await api('GET', '/api/me/id-card', { cookie: volunteer.cookie });
+    const token = (card.body.card as { verificationCode: string }).verificationCode;
+    expect(token).toBeTruthy();
+    const check = await api('GET', `/api/id-card/verify/${token}`);
+    expect(check.body.valid).toBe(true);
+    expect(check.body.photo).toBe(PHOTO);
+    expect(check.body).not.toHaveProperty('phone');
   });
 });

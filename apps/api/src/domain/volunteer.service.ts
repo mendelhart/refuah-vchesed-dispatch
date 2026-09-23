@@ -398,10 +398,10 @@ export async function buildIdCard(userId: string): Promise<IdCard> {
  */
 export async function verifyIdCard(
   cardToken: string,
-): Promise<{ valid: boolean; fullName?: string; volunteerNumber?: string; organization?: string }> {
+): Promise<{ valid: boolean; fullName?: string; volunteerNumber?: string; organization?: string; photo?: string }> {
   if (!cardToken || cardToken.length < 8) return { valid: false };
   const [row] = await db
-    .select({ fullName: users.fullName, status: users.status, number: users.volunteerNumber })
+    .select({ fullName: users.fullName, status: users.status, number: users.volunteerNumber, photo: users.photoUrl })
     .from(users)
     .where(and(eq(users.cardToken, cardToken), isNull(users.deletedAt)))
     .limit(1);
@@ -411,6 +411,10 @@ export async function verifyIdCard(
     fullName: row.fullName,
     volunteerNumber: row.number ?? undefined,
     organization: "Refuah V'Chesed",
+    // Shown to the desk so they can match the face to the card holder (owner
+    // decision, Sep 23). Sent inline: the page is unauthenticated, and only a
+    // current card ever gets this far.
+    photo: row.photo && row.photo.startsWith('data:image/') ? row.photo : undefined,
   };
 }
 

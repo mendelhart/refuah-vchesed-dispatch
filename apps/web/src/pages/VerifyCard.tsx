@@ -9,6 +9,7 @@ interface CardCheck {
   fullName?: string;
   volunteerNumber?: string;
   organization?: string;
+  photo?: string;
 }
 
 /**
@@ -46,7 +47,17 @@ export function VerifyCardPage(): React.JSX.Element {
           </>
         ) : (
           <>
-            <BadgeCheck className="mx-auto h-12 w-12 text-emerald-600 dark:text-emerald-400" aria-hidden />
+            {data.photo ? (
+              <img
+                src={data.photo}
+                alt={`Photo of ${data.fullName ?? 'the card holder'}`}
+                className="mx-auto h-40 w-32 rounded-xl border-2 border-emerald-600 object-cover"
+              />
+            ) : null}
+            <BadgeCheck
+              className={`mx-auto text-emerald-600 dark:text-emerald-400 ${data.photo ? 'mt-4 h-8 w-8' : 'h-12 w-12'}`}
+              aria-hidden
+            />
             <h1 className="mt-4 text-xl font-semibold text-slate-900 dark:text-white">
               {data.fullName}
             </h1>
@@ -58,6 +69,11 @@ export function VerifyCardPage(): React.JSX.Element {
                 {data.volunteerNumber}
               </p>
             ) : null}
+            {data.photo ? (
+              <p className="mt-4 text-xs text-slate-500">Check that this photo matches the person in front of you.</p>
+            ) : (
+              <p className="mt-4 text-xs text-slate-500">No photo on file. Please check another photo ID.</p>
+            )}
           </>
         )}
       </div>
