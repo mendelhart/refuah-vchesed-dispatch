@@ -62,6 +62,7 @@ export const qk = {
   },
   me: {
     impact: () => ['me', 'impact'] as const,
+    orgImpact: () => ['org', 'impact'] as const,
     status: () => ['me', 'status'] as const,
     notifications: () => ['me', 'notifications'] as const,
   },
@@ -86,6 +87,7 @@ export const qk = {
     smsEvents: () => ['admin', 'sms-events'] as const,
     settings: () => ['admin', 'settings'] as const,
     opsHealth: () => ['admin', 'ops-health'] as const,
+    features: () => ['admin', 'features'] as const,
   },
   org: {
     info: () => ['organization'] as const,

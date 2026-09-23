@@ -17,6 +17,7 @@ import { DirectoryPage } from "@/pages/Directory";
 import { CallsPage } from "@/pages/Calls";
 import { EquipmentPage } from "@/pages/Equipment";
 import { SettingsPage } from "@/pages/Settings";
+import { HubPage } from "@/pages/Hub";
 import { MyAvailabilityPage } from "@/pages/MyAvailability";
 import { MyProfilePage } from "@/pages/MyProfile";
 import { VerifyCardPage } from "@/pages/VerifyCard";
@@ -168,7 +169,9 @@ export function App(): React.JSX.Element {
           path="/impact"
           element={
             <Shell>
-              <ImpactPage />
+              <RequireRole roles={DISPATCH}>
+                <ImpactPage />
+              </RequireRole>
             </Shell>
           }
         />
@@ -298,6 +301,18 @@ export function App(): React.JSX.Element {
           }
         />
 
+        <Route path="/more" element={<Shell><HubPage section="more" /></Shell>} />
+        <Route path="/me" element={<Shell><HubPage section="profile" /></Shell>} />
+        <Route
+          path="/admin"
+          element={
+            <Shell>
+              <RequireRole roles={DISPATCH}>
+                <HubPage section="admin" />
+              </RequireRole>
+            </Shell>
+          }
+        />
         <Route
           path="/admin/audit"
           element={

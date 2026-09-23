@@ -195,7 +195,7 @@ describe('communications and templates', () => {
     expect(rows.map((r) => r.channel)).toContain('whatsapp');
   });
 
-  it('sends an offer on the volunteer's chosen channel (WhatsApp)', async () => {
+  it("sends an offer on the volunteer's chosen channel (WhatsApp)", async () => {
     const volunteer = await createTestUser({ role: 'volunteer' });
     await db.update(users).set({ notificationPreference: 'whatsapp' }).where(eq(users.id, volunteer.id));
 

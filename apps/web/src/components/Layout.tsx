@@ -46,8 +46,12 @@ import { useTheme } from '@/lib/theme';
 import { qk } from '@/lib/query';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { FEATURE_ROUTES, useFeatures, type Features } from '@/lib/features';
 import { BottomNavigation, bottomNavItems } from './BottomNavigation';
 import type { BoardSummaryResponse, NotificationsResponse, TripListResponse } from '@/types/api';
+
+/** Where a screen lives: the main menu, or one tap further under More / My profile / Admin. */
+export type NavSection = 'main' | 'more' | 'profile' | 'admin';
 
 interface NavItem {
   to: string;
@@ -55,48 +59,77 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   roles: readonly Role[];
   end?: boolean;
+  /** Section per role group; defaults to 'main'. */
+  dispatch?: NavSection;
+  volunteer?: NavSection;
+  /** One-line description on the hub pages. */
+  hint?: string;
 }
 
 /**
- * The sidebar.
+ * The menu.
  *
- * Ordered by how often somebody reaches for it, not by which module it belongs
- * to: dispatch work first, then the volunteer's own record, then the things an
- * administrator touches weekly at most. A flat list beats nested menus here —
- * dispatchers navigate this under time pressure with one hand.
+ * Kept short on purpose. Dispatchers see the screens they work in all day;
+ * everything else is one tap away under More or Admin. Volunteers see Home,
+ * My rides and My profile; their own records live inside My profile.
  */
 export const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Home', icon: Home, roles: ['volunteer', 'dispatcher', 'admin'], end: true },
   { to: '/board', label: 'Dispatch board', icon: LayoutDashboard, roles: ['dispatcher', 'admin'] },
   { to: '/messages', label: 'Messages', icon: MessageSquare, roles: ['dispatcher', 'admin'] },
+  { to: '/volunteers', label: 'Volunteers', icon: Users, roles: ['dispatcher', 'admin'] },
   { to: '/contacts', label: 'Contacts', icon: BookUser, roles: ['dispatcher', 'admin'] },
   { to: '/recurring', label: 'Standing rides', icon: Repeat, roles: ['dispatcher', 'admin'] },
-  { to: '/volunteers', label: 'Volunteers', icon: Users, roles: ['dispatcher', 'admin'] },
-  { to: '/duty', label: 'Phone duty', icon: CalendarClock, roles: ['volunteer', 'dispatcher', 'admin'] },
+  { to: '/equipment', label: 'Equipment', icon: Package, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'more', hint: 'Loans of wheelchairs, walkers and other equipment' },
 
-  { to: '/my-trips', label: 'My rides', icon: Car, roles: ['volunteer', 'dispatcher', 'admin'] },
-  { to: '/my-availability', label: 'My availability', icon: CalendarRange, roles: ['volunteer', 'dispatcher', 'admin'] },
-  { to: '/my-profile', label: 'What I can help with', icon: ListChecks, roles: ['volunteer', 'dispatcher', 'admin'] },
-  { to: '/my-id-card', label: 'My ID card', icon: IdCard, roles: ['volunteer', 'dispatcher', 'admin'] },
-  { to: '/impact', label: 'My impact', icon: HeartHandshake, roles: ['volunteer', 'dispatcher', 'admin'] },
+  { to: '/my-trips', label: 'My rides', icon: Car, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'profile' },
+  { to: '/me', label: 'My profile', icon: IdCard, roles: ['volunteer', 'dispatcher', 'admin'] },
+  { to: '/my-availability', label: 'My availability', icon: CalendarRange, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'profile', volunteer: 'profile', hint: 'When you can be asked' },
+  { to: '/my-profile', label: 'What I can help with', icon: ListChecks, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'profile', volunteer: 'profile', hint: 'Services, vehicle and what you can handle' },
+  { to: '/my-id-card', label: 'My ID card', icon: IdCard, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'profile', volunteer: 'profile', hint: 'Your volunteer card and licence' },
+  { to: '/settings', label: 'Settings', icon: SettingsIcon, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'profile', hint: 'Name, phone, how we reach you, menu' },
 
-  // Dispatchers reach callers, the team roster and hospital numbers from the
-  // one Contacts screen above; the separate Directory is the volunteer's view.
-  { to: '/directory', label: 'Directory', icon: Users, roles: ['volunteer'] },
-  { to: '/calls', label: 'Call log', icon: Phone, roles: ['volunteer', 'dispatcher', 'admin'] },
-  { to: '/equipment', label: 'Equipment', icon: Package, roles: ['volunteer', 'dispatcher', 'admin'] },
-  { to: '/vehicles', label: 'Vehicles', icon: Car, roles: ['dispatcher', 'admin'] },
-  { to: '/settings', label: 'Settings', icon: SettingsIcon, roles: ['volunteer', 'dispatcher', 'admin'] },
+  { to: '/directory', label: 'Directory', icon: Users, roles: ['volunteer'], volunteer: 'more', hint: 'The team roster' },
+  { to: '/duty', label: 'Phone duty', icon: CalendarClock, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'more', volunteer: 'more', hint: 'Who is on the phones when' },
+  { to: '/calls', label: 'Call log', icon: Phone, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'more', volunteer: 'more', hint: 'Calls placed through the app' },
+  { to: '/vehicles', label: 'Vehicles', icon: Car, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Organisation vehicles' },
+  { to: '/admin/applications', label: 'Applications', icon: UserPlus, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'New volunteer sign-ups to review' },
 
-  { to: '/admin/applications', label: 'Applications', icon: UserPlus, roles: ['dispatcher', 'admin'] },
-  { to: '/admin/announcements', label: 'Announcements', icon: Megaphone, roles: ['dispatcher', 'admin'] },
-  { to: '/admin/exports', label: 'Exports', icon: Download, roles: ['dispatcher', 'admin'] },
-  { to: '/admin/people', label: 'People', icon: Users, roles: ['admin'] },
-  { to: '/admin/templates', label: 'Message templates', icon: MessageSquareText, roles: ['admin'] },
-  { to: '/admin/notifications', label: 'Notifications', icon: Bell, roles: ['dispatcher', 'admin'] },
-  { to: '/admin/audit', label: 'Audit log', icon: FileText, roles: ['dispatcher', 'admin'] },
-  { to: '/admin/settings', label: 'Dispatch settings', icon: ShieldCheck, roles: ['admin'] },
+  { to: '/admin/people', label: 'People', icon: Users, roles: ['admin'], dispatch: 'admin', hint: 'Accounts, roles, invites, how each person is reached' },
+  { to: '/admin/announcements', label: 'Announcements', icon: Megaphone, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Message many volunteers at once' },
+  { to: '/admin/notifications', label: 'Notifications', icon: Bell, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Every message sent, and whether it arrived' },
+  { to: '/admin/templates', label: 'Message templates', icon: MessageSquareText, roles: ['admin'], dispatch: 'admin', hint: 'Wording of the texts' },
+  { to: '/impact', label: 'Organization impact', icon: HeartHandshake, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Rides, volunteers and people helped, all together' },
+  { to: '/admin/exports', label: 'Exports', icon: Download, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Download data' },
+  { to: '/admin/audit', label: 'Audit log', icon: FileText, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Who changed what' },
+  { to: '/admin/settings', label: 'Dispatch settings', icon: ShieldCheck, roles: ['admin'], dispatch: 'admin', hint: 'Timings, limits, call quiet hours, announcements on/off' },
 ];
+
+/** Hub entries that stand in for a whole section in the main menu. */
+export const HUB_ITEMS: Array<{ to: string; label: string; icon: NavItem['icon']; section: NavSection }> = [
+  { to: '/more', label: 'More', icon: Menu, section: 'more' },
+  { to: '/admin', label: 'Admin', icon: ShieldCheck, section: 'admin' },
+];
+
+export function sectionOf(item: NavItem, role: Role): NavSection {
+  const isDispatch = role === 'dispatcher' || role === 'admin';
+  return (isDispatch ? item.dispatch : item.volunteer) ?? 'main';
+}
+
+/** Items in one section for this person (role, feature switches, hidden screens). */
+export function sectionItems(
+  role: Role,
+  navHidden: string[] | undefined,
+  section: NavSection,
+  features: Features,
+): NavItem[] {
+  return NAV_ITEMS.filter((item) => {
+    if (!item.roles.includes(role) || sectionOf(item, role) !== section) return false;
+    const flag = FEATURE_ROUTES[item.to];
+    if (flag && !features[flag]) return false;
+    return section !== 'main' || !isNavItemHidden(role, navHidden, item.to);
+  });
+}
 
 /**
  * Routes nobody is allowed to hide: the way home, and the way back to the
@@ -109,7 +142,7 @@ const ALWAYS_VISIBLE = new Set(['/', '/settings']);
  * but most do not, so for a dispatcher they start hidden and can be switched
  * on in Settings > Your menu.
  */
-export const DISPATCH_DEFAULT_HIDDEN = new Set(['/my-trips', '/my-availability', '/my-profile', '/my-id-card', '/impact']);
+export const DISPATCH_DEFAULT_HIDDEN = new Set(['/my-trips', '/my-availability', '/my-profile', '/my-id-card', '/me']);
 
 /**
  * navHidden holds route paths the person hid. A `+` prefix ("+/my-trips")
@@ -137,9 +170,9 @@ export function toggleNavPreference(role: Role, navHidden: string[] | undefined,
   return defaultHidden ? rest : [...rest, to];
 }
 
-/** Role-eligible items minus the ones hidden for this person. */
-export function visibleNavItems(role: Role, navHidden: string[] | undefined): NavItem[] {
-  return NAV_ITEMS.filter((item) => item.roles.includes(role) && !isNavItemHidden(role, navHidden, item.to));
+/** Role-eligible main-menu items minus the ones hidden for this person. */
+export function visibleNavItems(role: Role, navHidden: string[] | undefined, features?: Features): NavItem[] {
+  return sectionItems(role, navHidden, 'main', features ?? { announcements: true });
 }
 
 function navLinkClass({ isActive }: { isActive: boolean }): string {
@@ -159,7 +192,10 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
 
   const role: Role = user?.role ?? 'volunteer';
   const isDispatch = role === 'dispatcher' || role === 'admin';
-  const items = visibleNavItems(role, user?.navHidden);
+  const features = useFeatures(Boolean(user));
+  const mainItems = visibleNavItems(role, user?.navHidden, features);
+  const hubs = HUB_ITEMS.filter((hub) => sectionItems(role, user?.navHidden, hub.section, features).length > 0);
+  const items: Array<{ to: string; label: string; icon: NavItem['icon']; end?: boolean }> = [...mainItems, ...hubs];
 
   // Badge sources. Both are best-effort: a failure here must never block the
   // shell, so neither result is thrown into the tree.

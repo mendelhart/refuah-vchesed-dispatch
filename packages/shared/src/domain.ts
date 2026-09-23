@@ -377,6 +377,8 @@ export const SETTING_KEYS = {
   voiceMaxCallsPerRound: 'voice.max_calls_per_round',
   /** Minutes before an unanswered offer call is tried once more. */
   voiceRetryMinutes: 'voice.retry_minutes',
+  /** Announcements screen switched on (1) or off (0) by an administrator. */
+  featureAnnouncements: 'features.announcements_enabled',
 } as const;
 
 export const DEFAULT_SETTINGS: Record<string, number> = {
@@ -405,6 +407,7 @@ export const DEFAULT_SETTINGS: Record<string, number> = {
   [SETTING_KEYS.voiceQuietEndHour]: 7,
   [SETTING_KEYS.voiceMaxCallsPerRound]: 10,
   [SETTING_KEYS.voiceRetryMinutes]: 2,
+  [SETTING_KEYS.featureAnnouncements]: 1,
 };
 
 // ---------------------------------------------------------------------------

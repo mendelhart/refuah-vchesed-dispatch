@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { and, desc, eq, gte, sql as raw } from 'drizzle-orm';
-import { DEFAULT_SETTINGS, updateSettingSchema } from '@rvc/shared';
+import { DEFAULT_SETTINGS, SETTING_KEYS, updateSettingSchema } from '@rvc/shared';
 import { db } from '../db/client.js';
 import { auditEvents, jobs, notificationDeliveries, notifications, smsEvents, users } from '../db/schema.js';
 import { actorFrom, currentUser, requireAdmin, requireAuth, requireDispatcher } from '../auth/guards.js';
@@ -90,6 +90,13 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/settings', { preHandler: requireDispatcher }, async () => ({
     settings: await loadSettings(), defaults: DEFAULT_SETTINGS,
   }));
+
+  /** Which optional screens are switched on. Everyone signed in needs this for the menu. */
+  app.get('/api/features', { preHandler: requireAuth }, async () => {
+    const s = await loadSettings();
+    const on = (key: string) => Number(s[key] ?? 1) !== 0;
+    return { announcements: on(SETTING_KEYS.featureAnnouncements) };
+  });
 
   app.put('/api/settings/:key', { preHandler: requireAdmin }, async (req) => {
     const { key } = z.object({ key: z.string().max(80) }).parse(req.params);

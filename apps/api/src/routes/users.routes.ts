@@ -9,7 +9,7 @@ import { db } from '../db/client.js';
 import { pushSubscriptions, users, volunteerGroups } from '../db/schema.js';
 import { actorFrom, currentUser, requireAdmin, requireAuth, requireDispatcher } from '../auth/guards.js';
 import { changeRole, createUser, deactivateUser, issueAuthToken, listUsers, sendInvitation, updateUser } from '../domain/users.service.js';
-import { volunteerImpact } from '../domain/impact.js';
+import { volunteerImpact, organizationImpact } from '../domain/impact.js';
 import { loadSessionUser } from '../auth/session.js';
 import { recordAudit } from '../lib/audit.js';
 import { normalizePhone } from '../lib/phone.js';
@@ -92,6 +92,9 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/me/impact', { preHandler: requireAuth }, async (req) =>
     volunteerImpact(currentUser(req).id),
   );
+
+  /** The whole organisation's impact, shown to dispatchers and admins under Admin. */
+  app.get('/api/impact', { preHandler: requireDispatcher }, async () => organizationImpact());
 
   /**
    * Snooze. Without this, volunteers at scale either ignore every message or

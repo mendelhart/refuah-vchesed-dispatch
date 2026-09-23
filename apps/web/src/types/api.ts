@@ -166,6 +166,21 @@ export interface ImpactResponse {
   trips: ImpactTripRow[];
 }
 
+export interface OrgImpactResponse {
+  totals: {
+    completed: number;
+    completedThisMonth: number;
+    completedThisYear: number;
+    upcoming: number;
+    volunteersAllTime: number;
+    volunteersLast30Days: number;
+    peopleHelped: number;
+    since: string | null;
+  };
+  byType: Array<{ tripType: string; count: number }>;
+  byMonth: Array<{ month: string; count: number }>;
+}
+
 export interface MeStatusResponse {
   mutedUntil: string | null;
   availability: unknown;

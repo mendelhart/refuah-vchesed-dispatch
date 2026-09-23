@@ -13,12 +13,12 @@ import { NavLink } from 'react-router-dom';
 import {
   BookUser,
   Car,
-  HeartHandshake,
+  IdCard,
   Home,
   LayoutDashboard,
+  Menu,
   MessageSquare,
   Settings as SettingsIcon,
-  Users,
 } from 'lucide-react';
 import type { Role } from '@rvc/shared';
 import { cn } from '@/lib/utils';
@@ -61,9 +61,8 @@ export function bottomNavItems(
   return [
     { to: '/', label: 'Home', icon: Home },
     withBadge({ to: '/my-trips', label: 'My rides', icon: Car }, badges.myTrips),
-    { to: '/impact', label: 'Impact', icon: HeartHandshake },
-    { to: '/directory', label: 'Directory', icon: Users },
-    { to: '/settings', label: 'Settings', icon: SettingsIcon },
+    { to: '/me', label: 'Profile', icon: IdCard },
+    { to: '/more', label: 'More', icon: Menu },
   ];
 }
 

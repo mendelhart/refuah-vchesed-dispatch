@@ -14,7 +14,7 @@ import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
 import { formatDateTime } from '@/lib/format';
 import { currentSubscription, pushSupported, subscribeToPush, unsubscribeFromPush } from '@/lib/push';
-import { NAV_ITEMS, isNavItemHidden, toggleNavPreference } from '@/components/Layout';
+import { NAV_ITEMS, isNavItemHidden, sectionOf, toggleNavPreference } from '@/components/Layout';
 import {
   ErrorState, ListSkeleton, PageHeader, cardClass, inputClass, labelClass, primaryButtonClass, secondaryButtonClass,
 } from '@/components/states';
@@ -247,13 +247,14 @@ export function SettingsPage(): React.JSX.Element {
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Your menu</h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
             Hide the screens you never use. Home and Settings always stay. Hidden screens still
-            work — you just will not see them in the menu. Dispatchers start with the volunteer-only
-            screens (My rides, My availability and so on) hidden; switch any of them back on here.
+            work — you just will not see them in the menu. Dispatchers start with My profile (their
+            own rides, hours and card) hidden; switch it back on here if you also drive.
           </p>
           <ul className="mt-4 grid gap-2 sm:grid-cols-2">
             {NAV_ITEMS.filter(
               (item) =>
                 item.roles.includes(user?.role ?? 'volunteer') &&
+                sectionOf(item, user?.role ?? 'volunteer') === 'main' &&
                 item.to !== '/' &&
                 item.to !== '/settings',
             ).map((item) => {

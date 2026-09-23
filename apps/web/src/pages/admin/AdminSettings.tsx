@@ -25,7 +25,16 @@ const SETTING_LABELS: Record<string, string> = {
   'notifications.retry_backoff_seconds': 'Wait between delivery attempts (seconds)',
   'auth.session_ttl_hours': 'How long a sign-in lasts (hours)',
   'calling.daily_limit_per_user': 'Calls one person may place per day',
+  'voice.quiet_start_hour': 'Voice calls: quiet hours start (hour, 0-23)',
+  'voice.quiet_end_hour': 'Voice calls: quiet hours end (hour, 0-23)',
+  'voice.max_calls_per_round': 'Voice calls per offer round (the rest get a text)',
+  'voice.retry_minutes': 'Call again after no answer (minutes)',
 };
+
+/** On/off switches, shown as checkboxes rather than numbers. */
+const FEATURE_SWITCHES: Array<{ key: string; label: string; hint: string }> = [
+  { key: 'features.announcements_enabled', label: 'Announcements', hint: 'Message many volunteers at once. Off hides the screen.' },
+];
 
 export function AdminSettingsPage(): React.JSX.Element {
   const queryClient = useQueryClient();
@@ -44,7 +53,8 @@ export function AdminSettingsPage(): React.JSX.Element {
     mutationFn: ({ key, value }: { key: string; value: number }) => api.put(`/api/settings/${key}`, { value }),
     onSuccess: (_data, vars) => {
       void queryClient.invalidateQueries({ queryKey: qk.admin.settings() });
-      toast.success(`${SETTING_LABELS[vars.key] ?? vars.key} updated.`);
+      void queryClient.invalidateQueries({ queryKey: qk.admin.features() });
+      toast.success(`${SETTING_LABELS[vars.key] ?? FEATURE_SWITCHES.find((f) => f.key === vars.key)?.label ?? vars.key} updated.`);
     },
     onError: (error: unknown) => toast.error(errorMessage(error)),
   });
@@ -89,7 +99,26 @@ export function AdminSettingsPage(): React.JSX.Element {
         <ErrorState error={settings.error} onRetry={() => void settings.refetch()} what="the settings" />
       ) : (
         <ul className="space-y-3">
-          {Object.entries(settings.data.defaults).map(([key, defaultValue]) => {
+          {FEATURE_SWITCHES.map((f) => {
+            const on = Number(settings.data.settings[f.key] ?? settings.data.defaults[f.key] ?? 1) !== 0;
+            return (
+              <li key={f.key} className={`${cardClass} flex items-start gap-3 p-4`}>
+                <input
+                  id={`setting-${f.key}`}
+                  type="checkbox"
+                  className="mt-1 h-5 w-5 accent-[#EA0029]"
+                  checked={on}
+                  disabled={save.isPending}
+                  onChange={(event) => save.mutate({ key: f.key, value: event.target.checked ? 1 : 0 })}
+                />
+                <label htmlFor={`setting-${f.key}`} className="text-sm">
+                  <span className="block font-medium text-slate-900 dark:text-white">{f.label}</span>
+                  <span className="block text-slate-500 dark:text-slate-400">{f.hint}</span>
+                </label>
+              </li>
+            );
+          })}
+          {Object.entries(settings.data.defaults).filter(([key]) => !key.startsWith('features.')).map(([key, defaultValue]) => {
             const current = settings.data.settings[key];
             const currentText = current === undefined ? String(defaultValue) : String(current);
             const draft = drafts[key] ?? currentText;
