@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, sql as raw } from 'drizzle-orm';
+import { and, eq, inArray, isNull, ne, sql as raw } from 'drizzle-orm';
 import type { NotificationChannel, NotificationEvent, NotificationPreference } from '@rvc/shared';
 import { CRITICAL_NOTIFICATION_EVENTS, SETTING_KEYS } from '@rvc/shared';
 import { db, type Executor } from '../db/client.js';
@@ -67,15 +67,21 @@ export interface NotifyInput {
   threadId?: string;
 }
 
-const SEND_TIMEOUT_MS = 10_000;
+let SEND_TIMEOUT_MS = 10_000;
+/** Tests only: shorten the provider timeout. */
+export function setSendTimeoutForTests(ms: number): void { SEND_TIMEOUT_MS = ms; }
+
+/** A provider call that did not answer in time. The request may still have gone out. */
+export class SendTimeoutError extends Error {}
 
 function withTimeout<T>(p: Promise<T>, ms: number, what: string): Promise<T> {
+  let timer: NodeJS.Timeout | undefined;
   return Promise.race([
     p,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`${what} timed out after ${ms}ms`)), ms),
-    ),
-  ]);
+    new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new SendTimeoutError(`${what} timed out after ${ms}ms`)), ms);
+    }),
+  ]).finally(() => clearTimeout(timer));
 }
 
 /**
@@ -320,7 +326,7 @@ export async function deliverNotification(deliveryId: string): Promise<void> {
     .limit(1);
 
   if (!row) return;
-  if (row.status === 'delivered' || row.status === 'failed' || row.status === 'skipped') return;
+  if (row.status === 'delivered' || row.status === 'failed' || row.status === 'skipped' || row.status === 'unknown') return;
 
   const attempts = row.attempts + 1;
 
@@ -551,6 +557,19 @@ export async function deliverNotification(deliveryId: string): Promise<void> {
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    // A timeout is not a failure we can safely retry: the provider may have
+    // accepted the request and the person may already have the message. Record
+    // it as 'unknown' (visible on the Notifications screen) and stop, rather
+    // than risk sending the same offer twice. Push is excluded: it only
+    // reaches here after every subscription failed outright.
+    if (err instanceof SendTimeoutError && row.channel !== 'push') {
+      await db
+        .update(notificationDeliveries)
+        .set({ status: 'unknown', attempts, lastError: `${message}; may have been sent, not retried`.slice(0, 1000), nextAttemptAt: null })
+        .where(eq(notificationDeliveries.id, deliveryId));
+      logger.warn({ deliveryId, channel: row.channel, event: row.event }, 'notification outcome unknown after provider timeout');
+      return;
+    }
     const exhausted = attempts >= row.maxAttempts;
     const backoff = await getNumberSetting(SETTING_KEYS.notificationRetryBackoffSeconds);
     await db
@@ -590,7 +609,11 @@ export async function recordSmsStatusCallback(
       failedAt: failed ? new Date() : null,
       lastError: failed ? (errorMessage ?? status) : null,
     })
-    .where(eq(notificationDeliveries.providerMessageId, providerMessageId));
+    .where(and(
+      eq(notificationDeliveries.providerMessageId, providerMessageId),
+      // A late or out-of-order 'failed' must not undo a confirmed delivery.
+      delivered ? raw`true` : ne(notificationDeliveries.status, 'delivered'),
+    ));
 }
 
 /** Operational health used by the dispatcher board and /health. */

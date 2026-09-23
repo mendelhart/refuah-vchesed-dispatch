@@ -254,6 +254,8 @@ export const DELIVERY_STATUSES = [
   'delivered',
   'failed',
   'skipped',
+  /** The provider did not answer in time: it may or may not have sent. Never auto-retried. */
+  'unknown',
 ] as const;
 export type DeliveryStatus = (typeof DELIVERY_STATUSES)[number];
 

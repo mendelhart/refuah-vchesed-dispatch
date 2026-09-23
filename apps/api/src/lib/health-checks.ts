@@ -77,9 +77,10 @@ export async function runHealthChecks(now = new Date()): Promise<{ status: 'ok' 
     detail: 'standing rides failed to be created for today' });
 
   const failedDeliveries = await count(raw`select count(*) as n from notification_deliveries
-    where status = 'failed' and failed_at > ${new Date(now.getTime() - 3_600_000).toISOString()}::timestamptz`);
+    where (status = 'failed' and failed_at > ${new Date(now.getTime() - 3_600_000).toISOString()}::timestamptz)
+       or (status = 'unknown' and queued_at > ${new Date(now.getTime() - 3_600_000).toISOString()}::timestamptz)`);
   add({ name: 'delivery_failures_1h', ok: failedDeliveries < THRESHOLDS.deliveryFailures1h, severity: 'warning',
-    value: failedDeliveries, detail: 'failed notification deliveries (SMS, WhatsApp, push, email) in the last hour' });
+    value: failedDeliveries, detail: 'failed or unknown-outcome notification deliveries (SMS, WhatsApp, push, email) in the last hour' });
 
   const badSigs = await count(raw`select count(*) as n from sms_events where outcome = 'rejected_signature'
     and created_at > ${new Date(now.getTime() - 3_600_000).toISOString()}::timestamptz`);
