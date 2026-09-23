@@ -886,7 +886,12 @@ export interface ClaimArgs {
   tripId?: string;
   /** Raw offer code from a deep link or SMS. */
   code?: string;
-  channel: 'app' | 'sms' | 'whatsapp' | 'voice' | 'push' | 'dispatcher';
+  /**
+   * How the VOLUNTEER accepted. This path is only ever a volunteer accepting
+   * their own offer; a coordinator or admin giving a trip to someone uses
+   * assignTrip() (POST /api/trips/:id/assign), which records who assigned it.
+   */
+  channel: 'app' | 'sms' | 'whatsapp' | 'voice' | 'push';
   /** Present for SMS: the verified sending number, which must match the offer. */
   verifiedPhone?: string;
 }
@@ -970,7 +975,11 @@ export async function claimTrip(actor: TripActor, args: ClaimArgs): Promise<Clai
       if (!owner?.phone || owner.phone !== args.verifiedPhone) {
         return { ok: false, reason: 'not_your_offer' };
       }
-    } else if (actor.user.role === 'volunteer' && offerRow.volunteerId !== actor.user.id) {
+    } else if (offerRow.volunteerId !== actor.user.id) {
+      // Whatever the caller's role. A coordinator or admin holding a
+      // volunteer's code (forwarded SMS, shared phone) must not be able to
+      // accept for them here: that would record a self-claim nobody made.
+      // Assigning someone is the explicit /assign path.
       return { ok: false, reason: 'not_your_offer' };
     }
 

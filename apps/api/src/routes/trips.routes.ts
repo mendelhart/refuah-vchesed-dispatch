@@ -154,7 +154,10 @@ export async function tripRoutes(app: FastifyInstance): Promise<void> {
       const messages: Record<string, string> = {
         already_taken: 'Another volunteer accepted this trip first. Thank you for responding.',
         expired: 'This offer has expired.',
-        not_your_offer: 'This trip was not offered to you.',
+        not_your_offer:
+          currentUser(req).role === 'volunteer'
+            ? 'This trip was not offered to you.'
+            : 'This trip was not offered to you. To give it to a volunteer, use Assign.',
         not_offered: 'This trip is no longer available.',
         unknown_code: 'That acceptance code is not valid.',
       };
@@ -177,7 +180,10 @@ export async function tripRoutes(app: FastifyInstance): Promise<void> {
     const outcome = await claimTrip(tripActor(req), { code, channel: 'app' });
     if (!outcome.ok) {
       reply.status(409);
-      return { error: { code: outcome.reason ?? 'conflict', message: 'This trip is no longer available.' } };
+      const message = outcome.reason === 'not_your_offer'
+        ? 'This acceptance code belongs to another volunteer. Coordinators give a trip to someone with Assign.'
+        : 'This trip is no longer available.';
+      return { error: { code: outcome.reason ?? 'conflict', message } };
     }
     return { tripId: outcome.tripId, reference: outcome.reference, claimed: true };
   });
