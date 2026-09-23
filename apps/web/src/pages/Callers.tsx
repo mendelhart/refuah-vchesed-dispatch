@@ -158,12 +158,12 @@ function CallerListButton({
   );
 }
 
-export function CallersPage(): React.JSX.Element {
+export function CallersPage({ initialCallerId = null }: { initialCallerId?: string | null } = {}): React.JSX.Element {
   const queryClient = useQueryClient();
 
   const [term, setTerm] = useState('');
   const [debounced, setDebounced] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(initialCallerId);
   const [callerForm, setCallerForm] = useState<CallerFormState>(blankCaller);
   const [callerModal, setCallerModal] = useState<'closed' | 'new' | 'edit'>('closed');
   const [addressOpen, setAddressOpen] = useState(false);

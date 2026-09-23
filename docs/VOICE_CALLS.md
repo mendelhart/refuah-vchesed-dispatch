@@ -1,7 +1,10 @@
-# Voice-call channel (design - not built)
+# Voice-call channel
 
-Status: design for review. Nothing here is implemented yet. Needs Twilio
-credentials (account SID, auth token, a voice-capable number) before it can run.
+Status: built (commits 864f488, 07536cc). Code: apps/api/src/services/voice.service.ts,
+webhooks under /webhooks/twilio/voice-notify, tests in voice-calls.test.ts. With
+MESSAGING_TEST_MODE on, calls are recorded in Admin > Notifications and never dialed.
+Going live needs Twilio credentials (account SID, auth token, a voice-capable
+number) and API_PUBLIC_URL.
 
 ## Goal
 
