@@ -187,7 +187,9 @@ export function App(): React.JSX.Element {
           path="/calls"
           element={
             <Shell>
-              <CallsPage />
+              <RequireRole roles={DISPATCH}>
+                <CallsPage />
+              </RequireRole>
             </Shell>
           }
         />
@@ -255,7 +257,9 @@ export function App(): React.JSX.Element {
           path="/duty"
           element={
             <Shell>
-              <DutyPage />
+              <RequireRole roles={DISPATCH}>
+                <DutyPage />
+              </RequireRole>
             </Shell>
           }
         />

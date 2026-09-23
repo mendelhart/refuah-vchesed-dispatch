@@ -92,8 +92,8 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/settings', label: 'Settings', icon: SettingsIcon, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'profile', hint: 'Name, phone, how we reach you, menu' },
 
   { to: '/directory', label: 'Directory', icon: Users, roles: ['volunteer'], volunteer: 'more', hint: 'The team roster' },
-  { to: '/duty', label: 'Phone duty', icon: CalendarClock, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'more', volunteer: 'more', hint: 'Who is on the phones when' },
-  { to: '/calls', label: 'Call log', icon: Phone, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'more', volunteer: 'more', hint: 'Calls placed through the app' },
+  { to: '/duty', label: 'Phone duty', icon: CalendarClock, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Who is on the phones when' },
+  { to: '/calls', label: 'Call log', icon: Phone, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Calls placed through the app' },
   { to: '/vehicles', label: 'Vehicles', icon: Car, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Organisation vehicles' },
   { to: '/admin/applications', label: 'Applications', icon: UserPlus, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'New volunteer sign-ups to review' },
 

@@ -251,6 +251,19 @@ export function BoardPage(): React.JSX.Element {
   const [params, setParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [segmentId, setSegmentId] = useState(SEGMENTS[0]!.id);
+  // The trip just created: its tab opens and the row is highlighted, so a new
+  // trip never "disappears" into a tab the dispatcher is not looking at.
+  const [justCreatedId, setJustCreatedId] = useState<string | null>(null);
+  const showCreated = (trip: TripDto): void => {
+    const home = SEGMENTS.find((s) => !s.history && !s.todayOnly && s.status?.includes(trip.status));
+    setSearchInput('');
+    setSegmentId(home?.id ?? 'all');
+    setJustCreatedId(trip.id);
+    window.setTimeout(() => {
+      document.getElementById(`board-row-${trip.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 600);
+    window.setTimeout(() => setJustCreatedId((id) => (id === trip.id ? null : id)), 15_000);
+  };
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(params.get('new') === '1');
@@ -417,7 +430,14 @@ export function BoardPage(): React.JSX.Element {
     const rest = restPeriodFor(trip.pickupAt);
     const checked = selected.includes(trip.id);
     return (
-      <div key={trip.id} className="flex items-start gap-2">
+      <div
+        key={trip.id}
+        id={`board-row-${trip.id}`}
+        className={cn(
+          'flex items-start gap-2',
+          justCreatedId === trip.id && 'rounded-xl ring-2 ring-[#EA0029] ring-offset-2 dark:ring-offset-slate-950',
+        )}
+      >
         {selectMode ? (
         <label className="grid min-h-[44px] min-w-[44px] flex-shrink-0 cursor-pointer place-items-center rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
           <input
@@ -430,6 +450,9 @@ export function BoardPage(): React.JSX.Element {
         </label>
         ) : null}
         <div className="min-w-0 flex-1">
+          {justCreatedId === trip.id ? (
+            <p className="mb-1 mr-2 inline-flex rounded-lg bg-[#EA0029] px-2 py-1 text-xs font-semibold text-white">Just created</p>
+          ) : null}
           {rest ? (
             <p className="mb-1 inline-flex flex-wrap items-center gap-2 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-800 dark:bg-indigo-500/15 dark:text-indigo-200">
               <Flame className="h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
@@ -795,7 +818,7 @@ export function BoardPage(): React.JSX.Element {
         )}
       </Modal>
 
-      <TripForm open={formOpen} onClose={() => setFormOpen(false)} />
+      <TripForm open={formOpen} onClose={() => setFormOpen(false)} onCreated={showCreated} />
     </div>
   );
 }

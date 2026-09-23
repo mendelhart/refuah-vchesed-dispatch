@@ -265,10 +265,13 @@ export function TripForm({
   open,
   trip,
   onClose,
+  onCreated,
 }: {
   open: boolean;
   trip?: TripDto | undefined;
   onClose: () => void;
+  /** Called with the new trip after a create (not an edit). */
+  onCreated?: (trip: TripDto) => void;
 }): React.JSX.Element {
   const queryClient = useQueryClient();
   // Creating is the fast path: caller, addresses, time, type, group. Urgency,
@@ -404,6 +407,7 @@ export function TripForm({
       } else {
         toast.success(trip ? 'Trip updated.' : 'Trip created.');
       }
+      if (!trip && isFullTrip(saved)) onCreated?.(saved);
       onClose();
     },
     onError: (error: unknown) => {
