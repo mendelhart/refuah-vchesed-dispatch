@@ -272,6 +272,21 @@ jobs:
       - name: run the browser suite
         run: ./scripts/e2e.sh
 
+      # A busy hour squeezed into 45 seconds: 5 signed-in accounts x 4 phones
+      # refreshing about once a second, plus a new call every 3 seconds. Fails
+      # on any server error or a p95 over 1.5s. Reuses the seeded database and
+      # builds from the step above; never run this against the live site.
+      - name: load test
+        env:
+          PORT: '8090'
+          API_PUBLIC_URL: http://127.0.0.1:8090
+          RUN_WORKER_IN_PROCESS: 'true'
+          LOGIN_MAX_PER_IP_PER_5MIN: '500'
+        run: |
+          node apps/api/dist/index.js > /tmp/load-api.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:8090/health >/dev/null 2>&1 && break; sleep 1; done
+          API=http://127.0.0.1:8090 node scripts/load-test.mjs --seconds 45 --tabs 4 || { tail -50 /tmp/load-api.log; exit 1; }
+
       - if: always()
         uses: actions/upload-artifact@v4
         with:
