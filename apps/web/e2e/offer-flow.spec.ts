@@ -90,8 +90,8 @@ test.describe('offer, accept, race, complete, cancel', () => {
 
     // The dispatcher sees who has it.
     const detail = await dispatch.get(`/api/trips/${trip.id}`);
-    const t = ((await detail.json()) as { trip: { assignedVolunteerId: string | null; status: string } }).trip;
-    expect(t.assignedVolunteerId).toBe(v1);
+    const t = ((await detail.json()) as { trip: { assignedVolunteer: { id: string } | null; status: string } }).trip;
+    expect(t.assignedVolunteer?.id).toBe(v1);
     const dpage = await (await browser.newContext({ storageState: STATE_FILES.dispatcher })).newPage();
     await dpage.goto(`/trips/${trip.id}`);
     await expect(dpage.locator('body')).toContainText('Yaakov Driver', { timeout: 20_000 });
