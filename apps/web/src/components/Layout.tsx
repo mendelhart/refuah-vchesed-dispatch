@@ -82,6 +82,8 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/messages', label: 'Messages', icon: MessageSquare, roles: ['dispatcher', 'admin'] },
   { to: '/volunteers', label: 'Volunteers', icon: Users, roles: ['dispatcher', 'admin'] },
   { to: '/contacts', label: 'Contacts', icon: BookUser, roles: ['dispatcher', 'admin'] },
+  // Top level for coordinators (user asked for it to be more prominent); volunteers never see it.
+  { to: '/calls', label: 'Call log', icon: Phone, roles: ['dispatcher', 'admin'], hint: 'Calls placed through the app' },
   { to: '/recurring', label: 'Standing rides', icon: Repeat, roles: ['dispatcher', 'admin'] },
   { to: '/equipment', label: 'Equipment', icon: Package, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'more', hint: 'Loans of wheelchairs, walkers and other equipment' },
 
@@ -94,8 +96,7 @@ export const NAV_ITEMS: NavItem[] = [
 
   { to: '/directory', label: 'Directory', icon: Users, roles: ['volunteer'], volunteer: 'more', hint: 'The team roster' },
   { to: '/duty', label: 'Phone duty', icon: CalendarClock, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Who is on the phones when' },
-  { to: '/calls', label: 'Call log', icon: Phone, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Calls placed through the app' },
-  { to: '/vehicles', label: 'Vehicles', icon: Car, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Organisation vehicles' },
+    { to: '/vehicles', label: 'Vehicles', icon: Car, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Organisation vehicles' },
   { to: '/admin/applications', label: 'Applications', icon: UserPlus, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'New volunteer sign-ups to review' },
 
   { to: '/admin/people', label: 'People', icon: Users, roles: ['admin'], dispatch: 'admin', hint: 'Accounts, roles, invites, how each person is reached' },
