@@ -70,10 +70,13 @@ export async function sendInvitation(
   const [org] = await exec.select({ name: organizationInfo.name }).from(organizationInfo).limit(1);
   const orgName = org?.name ?? "Refuah V'Chesed";
   const first = fullName.trim().split(/\s+/)[0] ?? fullName;
-  const body =
-    `Hi ${first}, ${orgName} added you as a volunteer driver. ` +
-    `Ride offers will come to your phone by text - just reply to accept. ` +
-    `To set up your account in the app (optional), use this link within 7 days: ${inviteUrl}`;
+  const [who] = await exec.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
+  const body = who && who.role !== 'volunteer'
+    ? `Hi ${first}, ${orgName} added you to the dispatch app as a ${who.role === 'admin' ? 'admin' : 'coordinator'}. ` +
+      `Set your password with this link within 7 days: ${inviteUrl}`
+    : `Hi ${first}, ${orgName} added you as a volunteer driver. ` +
+      `Ride offers will come to your phone by text - just reply to accept. ` +
+      `To set up your account in the app (optional), use this link within 7 days: ${inviteUrl}`;
   await notify({
     userId,
     event: 'volunteer.invitation',

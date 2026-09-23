@@ -210,10 +210,6 @@ export function PeoplePage(): React.JSX.Element {
       <AddPersonModal
         open={open}
         onClose={() => setOpen(false)}
-        onAdded={(data) => {
-          setInviteUrl(data.inviteUrl);
-          setInvitedVia(data.invitedVia ?? []);
-        }}
       />
     </div>
   );

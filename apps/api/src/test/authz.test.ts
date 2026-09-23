@@ -75,6 +75,13 @@ describe('authorization', () => {
     })).status).toBe(403);
   });
 
+  it('reports which channels really send, to coordinators only', async () => {
+    expect((await api('GET', '/api/messaging/status', { cookie: volunteer.cookie })).status).toBe(403);
+    const res = await api('GET', '/api/messaging/status', { cookie: dispatcher.cookie });
+    expect(res.status).toBe(200);
+    expect((res.body.channels as Record<string, string>).email).toBe('test');
+  });
+
   it('lets a coordinator edit, message and remove a volunteer; a volunteer cannot', async () => {
     expect((await api('PATCH', `/api/users/${otherVolunteer.id}`, {
       cookie: volunteer.cookie, payload: { fullName: 'Hijacked' },

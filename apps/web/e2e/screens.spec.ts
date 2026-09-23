@@ -80,6 +80,24 @@ test.describe('phone screenshots', () => {
     await context.close();
   });
 
+  test('dispatcher-add-volunteer-link', async ({ browser }) => {
+    const context = await browser.newContext({
+      storageState: STATE_FILES.dispatcher, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
+    });
+    const page = await context.newPage();
+    await page.goto('/volunteers');
+    await page.getByRole('button', { name: 'Add volunteer' }).click();
+    await page.getByLabel('Full name').fill('Screenshot Driver');
+    await page.getByLabel(/Mobile number/).fill('514 555 7321');
+    await page.getByLabel(/Email/).fill('shot.driver@example.test');
+    await page.getByRole('checkbox', { name: /Email/ }).check();
+    await page.screenshot({ path: 'screenshots/dispatcher-add-volunteer-form.png' });
+    await page.getByRole('button', { name: 'Add and invite' }).click();
+    await page.getByText('Set-up link (valid 7 days)').waitFor({ timeout: 15_000 });
+    await page.screenshot({ path: 'screenshots/dispatcher-add-volunteer-link.png' });
+    await context.close();
+  });
+
   test('admin-view-as-volunteer', async ({ browser }) => {
     const context = await browser.newContext({
       storageState: STATE_FILES.admin, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,

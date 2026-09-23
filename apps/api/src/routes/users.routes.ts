@@ -13,7 +13,7 @@ import { volunteerImpact, organizationImpact } from '../domain/impact.js';
 import { loadSessionUser } from '../auth/session.js';
 import { recordAudit } from '../lib/audit.js';
 import { normalizePhone } from '../lib/phone.js';
-import { vapidPublicKey } from '../services/providers/index.js';
+import { channelStatus, vapidPublicKey } from '../services/providers/index.js';
 import { Errors } from '../lib/errors.js';
 import { isStoredPhoto, parsePhotoDataUrl } from '../lib/photo.js';
 import { messageVolunteer } from '../domain/conversations.service.js';
@@ -85,6 +85,8 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     // transactional email is wired up (see docs/DEPLOYMENT.md).
     return { user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role }, inviteUrl, invitedVia };
   });
+
+  app.get('/api/messaging/status', { preHandler: requireDispatcher }, async () => ({ channels: channelStatus() }));
 
   app.post('/api/users/:id/message', { preHandler: requireDispatcher }, async (req) => {
     const { id } = idParam.parse(req.params);

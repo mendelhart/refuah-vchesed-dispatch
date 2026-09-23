@@ -94,6 +94,22 @@ export const licenceVerificationProvider: LicenceVerificationProvider =
     ? httpLicenceVerificationProvider
     : nullLicenceVerificationProvider;
 
+/**
+ * What each outbound channel really does right now, for the screens:
+ * 'live' sends, 'test' is recorded in Admin > Notifications only, 'off' has
+ * no provider at all (sends would fail).
+ */
+export function channelStatus(): Record<'email' | 'sms' | 'whatsapp' | 'push', 'live' | 'test' | 'off'> {
+  const s = (p: { name: string; enabled?: boolean }): 'live' | 'test' | 'off' =>
+    p.name === 'memory' ? 'test' : p.enabled === false ? 'off' : 'live';
+  return {
+    email: s(emailProvider as { name: string; enabled?: boolean }),
+    sms: s(smsProvider as { name: string; enabled?: boolean }),
+    whatsapp: s(whatsappProvider as { name: string; enabled?: boolean }),
+    push: s(pushProvider as { name: string; enabled?: boolean }),
+  };
+}
+
 export function logProviderSelection(): void {
   logger.info(
     {
