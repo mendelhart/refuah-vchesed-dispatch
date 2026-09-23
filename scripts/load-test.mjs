@@ -107,11 +107,12 @@ async function tab(cookie, kind) {
 }
 
 let created = 0;
+let createError = null;
 async function dispatcherTakingCalls(cookie) {
   while (Date.now() < deadline) {
     const pickupAt = new Date(Date.now() + (1 + Math.random() * 48) * 3600_000).toISOString();
     const n = created + 1;
-    const { status } = await call(cookie, 'POST', '/api/trips', {
+    const { status, json } = await call(cookie, 'POST', '/api/trips', {
       callerName: `Load test caller ${n}`,
       callerPhone: '514-555-0' + String(100 + (n % 900)).padStart(3, '0'),
       pickup: { line1: '5800 Rue Hutchison', city: 'Montreal', province: 'QC', country: 'CA' },
@@ -120,11 +121,13 @@ async function dispatcherTakingCalls(cookie) {
       tripType: 'ride',
       priority: n % 7 === 0 ? 'urgent' : 'routine',
       groupSlug: 'chesed_on_the_go',
-      assignmentMode: 'manual',
+      // Held for a coordinator, so the test does not fan offers out to volunteers.
+      assignmentMode: 'admin_approval',
       mobilityNeeds: [],
       passengerNotes: 'load test',
     });
     if (status >= 200 && status < 300) created += 1;
+    else if (!createError) createError = `${status} ${JSON.stringify(json)}`;
     await sleep(3000);
   }
 }
@@ -166,6 +169,7 @@ console.log(
     `server errors ${errors}, rate-limited ${limited}`,
 );
 if (errors) console.log('errors by endpoint:', Object.fromEntries(failures));
+if (createError) console.log('first failed ride creation:', createError);
 if (errors > 0 || worstP95 > P95_LIMIT || created === 0) {
   console.error(`FAIL: ${errors} server errors, worst p95 ${Math.round(worstP95)}ms (limit ${P95_LIMIT}), ${created} rides created`);
   process.exit(1);
