@@ -8,7 +8,7 @@
  *  - BottomNavigation existed but was never mounted; it is mounted below.
  */
 import React, { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Bell,
@@ -194,6 +194,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
   const [menuOpen, setMenuOpen] = useState(false);
 
   const role: Role = user?.role ?? 'volunteer';
+  const { pathname } = useLocation();
   const isDispatch = role === 'dispatcher' || role === 'admin';
   const features = useFeatures(Boolean(user));
   const mainItems = visibleNavItems(role, user?.navHidden, features);
@@ -348,7 +349,8 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
 
       <BottomNavigation items={bottomNavItems(role, badges, !isNavItemHidden(role, user?.navHidden, '/my-trips'))} />
 
-      {isDispatch ? (
+      {/* Only where new calls are taken: Home and the Board. Elsewhere it confused people. */}
+      {isDispatch && (pathname === '/' || pathname === '/board') ? (
         <Link
           to="/board?new=1"
           aria-label="Create a new trip"
