@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql as raw } from 'drizzle-orm';
-import { createTestUser, getApp, resetDb, shutdown, type TestUser } from './harness.js';
+import { api, createTestUser, getApp, resetDb, sampleTrip, shutdown, type TestUser } from './harness.js';
+import { endExpiredSuspensions } from '../domain/users.service.js';
 import { db } from '../db/client.js';
 import { handlers } from '../jobs/handlers/index.js';
 
@@ -70,6 +71,53 @@ describe('timed jobs', () => {
     await handlers['cleanup.tokens']({});
     expect(await count(raw`select count(*) as n from auth_tokens where token_hash = 'jobs-tok-old'`)).toBe(0);
     expect(await count(raw`select count(*) as n from auth_tokens where token_hash in ('jobs-tok-recent', 'jobs-tok-live')`)).toBe(2);
+  });
+
+  it('ends a pause once its date has passed, and leaves open-ended and future pauses alone', async () => {
+    const past = await createTestUser({ role: 'volunteer' });
+    const future = await createTestUser({ role: 'volunteer' });
+    const openEnded = await createTestUser({ role: 'volunteer' });
+    await db.execute(raw`update users set status = 'inactive', suspended_until = now() - interval '1 hour', suspension_reason = 'away' where id = ${past.id}`);
+    await db.execute(raw`update users set status = 'inactive', suspended_until = now() + interval '3 days' where id = ${future.id}`);
+    await db.execute(raw`update users set status = 'inactive', suspended_until = null where id = ${openEnded.id}`);
+
+    expect(await endExpiredSuspensions()).toBe(1);
+    const rows = (await db.execute(raw`
+      select id, status, suspended_until, suspension_reason from users where id in (${past.id}, ${future.id}, ${openEnded.id})
+    `)) as unknown as Array<{ id: string; status: string; suspended_until: unknown; suspension_reason: string | null }>;
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    expect(byId.get(past.id)).toMatchObject({ status: 'active', suspended_until: null, suspension_reason: null });
+    expect(byId.get(future.id)!.status).toBe('inactive');
+    expect(byId.get(openEnded.id)!.status).toBe('inactive');
+  });
+
+  it('trip.escalate flags an unanswered offer once, audits it and tells the coordinators', async () => {
+    const coordinator = await createTestUser({ role: 'dispatcher' });
+    const created = await api('POST', '/api/trips', { cookie: coordinator.cookie, payload: sampleTrip() });
+    const tripId = (created.body.trip as { id: string }).id;
+    const offered = await api('POST', `/api/trips/${tripId}/offer`, { cookie: coordinator.cookie, payload: {} });
+    expect((offered.body.trip as { status: string }).status).toBe('offered');
+
+    await handlers['trip.escalate']({ tripId, round: 1 });
+    await handlers['trip.escalate']({ tripId, round: 1 });
+
+    expect(await count(raw`select escalation_count as n from trips where id = ${tripId}`)).toBe(1);
+    expect(await count(raw`select count(*) as n from trips where id = ${tripId} and escalated_at is not null`)).toBe(1);
+    expect(await count(raw`select count(*) as n from audit_events where action = 'trip.escalated' and entity_id = ${tripId}`)).toBe(1);
+    expect(await count(raw`select count(*) as n from notifications where trip_id = ${tripId} and user_id = ${coordinator.id}`)).toBeGreaterThan(0);
+  });
+
+  it('trip.escalate does nothing once the ride has been taken', async () => {
+    const coordinator = await createTestUser({ role: 'dispatcher' });
+    const created = await api('POST', '/api/trips', { cookie: coordinator.cookie, payload: sampleTrip() });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const tripId = (created.body.trip as { id: string }).id;
+    await api('POST', `/api/trips/${tripId}/offer`, { cookie: coordinator.cookie, payload: {} });
+    const claimed = await api('POST', `/api/trips/${tripId}/claim`, { cookie: volunteer.cookie, payload: {} });
+    expect(claimed.status).toBe(200);
+
+    await handlers['trip.escalate']({ tripId, round: 1 });
+    expect(await count(raw`select count(*) as n from trips where id = ${tripId} and escalated_at is null`)).toBe(1);
   });
 
   it('the scans run cleanly on an empty day', async () => {
