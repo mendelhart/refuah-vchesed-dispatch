@@ -45,6 +45,20 @@ test.describe('phone screenshots', () => {
     await context.close();
   });
 
+  test('admin-view-as-volunteer', async ({ browser }) => {
+    const context = await browser.newContext({
+      storageState: STATE_FILES.admin, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
+    });
+    const page = await context.newPage();
+    await page.goto('/admin/people');
+    await page.getByRole('button', { name: 'View as' }).last().click();
+    await page.waitForURL((url) => url.pathname === '/', { timeout: 15_000 });
+    await page.getByText(/viewing as/i).waitFor({ timeout: 15_000 });
+    await page.waitForLoadState('networkidle').catch(() => undefined);
+    await page.screenshot({ path: 'screenshots/admin-view-as-volunteer.png', fullPage: true });
+    await context.close();
+  });
+
   for (const shot of SHOTS) {
     test(shot.name, async ({ browser }) => {
       const context = await browser.newContext({
