@@ -26,6 +26,7 @@ import {
 } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { invalidateTrips, qk } from '@/lib/query';
+import type { ContactsResponse } from '@/types/api';
 import { saveCallerFromTrip } from '@/lib/save-caller';
 import { isFullTrip } from '@/types/api';
 import { mobilityLabel, relativeTime, tripTypeLabel } from '@/lib/format';
@@ -306,6 +307,12 @@ export function TripForm({
   });
 
   const callerId = form.callerId;
+  const hospitals = useQuery({
+    queryKey: qk.contacts.list(),
+    queryFn: () => api.get<ContactsResponse>('/api/contacts'),
+    staleTime: 300_000,
+  });
+
   const callerProfile = useQuery({
     queryKey: qk.callers.detail(callerId ?? 'none'),
     queryFn: () => api.get<CallerProfileResponse>(`/api/callers/${callerId ?? ''}`),
@@ -694,6 +701,47 @@ export function TripForm({
         </div>
 
         <div className="space-y-3">
+          {(hospitals.data?.contacts ?? []).some((c) => c.role?.toLowerCase() === 'hospital' && c.address) ? (
+            <div>
+              <label htmlFor="hospital-pick" className={labelClass}>
+                Hospital
+              </label>
+              <select
+                id="hospital-pick"
+                className={inputClass}
+                value=""
+                onChange={(event) => {
+                  const contact = (hospitals.data?.contacts ?? []).find((c) => c.id === event.target.value);
+                  if (!contact?.address) return;
+                  setForm((current) => ({
+                    ...current,
+                    dropoff: {
+                      line1: contact.address!.line1,
+                      unit: contact.address!.unit ?? '',
+                      city: contact.address!.city,
+                      province: contact.address!.province,
+                      postalCode: contact.address!.postalCode ?? '',
+                      country: contact.address!.country ?? 'CA',
+                      notes: contact.address!.notes ?? '',
+                      latitude: contact.address!.latitude ?? null,
+                      longitude: contact.address!.longitude ?? null,
+                    },
+                  }));
+                }}
+              >
+                <option value="" disabled>
+                  Pick a hospital to fill the dropoff
+                </option>
+                {(hospitals.data?.contacts ?? [])
+                  .filter((c) => c.role?.toLowerCase() === 'hospital' && c.address)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          ) : null}
           <AddressFields
             id="dropoff"
             label="Dropoff address"
