@@ -19,6 +19,7 @@ import {
 import type { InviteUrlResponse, UserListResponse } from '@/types/api';
 import { setViewAs } from '@/lib/viewAs';
 import { AddPersonModal, channelLabel } from '@/components/AddPersonModal';
+import { PhotoButton } from '@/components/PhotoButton';
 
 export function PeoplePage(): React.JSX.Element {
   const queryClient = useQueryClient();
@@ -121,6 +122,10 @@ export function PeoplePage(): React.JSX.Element {
         <ul className="space-y-2">
           {people.data.users.map((person) => (
             <li key={person.id} className={`${cardClass} flex flex-wrap items-center justify-between gap-3 p-4`}>
+              <div className="flex min-w-0 items-center gap-3">
+                {person.photoUrl ? (
+                  <img src={person.photoUrl} alt="" className="h-12 w-12 flex-shrink-0 rounded-full object-cover" />
+                ) : null}
               <div className="min-w-0">
                 <p className="font-medium text-slate-900 dark:text-white">{person.fullName}</p>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -132,6 +137,7 @@ export function PeoplePage(): React.JSX.Element {
                   {person.activated === false ? ' · Offers by text only (no app account yet)' : ''}
                   {person.groupSlugs.length > 0 ? ` · ${person.groupSlugs.map(titleCase).join(', ')}` : ''}
                 </p>
+              </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <label className="sr-only" htmlFor={`role-${person.id}`}>
@@ -164,6 +170,12 @@ export function PeoplePage(): React.JSX.Element {
                     </option>
                   ))}
                 </select>
+                <PhotoButton
+                  endpoint={`/api/users/${person.id}/photo`}
+                  hasPhoto={Boolean(person.photoUrl)}
+                  onChanged={() => void people.refetch()}
+                  compact
+                />
                 <button type="button" className={secondaryButtonClass} onClick={() => resendInvite.mutate(person.id)}>
                   Invite link
                 </button>

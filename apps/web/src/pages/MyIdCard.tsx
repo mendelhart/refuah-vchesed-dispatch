@@ -18,11 +18,13 @@ import { api } from '@/lib/api';
 import { qk } from '@/lib/query';
 import { formatMonthYear, titleCase, formatPhone } from '@/lib/format';
 import { ErrorState, ListSkeleton, PageHeader, secondaryButtonClass } from '@/components/states';
+import { PhotoButton } from '@/components/PhotoButton';
 
 interface IdCardData {
   volunteerNumber: string;
   fullName: string;
   role: string;
+  photo: string | null;
   groups: string[];
   services: string[];
   capabilities: string[];
@@ -430,12 +432,20 @@ export function MyIdCardPage(): React.JSX.Element {
         title="My ID card"
         subtitle="Show this at a reception desk when you are asked who you are with"
         actions={
-          <button type="button" className={secondaryButtonClass} onClick={() => window.print()}>
-            <Printer className="h-4 w-4" aria-hidden="true" />
-            Print
-          </button>
+          <span className="flex flex-wrap gap-2">
+            <PhotoButton endpoint="/api/me/photo" hasPhoto={Boolean(card.photo)} onChanged={() => void idCard.refetch()} />
+            <button type="button" className={secondaryButtonClass} onClick={() => window.print()}>
+              <Printer className="h-4 w-4" aria-hidden="true" />
+              Print
+            </button>
+          </span>
         }
       />
+      {!card.photo ? (
+        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+          Add a clear photo of your face so reception desks can match you to your card.
+        </p>
+      ) : null}
 
       {/*
         The card keeps one fixed appearance in both themes on purpose: it is the
@@ -452,10 +462,19 @@ export function MyIdCardPage(): React.JSX.Element {
         </div>
 
         <div className="space-y-5 px-5 py-6">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Name</p>
-            <p className="text-3xl font-bold leading-tight text-slate-900">{card.fullName}</p>
-            <p className="mt-1 text-sm text-slate-600">{titleCase(card.role)}</p>
+          <div className="flex items-start gap-4">
+            {card.photo ? (
+              <img
+                src={card.photo}
+                alt={`Photo of ${card.fullName}`}
+                className="h-28 w-24 flex-shrink-0 rounded-lg border border-slate-200 object-cover"
+              />
+            ) : null}
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-wide text-slate-500">Name</p>
+              <p className="text-3xl font-bold leading-tight text-slate-900">{card.fullName}</p>
+              <p className="mt-1 text-sm text-slate-600">{titleCase(card.role)}</p>
+            </div>
           </div>
 
           <div>
