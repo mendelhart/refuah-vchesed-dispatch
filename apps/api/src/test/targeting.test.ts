@@ -305,6 +305,33 @@ describe('offer targeting', () => {
     expect(res.body.offered).toBe(1);
   });
 
+  it('skips a volunteer outside the trip group, and says so', async () => {
+    const outsider = await createTestUser({ role: 'volunteer', groups: [] });
+    const tripId = await makeTrip();
+    const result = await evaluateCandidates({
+      groupId: await groupIdOf(tripId), tripType: 'ride', priority: 'emergency',
+      pickupAt: new Date(Date.now() + 4 * 3_600_000), mobilityNeeds: [],
+    });
+    // Emergency relaxes availability and snooze only, never group membership.
+    expect(result.eligible.find((c) => c.id === outsider.id)).toBeUndefined();
+    expect(result.excluded.find((e) => e.id === outsider.id)?.reasons).toContain('not in this group');
+  });
+
+  it('exclusion reasons are fixed phrases that never carry private notes', async () => {
+    const v = await createTestUser({ role: 'volunteer' });
+    const pickupAt = new Date(Date.now() + 4 * 3_600_000);
+    await db.execute(raw`insert into availability_exceptions (user_id, kind, starts_at, ends_at, reason)
+      values (${v.id}, 'unavailable', ${new Date(pickupAt.getTime() - 3_600_000).toISOString()}::timestamptz,
+              ${new Date(pickupAt.getTime() + 3_600_000).toISOString()}::timestamptz, 'chemo appointment')`);
+    const tripId = await makeTrip({ pickupAt: pickupAt.toISOString() });
+    const result = await evaluateCandidates({
+      groupId: await groupIdOf(tripId), tripType: 'ride', priority: 'routine', pickupAt, mobilityNeeds: [],
+    });
+    const reasons = result.excluded.find((e) => e.id === v.id)?.reasons ?? [];
+    expect(reasons).toEqual(['not available at this time']);
+    expect(JSON.stringify(result)).not.toMatch(/chemo/);
+  });
+
   it('never offers to a dispatcher who is not also a volunteer', async () => {
     await createTestUser({ role: 'volunteer' });
     const tripId = await makeTrip();
