@@ -286,6 +286,7 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 export const updateUserSchema = z.object({
   fullName: z.string().trim().min(2).max(120).optional(),
   phone: phoneInputSchema.optional().nullable(),
+  email: z.preprocess(blankToNull, emailSchema.optional().nullable()),
   groupSlugs: z.array(z.string().trim().max(60)).max(20).optional(),
   status: z.enum(USER_STATUSES).optional(),
   preferredVehicleType: z.string().trim().max(60).optional().nullable(),
@@ -295,6 +296,13 @@ export const updateUserSchema = z.object({
   photoUrl: z.string().trim().url().max(500).optional().nullable(),
   /** Dispatchers can switch how a volunteer is reached. */
   notificationPreference: z.enum(NOTIFICATION_PREFERENCES).optional(),
+});
+
+/** A one-off message from a coordinator to one volunteer. */
+export const DIRECT_MESSAGE_CHANNELS = ['sms', 'whatsapp'] as const;
+export const directMessageSchema = z.object({
+  channel: z.enum(DIRECT_MESSAGE_CHANNELS),
+  body: z.string().trim().min(1, 'Write a message first.').max(1200, 'That is too long for one text. Shorten it.'),
 });
 
 /** Role changes are a separate, admin-only, separately-audited operation. */

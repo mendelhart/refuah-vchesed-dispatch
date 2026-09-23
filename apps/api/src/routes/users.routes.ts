@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { and, eq, isNull } from 'drizzle-orm';
 import {
   changeRoleSchema, createUserSchema, pushSubscriptionSchema, resendInviteSchema,
-  updateMeSchema, updateUserSchema, uuidSchema,
+  updateMeSchema, updateUserSchema, uuidSchema, directMessageSchema,
 } from '@rvc/shared';
 import { db } from '../db/client.js';
 import { pushSubscriptions, users, volunteerGroups } from '../db/schema.js';
@@ -16,6 +16,7 @@ import { normalizePhone } from '../lib/phone.js';
 import { vapidPublicKey } from '../services/providers/index.js';
 import { Errors } from '../lib/errors.js';
 import { isStoredPhoto, parsePhotoDataUrl } from '../lib/photo.js';
+import { messageVolunteer } from '../domain/conversations.service.js';
 
 const idParam = z.object({ id: uuidSchema });
 
@@ -85,10 +86,20 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     return { user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role }, inviteUrl, invitedVia };
   });
 
+  app.post('/api/users/:id/message', { preHandler: requireDispatcher }, async (req) => {
+    const { id } = idParam.parse(req.params);
+    const body = directMessageSchema.parse(req.body);
+    return messageVolunteer(actorFrom(req), id, body.channel, body.body);
+  });
+
   app.patch('/api/users/:id', { preHandler: requireDispatcher }, async (req) => {
     const { id } = idParam.parse(req.params);
     const body = updateUserSchema.parse(req.body);
     const actor = currentUser(req);
+    if (actor.role !== 'admin' && id !== actor.id) {
+      const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id)).limit(1);
+      if (target && target.role === 'admin') throw Errors.forbidden('Only an admin can change an admin.');
+    }
     // Dispatchers may maintain the roster; only admins may change status.
     if (actor.role !== 'admin' && body.status) throw Errors.forbidden('Only administrators can change account status.');
     const updated = await updateUser(actorFrom(req), id, body as Record<string, unknown>);
@@ -102,9 +113,17 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     return { user: { id: updated.id, role: updated.role } };
   });
 
-  app.post('/api/users/:id/deactivate', { preHandler: requireAdmin }, async (req) => {
+  // Admins can remove anyone. Coordinators can remove volunteers only.
+  app.post('/api/users/:id/deactivate', { preHandler: requireDispatcher }, async (req) => {
     const { id } = idParam.parse(req.params);
     const body = z.object({ reason: z.string().trim().min(1).max(500) }).parse(req.body);
+    const me = currentUser(req);
+    if (me.role !== 'admin') {
+      const [target] = await db.select({ role: users.role }).from(users).where(eq(users.id, id)).limit(1);
+      if (!target || target.role !== 'volunteer' || id === me.id) {
+        throw Errors.forbidden('Only an admin can remove a coordinator or admin.');
+      }
+    }
     await deactivateUser(actorFrom(req), id, body.reason);
     return { ok: true };
   });

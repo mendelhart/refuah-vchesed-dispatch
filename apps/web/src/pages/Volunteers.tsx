@@ -30,6 +30,8 @@ import {
 import type { GroupsResponse } from '@/types/api';
 import { useAuth } from '@/lib/auth';
 import { AddPersonModal } from '@/components/AddPersonModal';
+import { VolunteerActions } from '@/components/VolunteerActions';
+import { roleLabel } from '@rvc/shared';
 
 /** Snake case on purpose: this row comes straight from a raw SQL projection. */
 interface VolunteerRow {
@@ -273,6 +275,7 @@ export function VolunteersPage(): React.JSX.Element {
         <VolunteerDrawer
           row={selected}
           services={services.data?.services ?? []}
+          canManage={canAdd}
           onClose={() => setOpenId(null)}
         />
       ) : null}
@@ -558,10 +561,12 @@ function FortnightView({ rows }: { rows: VolunteerRow[] }): React.JSX.Element {
 function VolunteerDrawer({
   row,
   services,
+  canManage,
   onClose,
 }: {
   row: VolunteerRow;
   services: { slug: string; name: string }[];
+  canManage: boolean;
   onClose: () => void;
 }): React.JSX.Element {
   const queryClient = useQueryClient();
@@ -676,7 +681,7 @@ function VolunteerDrawer({
         <section>
           <p className="text-sm text-slate-600 dark:text-slate-400">
             {row.volunteer_number ? `${row.volunteer_number} · ` : ''}
-            {titleCase(row.role)} · {titleCase(row.status)}
+            {roleLabel(row.role)} · {titleCase(row.status)}
             {row.licence_status ? ` · licence ${titleCase(row.licence_status)}` : ''}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -709,6 +714,8 @@ function VolunteerDrawer({
             </p>
           ) : null}
         </section>
+
+        {canManage ? <VolunteerActions key={row.id} person={row} onRemoved={onClose} /> : null}
 
         <section>
           <label htmlFor={`reach-${row.id}`} className="font-semibold text-slate-900 dark:text-white">

@@ -70,9 +70,38 @@ describe('authorization', () => {
     expect((await api('POST', `/api/users/${volunteer.id}/role`, {
       cookie: dispatcher.cookie, payload: { role: 'admin' },
     })).status).toBe(403);
-    expect((await api('POST', `/api/users/${volunteer.id}/deactivate`, {
+    expect((await api('POST', `/api/users/${admin.id}/deactivate`, {
       cookie: dispatcher.cookie, payload: { reason: 'x' },
     })).status).toBe(403);
+  });
+
+  it('lets a coordinator edit, message and remove a volunteer; a volunteer cannot', async () => {
+    expect((await api('PATCH', `/api/users/${otherVolunteer.id}`, {
+      cookie: volunteer.cookie, payload: { fullName: 'Hijacked' },
+    })).status).toBe(403);
+    expect((await api('POST', `/api/users/${otherVolunteer.id}/message`, {
+      cookie: volunteer.cookie, payload: { channel: 'sms', body: 'hi' },
+    })).status).toBe(403);
+    expect((await api('POST', `/api/users/${otherVolunteer.id}/deactivate`, {
+      cookie: volunteer.cookie, payload: { reason: 'x' },
+    })).status).toBe(403);
+
+    const edit = await api('PATCH', `/api/users/${otherVolunteer.id}`, {
+      cookie: dispatcher.cookie, payload: { fullName: 'Renamed Driver', email: 'renamed@driver.test' },
+    });
+    expect(edit.status).toBe(200);
+    expect((edit.body.user as { fullName: string }).fullName).toBe('Renamed Driver');
+
+    expect((await api('POST', `/api/users/${otherVolunteer.id}/message`, {
+      cookie: dispatcher.cookie, payload: { channel: 'whatsapp', body: 'Can you drive Thursday?' },
+    })).status).toBe(200);
+    expect((await api('POST', `/api/users/${otherVolunteer.id}/message`, {
+      cookie: dispatcher.cookie, payload: { channel: 'sms', body: 'Can you drive Thursday?' },
+    })).status).toBe(200);
+
+    expect((await api('POST', `/api/users/${otherVolunteer.id}/deactivate`, {
+      cookie: dispatcher.cookie, payload: { reason: 'Moved away' },
+    })).status).toBe(200);
   });
 
   it('will not let a volunteer promote themselves', async () => {

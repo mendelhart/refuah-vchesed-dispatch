@@ -316,6 +316,46 @@ export async function setThreadStatus(actor: AuditActor, threadId: string, statu
 }
 
 /**
+ * A coordinator writes to one volunteer from their card.
+ *
+ * Text goes into the volunteer's Messages conversation, so their reply lands
+ * in the same thread. WhatsApp goes out through the same delivery path as
+ * every other message, so it shows in Admin > Notifications like the rest.
+ */
+export async function messageVolunteer(
+  actor: AuditActor,
+  userId: string,
+  channel: 'sms' | 'whatsapp',
+  body: string,
+): Promise<{ threadId: string | null }> {
+  const text = body.trim();
+  if (!text) throw Errors.validation('Write a message first.');
+  const [person] = await db.select({ id: users.id, phone: users.phone, role: users.role })
+    .from(users).where(and(eq(users.id, userId), isNull(users.deletedAt))).limit(1);
+  if (!person) throw Errors.notFound('Volunteer');
+  if (!person.phone) throw Errors.validation('There is no mobile number on file for them. Add one first.');
+
+  let threadId: string | null = null;
+  if (channel === 'sms') {
+    threadId = (await threadForPhone(person.phone)).id;
+  }
+  await notify({
+    userId: person.id,
+    event: 'sms.reply_received',
+    title: "Message from Refuah V'Chesed",
+    body: text,
+    ...(threadId ? { threadId } : {}),
+    forceChannels: [channel],
+    exactChannels: true,
+  });
+  await recordAudit({
+    actor, action: 'volunteer.messaged', entityType: 'user', entityId: person.id,
+    next: { channel, length: text.length },
+  });
+  return { threadId };
+}
+
+/**
  * Sends a reply.
  *
  * Two paths on purpose. A thread belonging to a known volunteer goes through

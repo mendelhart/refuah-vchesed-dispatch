@@ -167,6 +167,18 @@ export async function updateUser(actor: AuditActor, userId: string, patch: Recor
       }
       set.phone = phone;
     }
+    if ('email' in patch) {
+      const email = typeof patch.email === 'string' && patch.email.trim() ? patch.email.trim().toLowerCase() : null;
+      if (!email && before.role !== 'volunteer') {
+        throw Errors.validation('Coordinators and admins need an email address to sign in.', { field: 'email' });
+      }
+      if (email && email !== (before.email ?? '').toLowerCase()) {
+        const dupe = await tx.select({ id: users.id }).from(users)
+          .where(and(raw`lower(${users.email}) = ${email}`, isNull(users.deletedAt))).limit(1);
+        if (dupe.length) throw Errors.conflict('Someone else already has that email address.');
+      }
+      set.email = email;
+    }
     if ('emergencyContactPhone' in patch) set.emergencyContactPhone = normalizePhone(patch.emergencyContactPhone as string);
     if ('availability' in patch) set.availability = patch.availability;
     if ('navHidden' in patch) set.navHidden = Array.isArray(patch.navHidden) ? patch.navHidden : [];
