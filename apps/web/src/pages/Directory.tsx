@@ -9,18 +9,20 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useQuery } from '@tanstack/react-query';
-import { Mail, Pencil, Phone, Search, Users } from 'lucide-react';
+import { Mail, Pencil, Phone, Plus, Search, Users } from 'lucide-react';
+import { AddPersonModal } from '@/components/AddPersonModal';
 import { api } from '@/lib/api';
 import { qk } from '@/lib/query';
 import { telHref, titleCase, formatPhone } from '@/lib/format';
 import type { UserListResponse } from '@/types/api';
 import {
-  EmptyState, ErrorState, ListSkeleton, PageHeader, cardClass, inputClass,
+  EmptyState, ErrorState, ListSkeleton, PageHeader, cardClass, inputClass, primaryButtonClass,
 } from '@/components/states';
 
 export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}): React.JSX.Element {
   const { user } = useAuth();
   const canManage = user?.role === 'dispatcher' || user?.role === 'admin';
+  const [adding, setAdding] = useState(false);
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
 
@@ -37,7 +39,19 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
 
   return (
     <div className="space-y-6">
-      <PageHeader title={title} subtitle="Everyone on the roster" />
+      <PageHeader
+        title={title}
+        subtitle="Everyone on the roster"
+        actions={
+          user?.role === 'admin' ? (
+            <button type="button" className={primaryButtonClass} onClick={() => setAdding(true)}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Add volunteer
+            </button>
+          ) : undefined
+        }
+      />
+      <AddPersonModal open={adding} onClose={() => setAdding(false)} title="Add volunteer" />
 
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />

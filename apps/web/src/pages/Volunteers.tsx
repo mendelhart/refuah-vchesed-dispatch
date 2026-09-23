@@ -28,6 +28,8 @@ import {
   panelClass, primaryButtonClass, secondaryButtonClass, tableWrapClass,
 } from '@/components/states';
 import type { GroupsResponse } from '@/types/api';
+import { useAuth } from '@/lib/auth';
+import { AddPersonModal } from '@/components/AddPersonModal';
 
 /** Snake case on purpose: this row comes straight from a raw SQL projection. */
 interface VolunteerRow {
@@ -118,6 +120,9 @@ export function VolunteersPage(): React.JSX.Element {
   const [status, setStatus] = useState<'active' | 'all'>('active');
   const [view, setView] = useState<'list' | 'calendar'>('list');
   // ?open=<id> (from Contacts > Volunteers) opens that volunteer straight away.
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const [adding, setAdding] = useState(false);
   const [openId, setOpenId] = useState<string | null>(() => new URLSearchParams(window.location.search).get('open'));
 
   useEffect(() => {
@@ -155,7 +160,16 @@ export function VolunteersPage(): React.JSX.Element {
       <PageHeader
         title="Volunteers"
         subtitle="Who is on the roster, what they do, and when they can be asked"
+        actions={
+          isAdmin ? (
+            <button type="button" className={primaryButtonClass} onClick={() => setAdding(true)}>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Add volunteer
+            </button>
+          ) : undefined
+        }
       />
+      <AddPersonModal open={adding} onClose={() => setAdding(false)} title="Add volunteer" />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="relative sm:col-span-2">
