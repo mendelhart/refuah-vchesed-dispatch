@@ -8,7 +8,14 @@ import { createQueryClient } from './lib/query';
 import { AuthProvider } from './lib/auth';
 import { ThemeProvider } from './lib/theme';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { reloadForNewVersion } from './lib/chunk-reload';
 import './index.css';
+
+// Vite fires this when a screen's file from an older deploy is gone.
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  reloadForNewVersion();
+});
 
 const queryClient = createQueryClient();
 

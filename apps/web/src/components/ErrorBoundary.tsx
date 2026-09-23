@@ -6,24 +6,28 @@
  * render error is contained, shown plainly, and recoverable in place.
  */
 import React from 'react';
+import { isChunkLoadError, reloadForNewVersion } from '@/lib/chunk-reload';
 
 interface Props {
   children: React.ReactNode;
 }
 interface State {
   error: Error | null;
+  updating?: boolean;
 }
 
 export class ErrorBoundary extends React.Component<Props, State> {
   override state: State = { error: null };
 
   static getDerivedStateFromError(error: Error): State {
-    return { error };
+    return { error, updating: isChunkLoadError(error) };
   }
 
   override componentDidCatch(error: Error, info: React.ErrorInfo): void {
     // Console is the only sink available client-side; the server logs its own.
     console.error('Unhandled render error', error, info.componentStack);
+    // A new version was deployed while this tab was open: reload to get it.
+    if (isChunkLoadError(error) && !reloadForNewVersion()) this.setState({ updating: false });
   }
 
   private readonly reset = (): void => {
@@ -31,8 +35,29 @@ export class ErrorBoundary extends React.Component<Props, State> {
   };
 
   override render(): React.ReactNode {
-    const { error } = this.state;
+    const { error, updating } = this.state;
     if (!error) return this.props.children;
+
+    if (isChunkLoadError(error)) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-slate-950">
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {updating ? 'Loading the latest version…' : 'A new version is available'}
+            </h1>
+            {updating ? null : (
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="mt-4 min-h-[44px] rounded-lg bg-[#EA0029] px-4 text-sm font-semibold text-white hover:bg-[#C80023]"
+              >
+                Reload
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-slate-950">
