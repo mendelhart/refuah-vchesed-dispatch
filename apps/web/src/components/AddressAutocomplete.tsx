@@ -120,7 +120,7 @@ export function AddressFields({ id, label, value, onChange, notesPlaceholder, re
           setLookupFailed(true);
         })
         .finally(() => setLoading(false));
-    }, 300);
+    }, 450);
 
     return () => {
       controller.abort();
