@@ -7,6 +7,7 @@ Audit and hardening pass against the "Production Hardening Command" (sections 1-
 **Architecture.** Keep it. It is one Fastify API, Postgres as the only source of truth, a Postgres job queue using `FOR UPDATE SKIP LOCKED`, and a React PWA. Critical paths are enforced in SQL: compare-and-set claims, partial unique indexes, CHECK constraints and append-only audit triggers. Nothing found in this audit needs Redis, microservices or a rewrite. Every fix is small and local.
 
 **Real defects found and fixed:**
+
 - Coordinators/admins could accept a trip with a volunteer's code, and it was recorded as the volunteer's claim (F-06).
 - Inbound SMS/WhatsApp idempotency was check-then-insert, so two concurrent redeliveries could both act (F-02).
 - A provider timeout was treated as "failed" and retried, so the same message could be sent twice. A late "failed" callback could overwrite "delivered" (F-10a/b).
@@ -19,11 +20,13 @@ Audit and hardening pass against the "Production Hardening Command" (sections 1-
 - `SENTRY_DSN` did nothing because `@sentry/node` wasn't installed, and there was no operational health check (F-05).
 
 **Production blockers, all needing the owner:**
+
 1. Nightly backups do not run. The GitHub secrets `BACKUP_DATABASE_URL` and `BACKUP_PASSPHRASE` are not set, and every nightly run fails.
 2. No error alerting. There is no Sentry DSN and no uptime monitor, so nobody is told when the API is down.
 3. Render deploys every push, even when CI fails (see F-19).
 
 **Remaining risks:**
+
 - The recovery point is 24 hours at best (nightly dump, no PITR).
 - The Render free tier sleeps after inactivity: the first request is slow and the in-process worker pauses.
 - SMS/WhatsApp sending is in test mode (`MESSAGING_TEST_MODE=true`, Twilio on hold), so real delivery is untested in production.
@@ -67,6 +70,7 @@ Severity is the spec's rating or mine. Status "CI" means covered by a test that 
 F-02, F-03, F-04, F-05 (code), F-06, F-09, F-10a/b/c, F-11a/b, F-12, F-14, F-16, F-17, F-18, F-22. Migrations added: 0018 (file blobs), 0019 (delivery `unknown`), 0020 (delivery `sending`). They apply on deploy and are already live.
 
 ## Verified Safe
+
 - Atomic acceptance and losers superseded (F-07).
 - Object-level authorization across trips, logs, notifications, availability and admin-only surfaces (F-08). Pausing a user ends their session.
 - Targeting order: group, service, capability, availability, conflict, snooze. Priority relaxation; "no rules = no restriction" (F-13).
@@ -78,6 +82,7 @@ F-02, F-03, F-04, F-05 (code), F-06, F-09, F-10a/b/c, F-11a/b, F-12, F-14, F-16,
 - Performance: indexes exist for every hot path (trips status/pickup/group/assignee/open, offers per volunteer/trip/expiry, deliveries pending/status/provider id, audit by entity/actor/action/time, jobs claim/dedupe, availability by user). Trip lists are paginated (`limit + 1`). The CI load test (5 accounts x 4 phones, about 1 req/s, p95 < 1.5 s) passes. Query plans were **not** captured against production-sized data.
 
 ## Remaining Work
+
 - **HIGH (owner):** set backup secrets (F-20); create a Sentry DSN and an uptime monitor (F-05); resolve the Fly job, then gate Render on CI (F-19).
 - **MEDIUM:** define a retention policy (F-26); PITR when budget allows; manually test offline and logout on a real phone (F-16); test real SMS/WhatsApp delivery once Twilio/WAHA credentials exist.
 - **LOW:** set `HEALTH_CHECK_TOKEN` (F-23a); decide announcement image privacy (F-23b); re-enable 2FA after a domain is connected; add a "test ride" flag so test data doesn't trip the unassigned-ride warning.
@@ -92,9 +97,10 @@ All tests run in GitHub Actions against Postgres 16 with real migrations. No loc
 - `./scripts/e2e.sh` (Playwright, phone and desktop) at `fb3681a`: 55 passed, 4 failed. All 4 were the new offer-flow tests: pickups collided with the test volunteer's earlier ride, and the refusal wording differed. Fixed in `302fedb`; result below.
 - `npm audit --omit=dev`: 0 vulnerabilities.
 
-BROWSER_RESULT_PLACEHOLDER
+- `302fedb`: 57 passed, 2 failed. The cancellation test now passes. The race test read the wrong field name (`assignedVolunteerId` instead of `assignedVolunteer.id`). Fixed in `5f8fb4d`, whose CI run was still queued when this report was written. The browser-test result for the new offer-flow test is **not yet confirmed green**.
 
 ## Deployment Readiness
+
 - **Code:** ready for the current single-instance, free-tier deployment. Known defects above are fixed with tests.
 - **Infrastructure:** Render free tier sleeps and has no persistent disk (handled by the db file driver). A paid instance is needed for always-on dispatch and for reliable timers (offer expiry, escalation). Render deploys without waiting for CI (F-19).
 - **Security:** authz, signatures, lockout, encryption with rotation, and audit are all in place. 2FA is off by decision. `HEALTH_CHECK_TOKEN` is unset.
@@ -103,6 +109,7 @@ BROWSER_RESULT_PLACEHOLDER
 - **Operational:** SMS/WhatsApp are in test mode, so volunteers receive in-app/push only. Real-channel delivery needs credentials and a live test.
 
 ## Final response (§31)
+
 1. Files changed: 66 (see `git diff --stat 61f898d^..HEAD`), about 3,000 lines, mostly tests and docs.
 2. Tests added: `delivery-semantics`, `job-queue`, `availability-edges`, `rest-periods`, `idor`, `claim-authz` (extended), `waha-signature`, `offer-flow.spec.ts` (e2e), plus additions to `sms-webhook`, `concurrency`, `mfa`, `targeting`, `recurring`, `auth`, `file-storage`, `key-rotation`, `health-checks`.
 3-4. See Test Results.
