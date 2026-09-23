@@ -9,6 +9,7 @@
  */
 import type { ApiError as ApiErrorEnvelope } from '@rvc/shared';
 import { getViewAs } from './viewAs';
+import { clearTripCache } from './offline';
 
 export class ApiError extends Error {
   constructor(
@@ -102,6 +103,9 @@ async function request<T>(method: Method, path: string, body?: unknown, signal?:
   // The transition endpoints answer a lost race with 200-shaped bodies in some
   // proxies and 409 in others; treat an `error` envelope as an error either way.
   if (!response.ok || isErrorEnvelope(parsed)) {
+    // A session ended on the server (paused, removed, signed out elsewhere):
+    // drop the offline copy of this person's rides as well.
+    if (response.status === 401) void clearTripCache();
     if (isErrorEnvelope(parsed)) {
       const { code, message, details, requestId } = parsed.error;
       throw new ApiError(response.status === 200 ? 409 : response.status, code, message, details, requestId);
