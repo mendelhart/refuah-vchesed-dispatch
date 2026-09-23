@@ -70,6 +70,12 @@ export function PeoplePage(): React.JSX.Element {
     onError: (error: unknown) => toast.error(errorMessage(error)),
   });
 
+  const resetMfa = useMutation({
+    mutationFn: (id: string) => api.post(`/api/users/${id}/mfa/reset`, {}),
+    onSuccess: () => toast.success('Two-step sign-in reset. They set it up again at their next sign-in.'),
+    onError: (error: unknown) => toast.error(errorMessage(error)),
+  });
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -179,6 +185,18 @@ export function PeoplePage(): React.JSX.Element {
                 <button type="button" className={secondaryButtonClass} onClick={() => resendInvite.mutate(person.id)}>
                   Invite link
                 </button>
+                {person.role !== 'volunteer' ? (
+                  <button
+                    type="button"
+                    className={secondaryButtonClass}
+                    title="Lost phone: clear their authenticator. They are signed out and set it up again."
+                    onClick={() => {
+                      if (window.confirm(`Reset two-step sign-in for ${person.fullName}? They will be signed out and set up a new authenticator at next sign-in.`)) resetMfa.mutate(person.id);
+                    }}
+                  >
+                    Reset 2-step
+                  </button>
+                ) : null}
                 {person.status === 'active' && person.role !== 'admin' ? (
                   <button
                     type="button"
