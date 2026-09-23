@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Mail, Phone, Search, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { qk } from '@/lib/query';
-import { telHref, titleCase } from '@/lib/format';
+import { telHref, titleCase, formatPhone } from '@/lib/format';
 import type { UserListResponse } from '@/types/api';
 import {
   EmptyState, ErrorState, ListSkeleton, PageHeader, cardClass, inputClass,
@@ -78,7 +78,7 @@ export function DirectoryPage(): React.JSX.Element {
                   {person.phone ? (
                     <a className="mt-1 flex items-center gap-2 text-sm text-[#E31E24]" href={telHref(person.phone)}>
                       <Phone className="h-3 w-3" aria-hidden="true" />
-                      {person.phone}
+                      {formatPhone(person.phone)}
                     </a>
                   ) : null}
                   {person.email ? (

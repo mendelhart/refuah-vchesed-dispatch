@@ -22,8 +22,7 @@ import { markInstallEligible } from '@/lib/install-prompt';
 import { useCompleteTrip } from '@/lib/trip-actions';
 import {
   formatDateTime, mobilityLabel, priorityClass, priorityLabel, relativeTime, statusClass, statusLabel, telHref,
-  titleCase, tripTypeLabel,
-} from '@/lib/format';
+  titleCase, tripTypeLabel, formatPhone } from '@/lib/format';
 import { isFullTrip, type TripHistoryResponse, type TripResponse } from '@/types/api';
 import { TripActions } from '@/components/TripActions';
 import { TripForm } from '@/components/TripForm';
@@ -332,7 +331,7 @@ export function TripDetailPage(): React.JSX.Element {
                   {trip.callerName ?? '—'}
                   {trip.callerPhone ? (
                     <a className="text-[#E31E24] underline-offset-2 hover:underline" href={telHref(trip.callerPhone)}>
-                      {trip.callerPhone}
+                      {formatPhone(trip.callerPhone)}
                     </a>
                   ) : null}
                   {isFullTrip(trip) && !trip.callerId && (trip.callerName || trip.callerPhone) ? (
@@ -357,7 +356,7 @@ export function TripDetailPage(): React.JSX.Element {
                       className="font-medium text-[#E31E24] underline-offset-2 hover:underline"
                       href={telHref(trip.callbackNumber)}
                     >
-                      {trip.callbackNumber}
+                      {formatPhone(trip.callbackNumber)}
                     </a>
                     <span className="text-xs text-slate-500 dark:text-slate-400">ring this about the trip</span>
                   </dd>
@@ -372,7 +371,7 @@ export function TripDetailPage(): React.JSX.Element {
                       {trip.assignedVolunteer.fullName}
                       {trip.assignedVolunteer.phone ? (
                         <a className="text-[#E31E24] underline-offset-2 hover:underline" href={telHref(trip.assignedVolunteer.phone)}>
-                          {trip.assignedVolunteer.phone}
+                          {formatPhone(trip.assignedVolunteer.phone)}
                         </a>
                       ) : null}
                     </>

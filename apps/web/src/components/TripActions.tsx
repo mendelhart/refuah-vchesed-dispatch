@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { CheckCircle2, PhoneCall, Send, Undo2, UserCheck, UserCog, XCircle } from 'lucide-react';
+import { CheckCircle2, MoreHorizontal, PhoneCall, Send, Undo2, UserCheck, UserCog, XCircle } from 'lucide-react';
 import type { TripDto } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
@@ -24,8 +24,22 @@ type Dialog = 'assign' | 'reassign' | 'cancel' | 'return' | null;
 const actionButtonClass =
   'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800';
 
-export function TripActions({ trip }: { trip: TripDto }): React.JSX.Element {
+/**
+ * `compact` is the phone board: one main button (offer, or complete once a ride
+ * is under way) and everything else one tap away behind "More", so a card is
+ * a glance rather than a wall of buttons. `extra` joins the "More" row.
+ */
+export function TripActions({
+  trip,
+  compact = false,
+  extra,
+}: {
+  trip: TripDto;
+  compact?: boolean;
+  extra?: React.ReactNode;
+}): React.JSX.Element {
   const [dialog, setDialog] = useState<Dialog>(null);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [volunteerId, setVolunteerId] = useState('');
 
@@ -51,6 +65,9 @@ export function TripActions({ trip }: { trip: TripDto }): React.JSX.Element {
   });
 
   const can = (transition: string): boolean => trip.availableTransitions.includes(transition as never);
+  // In compact mode the main action stays visible; the rest wait behind More.
+  const mainAction: 'offer' | 'complete' | null = can('offer') ? 'offer' : can('complete') ? 'complete' : null;
+  const show = (action: string): boolean => !compact || moreOpen || action === mainAction;
   const closeDialog = (): void => {
     setDialog(null);
     setReason('');
@@ -60,7 +77,7 @@ export function TripActions({ trip }: { trip: TripDto }): React.JSX.Element {
   return (
     <>
       <div className="flex flex-wrap gap-2">
-        {can('offer') ? (
+        {can('offer') && show('offer') ? (
           <button
             type="button"
             className={primaryButtonClass}
@@ -72,28 +89,28 @@ export function TripActions({ trip }: { trip: TripDto }): React.JSX.Element {
           </button>
         ) : null}
 
-        {can('assign') ? (
+        {can('assign') && show('assign') ? (
           <button type="button" className={actionButtonClass} onClick={() => setDialog('assign')}>
             <UserCheck className="h-4 w-4" aria-hidden="true" />
             Assign
           </button>
         ) : null}
 
-        {can('reassign') ? (
+        {can('reassign') && show('reassign') ? (
           <button type="button" className={actionButtonClass} onClick={() => setDialog('reassign')}>
             <UserCog className="h-4 w-4" aria-hidden="true" />
             Reassign
           </button>
         ) : null}
 
-        {can('return_to_pending') ? (
+        {can('return_to_pending') && show('return') ? (
           <button type="button" className={actionButtonClass} onClick={() => setDialog('return')}>
             <Undo2 className="h-4 w-4" aria-hidden="true" />
             Back to queue
           </button>
         ) : null}
 
-        {can('complete') ? (
+        {can('complete') && show('complete') ? (
           <button
             type="button"
             className={actionButtonClass}
@@ -105,7 +122,7 @@ export function TripActions({ trip }: { trip: TripDto }): React.JSX.Element {
           </button>
         ) : null}
 
-        {trip.callerPhone ? (
+        {trip.callerPhone && show('call-caller') ? (
           <button
             type="button"
             className={actionButtonClass}
@@ -117,7 +134,7 @@ export function TripActions({ trip }: { trip: TripDto }): React.JSX.Element {
           </button>
         ) : null}
 
-        {trip.assignedVolunteer ? (
+        {trip.assignedVolunteer && show('call-volunteer') ? (
           <button
             type="button"
             className={actionButtonClass}
@@ -129,7 +146,7 @@ export function TripActions({ trip }: { trip: TripDto }): React.JSX.Element {
           </button>
         ) : null}
 
-        {can('cancel') ? (
+        {can('cancel') && show('cancel') ? (
           <button
             type="button"
             className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-3 text-sm font-medium text-[#E31E24] hover:bg-red-50 dark:border-red-900 dark:bg-slate-900 dark:hover:bg-red-950/40"
@@ -137,6 +154,20 @@ export function TripActions({ trip }: { trip: TripDto }): React.JSX.Element {
           >
             <XCircle className="h-4 w-4" aria-hidden="true" />
             Cancel
+          </button>
+        ) : null}
+
+        {extra && (!compact || moreOpen) ? extra : null}
+
+        {compact ? (
+          <button
+            type="button"
+            className={actionButtonClass}
+            aria-expanded={moreOpen}
+            onClick={() => setMoreOpen((open) => !open)}
+          >
+            <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+            {moreOpen ? 'Less' : mainAction ? 'More' : 'Actions'}
           </button>
         ) : null}
       </div>

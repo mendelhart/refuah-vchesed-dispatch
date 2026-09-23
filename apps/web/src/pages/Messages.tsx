@@ -14,9 +14,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ArrowLeft, Hand, Inbox, MessageSquare, Send, TriangleAlert } from 'lucide-react';
 import { replyThreadSchema, type ThreadStatus } from '@rvc/shared';
+import { cn } from '@/lib/utils';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
-import { formatDateTime, relativeTime, telHref, titleCase } from '@/lib/format';
+import { formatDateTime, relativeTime, telHref, titleCase, formatPhone } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
 import {
   EmptyState, ErrorState, ListSkeleton, PageHeader, inputClass, panelClass, primaryButtonClass, secondaryButtonClass,
@@ -66,12 +67,12 @@ interface ThreadDetailResponse {
   messages: MessageRow[];
 }
 
-const STATUS_FILTERS: { value: 'open' | 'snoozed' | 'closed' | 'all'; label: string }[] = [
-  { value: 'open', label: 'Open' },
-  { value: 'snoozed', label: 'Snoozed' },
-  { value: 'closed', label: 'Closed' },
-  { value: 'all', label: 'Everything' },
-];
+const MESSAGE_TABS = [
+  { id: 'all-open', label: 'All open', status: 'open', mine: false },
+  { id: 'mine', label: 'Mine', status: 'open', mine: true },
+  { id: 'snoozed', label: 'Snoozed', status: 'snoozed', mine: false },
+  { id: 'closed', label: 'Closed', status: 'closed', mine: false },
+] as const;
 
 const PARTY_LABELS: Record<string, string> = {
   volunteer: 'Volunteer',
@@ -204,28 +205,33 @@ export function MessagesPage(): React.JSX.Element {
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <select
-          className={`${inputClass} sm:w-48`}
-          value={statusFilter}
-          aria-label="Filter by conversation status"
-          onChange={(event) => setStatusFilter(event.target.value as 'open' | 'snoozed' | 'closed' | 'all')}
-        >
-          {STATUS_FILTERS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <label className="flex min-h-[44px] cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200">
-          <input
-            type="checkbox"
-            className="h-4 w-4 accent-[#E31E24]"
-            checked={mine}
-            onChange={(event) => setMine(event.target.checked)}
-          />
-          Only the ones I have taken
-        </label>
+      {/* Tabs instead of a dropdown plus a checkbox: the two views a dispatcher
+          switches between all day are one tap each. Snoozed and closed stay
+          reachable for looking something up. */}
+      <div role="tablist" aria-label="Conversation views" className="flex flex-wrap gap-2">
+        {MESSAGE_TABS.map((tab) => {
+          const active = statusFilter === tab.status && mine === tab.mine;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => {
+                setStatusFilter(tab.status);
+                setMine(tab.mine);
+              }}
+              className={cn(
+                'min-h-[44px] whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors',
+                active
+                  ? 'bg-[#E31E24] text-white'
+                  : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
@@ -320,7 +326,7 @@ export function MessagesPage(): React.JSX.Element {
                     </h2>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
                       <a href={telHref(thread.data.thread.phone)} className="underline underline-offset-2">
-                        {thread.data.thread.phone}
+                        {formatPhone(thread.data.thread.phone)}
                       </a>
                       {' · '}
                       {PARTY_LABELS[thread.data.thread.partyType] ?? titleCase(thread.data.thread.partyType)}

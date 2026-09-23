@@ -13,13 +13,17 @@ import { AlertOctagon, BellRing, CalendarClock, Clock, MapPin, Phone, Repeat, Us
 import type { TripDto } from '@rvc/shared';
 import {
   formatDateTime, mobilityLabel, priorityClass, priorityLabel, relativeTime, statusClass, statusLabel, telHref,
-  tripTypeLabel,
-} from '@/lib/format';
+  tripTypeLabel, formatPhone } from '@/lib/format';
 import { OfferCountdown } from './Countdown';
 import { TripActions } from './TripActions';
 import { cardClass } from './states';
 
-export function TripCard({ trip }: { trip: TripDto }): React.JSX.Element {
+/**
+ * `compact` is the phone board: tighter padding, the name opens the ride, the
+ * reference and a routine priority drop out, and secondary actions fold behind
+ * "More" so three rides fit a screen instead of one and a half.
+ */
+export function TripCard({ trip, compact = false }: { trip: TripDto; compact?: boolean }): React.JSX.Element {
   const unansweredOffer = trip.status === 'offered' && trip.openOfferCount > 0 && !trip.assignedVolunteer;
   // An appointment that matches the pickup adds a line and says nothing; only a
   // time that differs is worth the row.
@@ -38,20 +42,30 @@ export function TripCard({ trip }: { trip: TripDto }): React.JSX.Element {
               : 'border-l-slate-300 dark:border-l-slate-600'
       }`}
     >
-      <div className="p-5 md:p-6">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className={compact ? 'p-4' : 'p-5 md:p-6'}>
+        <div className={`${compact ? 'mb-2' : 'mb-3'} flex flex-wrap items-center gap-2`}>
           <h3 className="min-w-0 break-words text-base font-semibold text-slate-900 dark:text-white md:text-lg">
-            {trip.callerName ?? tripTypeLabel(trip.tripType)}
+            {compact ? (
+              <Link to={`/trips/${trip.id}`} className="underline-offset-2 hover:underline">
+                {trip.callerName ?? tripTypeLabel(trip.tripType)}
+              </Link>
+            ) : (
+              (trip.callerName ?? tripTypeLabel(trip.tripType))
+            )}
           </h3>
-          <span className="rounded bg-slate-100 px-2 py-1 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-            {trip.reference}
-          </span>
+          {compact ? null : (
+            <span className="rounded bg-slate-100 px-2 py-1 font-mono text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              {trip.reference}
+            </span>
+          )}
           <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusClass(trip.status)}`}>
             {statusLabel(trip.status)}
           </span>
-          <span className={`rounded-full px-3 py-1 text-xs font-medium ${priorityClass(trip.priority)}`}>
-            {priorityLabel(trip.priority)}
-          </span>
+          {compact && trip.priority === 'routine' ? null : (
+            <span className={`rounded-full px-3 py-1 text-xs font-medium ${priorityClass(trip.priority)}`}>
+              {priorityLabel(trip.priority)}
+            </span>
+          )}
           {trip.isOverdue ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-[#E31E24] px-3 py-1 text-xs font-semibold text-white">
               <AlertOctagon className="h-3 w-3" aria-hidden="true" />
@@ -61,12 +75,12 @@ export function TripCard({ trip }: { trip: TripDto }): React.JSX.Element {
           {trip.status === 'offered' ? <OfferCountdown expiresAt={trip.offerExpiresAt} /> : null}
         </div>
 
-        <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+        <div className={`${compact ? 'space-y-1.5' : 'space-y-2'} text-sm text-slate-600 dark:text-slate-300`}>
           {trip.callerPhone ? (
             <p className="flex items-center gap-2">
               <Phone className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
               <a className="underline-offset-2 hover:underline" href={telHref(trip.callerPhone)}>
-                {trip.callerPhone}
+                {formatPhone(trip.callerPhone)}
               </a>
             </p>
           ) : null}
@@ -101,7 +115,7 @@ export function TripCard({ trip }: { trip: TripDto }): React.JSX.Element {
               <span className="font-medium text-slate-800 dark:text-slate-100">{trip.assignedVolunteer.fullName}</span>
               {trip.assignedVolunteer.phone ? (
                 <a className="text-slate-500 underline-offset-2 hover:underline dark:text-slate-400" href={telHref(trip.assignedVolunteer.phone)}>
-                  {trip.assignedVolunteer.phone}
+                  {formatPhone(trip.assignedVolunteer.phone)}
                 </a>
               ) : null}
             </p>
@@ -147,7 +161,7 @@ export function TripCard({ trip }: { trip: TripDto }): React.JSX.Element {
             </div>
           ) : null}
 
-          <p className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-400 dark:text-slate-500">
+          <p className={`${compact ? 'hidden' : 'flex'} flex-wrap items-center gap-2 pt-1 text-xs text-slate-400 dark:text-slate-500`}>
             <span>
               {trip.group.name} · {tripTypeLabel(trip.tripType)}
               {trip.assignmentMode === 'admin_approval' ? ' · needs dispatcher approval' : ''}
@@ -161,6 +175,22 @@ export function TripCard({ trip }: { trip: TripDto }): React.JSX.Element {
           </p>
         </div>
 
+        {compact ? (
+          <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+            <TripActions
+              trip={trip}
+              compact
+              extra={
+                <Link
+                  to={`/trips/${trip.id}`}
+                  className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-medium text-[#E31E24] hover:bg-red-50 dark:hover:bg-red-950/30"
+                >
+                  Open details
+                </Link>
+              }
+            />
+          </div>
+        ) : (
         <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
           <TripActions trip={trip} />
           <Link
@@ -170,6 +200,7 @@ export function TripCard({ trip }: { trip: TripDto }): React.JSX.Element {
             Open details
           </Link>
         </div>
+        )}
       </div>
     </article>
   );

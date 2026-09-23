@@ -16,7 +16,6 @@ import {
   CalendarClock,
   CalendarRange,
   Car,
-  ClipboardList,
   Download,
   FileText,
   HeartHandshake,
@@ -70,7 +69,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/', label: 'Home', icon: Home, roles: ['volunteer', 'dispatcher', 'admin'], end: true },
   { to: '/board', label: 'Dispatch board', icon: LayoutDashboard, roles: ['dispatcher', 'admin'] },
   { to: '/messages', label: 'Messages', icon: MessageSquare, roles: ['dispatcher', 'admin'] },
-  { to: '/callers', label: 'Callers', icon: BookUser, roles: ['dispatcher', 'admin'] },
+  { to: '/contacts', label: 'Contacts', icon: BookUser, roles: ['dispatcher', 'admin'] },
   { to: '/recurring', label: 'Standing rides', icon: Repeat, roles: ['dispatcher', 'admin'] },
   { to: '/volunteers', label: 'Volunteers', icon: Users, roles: ['dispatcher', 'admin'] },
   { to: '/duty', label: 'Phone duty', icon: CalendarClock, roles: ['volunteer', 'dispatcher', 'admin'] },
@@ -81,9 +80,10 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/my-id-card', label: 'My ID card', icon: IdCard, roles: ['volunteer', 'dispatcher', 'admin'] },
   { to: '/impact', label: 'My impact', icon: HeartHandshake, roles: ['volunteer', 'dispatcher', 'admin'] },
 
-  { to: '/directory', label: 'Directory', icon: Users, roles: ['volunteer', 'dispatcher', 'admin'] },
+  // Dispatchers reach callers, the team roster and hospital numbers from the
+  // one Contacts screen above; the separate Directory is the volunteer's view.
+  { to: '/directory', label: 'Directory', icon: Users, roles: ['volunteer'] },
   { to: '/calls', label: 'Call log', icon: Phone, roles: ['volunteer', 'dispatcher', 'admin'] },
-  { to: '/contacts', label: 'Contacts', icon: ClipboardList, roles: ['dispatcher', 'admin'] },
   { to: '/equipment', label: 'Equipment', icon: Package, roles: ['volunteer', 'dispatcher', 'admin'] },
   { to: '/vehicles', label: 'Vehicles', icon: Car, roles: ['dispatcher', 'admin'] },
   { to: '/settings', label: 'Settings', icon: SettingsIcon, roles: ['volunteer', 'dispatcher', 'admin'] },
@@ -104,12 +104,42 @@ export const NAV_ITEMS: NavItem[] = [
  */
 const ALWAYS_VISIBLE = new Set(['/', '/settings']);
 
-/** Role-eligible items minus the ones this person chose to hide. */
+/**
+ * A volunteer's own screens. Dispatchers who also drive can still use them,
+ * but most do not, so for a dispatcher they start hidden and can be switched
+ * on in Settings > Your menu.
+ */
+export const DISPATCH_DEFAULT_HIDDEN = new Set(['/my-trips', '/my-availability', '/my-profile', '/my-id-card', '/impact']);
+
+/**
+ * navHidden holds route paths the person hid. A `+` prefix ("+/my-trips")
+ * records the opposite: a screen that is hidden by default for their role and
+ * that they chose to show. No migration needed; the column is a text array.
+ */
+export const SHOWN_PREFIX = '+';
+
+export function isNavItemHidden(role: Role, navHidden: string[] | undefined, to: string): boolean {
+  if (ALWAYS_VISIBLE.has(to)) return false;
+  const prefs = navHidden ?? [];
+  if (prefs.includes(to)) return true;
+  const isDispatch = role === 'dispatcher' || role === 'admin';
+  if (isDispatch && DISPATCH_DEFAULT_HIDDEN.has(to)) return !prefs.includes(`${SHOWN_PREFIX}${to}`);
+  return false;
+}
+
+/** The navHidden value after flipping one screen between Shown and Hidden. */
+export function toggleNavPreference(role: Role, navHidden: string[] | undefined, to: string): string[] {
+  const hiddenNow = isNavItemHidden(role, navHidden, to);
+  const rest = (navHidden ?? []).filter((entry) => entry !== to && entry !== `${SHOWN_PREFIX}${to}`);
+  const isDispatch = role === 'dispatcher' || role === 'admin';
+  const defaultHidden = isDispatch && DISPATCH_DEFAULT_HIDDEN.has(to);
+  if (hiddenNow) return defaultHidden ? [...rest, `${SHOWN_PREFIX}${to}`] : rest;
+  return defaultHidden ? rest : [...rest, to];
+}
+
+/** Role-eligible items minus the ones hidden for this person. */
 export function visibleNavItems(role: Role, navHidden: string[] | undefined): NavItem[] {
-  const hidden = new Set(navHidden ?? []);
-  return NAV_ITEMS.filter(
-    (item) => item.roles.includes(role) && (ALWAYS_VISIBLE.has(item.to) || !hidden.has(item.to)),
-  );
+  return NAV_ITEMS.filter((item) => item.roles.includes(role) && !isNavItemHidden(role, navHidden, item.to));
 }
 
 function navLinkClass({ isActive }: { isActive: boolean }): string {
@@ -290,7 +320,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
         </main>
       </div>
 
-      <BottomNavigation items={bottomNavItems(role, badges)} />
+      <BottomNavigation items={bottomNavItems(role, badges, !isNavItemHidden(role, user?.navHidden, '/my-trips'))} />
 
       {isDispatch ? (
         <Link

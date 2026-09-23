@@ -17,7 +17,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Phone, Plus, Trash2 } from 'lu
 import { DUTY_KINDS, type DutyKind } from '@rvc/shared';
 import { ApiError, api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
-import { formatDateTime, formatTime, telHref, titleCase } from '@/lib/format';
+import { formatDateTime, formatTime, telHref, titleCase, formatPhone } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
 import { Modal } from '@/components/Modal';
 import {
@@ -189,7 +189,7 @@ export function DutyPage(): React.JSX.Element {
               href={telHref(onDutyNow.phone)}
             >
               <Phone className="h-4 w-4" aria-hidden="true" />
-              Call {onDutyNow.phone}
+              Call {formatPhone(onDutyNow.phone)}
             </a>
           ) : (
             <p className="mt-3 text-sm font-medium text-[#E31E24]">
@@ -295,7 +295,7 @@ export function DutyPage(): React.JSX.Element {
                           href={telHref(shift.phone)}
                         >
                           <Phone className="h-3 w-3" aria-hidden="true" />
-                          {shift.phone}
+                          {formatPhone(shift.phone)}
                         </a>
                       ) : null}
                       {shift.notes ? (

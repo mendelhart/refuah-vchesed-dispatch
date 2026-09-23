@@ -16,7 +16,7 @@ import { ADDRESS_LABELS, callerAddressSchema, callerSchema, type AddressLabel } 
 import type { TripPriority, TripStatus } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
-import { formatDate, formatDateTime, priorityClass, priorityLabel, relativeTime, statusClass, statusLabel, telHref, titleCase } from '@/lib/format';
+import { formatDate, formatDateTime, priorityClass, priorityLabel, relativeTime, statusClass, statusLabel, telHref, titleCase, formatPhone } from '@/lib/format';
 import { Modal } from '@/components/Modal';
 import { AddressFields, emptyAddress, toAddressInput, type AddressDraft } from '@/components/AddressAutocomplete';
 import {
@@ -408,7 +408,7 @@ export function CallersPage(): React.JSX.Element {
                         className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
                       >
                         <Phone className="h-4 w-4" aria-hidden="true" />
-                        {phone}
+                        {formatPhone(phone)}
                       </a>
                     ))}
                   {profile.data.caller.email ? (

@@ -276,6 +276,10 @@ export function TripForm({
   const [moreOpen, setMoreOpen] = useState(Boolean(trip));
   const [form, setForm] = useState<FormState>(() => (trip ? fromTrip(trip) : blankForm()));
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // The fields behind More options can still fail validation; open it so the
+  // message is not hidden inside a closed section.
+  const MORE_FIELDS = ['callbackNumber', 'pickupEntrance', 'pickupParking', 'dropoffEntrance', 'dropoffParking'];
+  if (!moreOpen && MORE_FIELDS.some((key) => errors[key])) setMoreOpen(true);
   const [formKey, setFormKey] = useState(trip?.id ?? 'new');
   const [callerQuery, setCallerQuery] = useState('');
   const [callerTerm, setCallerTerm] = useState('');
@@ -642,23 +646,6 @@ export function TripForm({
               />
               {fieldError('callerPhone')}
             </div>
-            <div className="sm:col-span-2">
-              <label htmlFor="callback-number" className={labelClass}>
-                Callback number
-              </label>
-              <input
-                id="callback-number"
-                type="tel"
-                className={inputClass}
-                value={form.callbackNumber}
-                placeholder="+1 514 555 9876"
-                onChange={(event) => setForm({ ...form, callbackNumber: event.target.value })}
-              />
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                The number to ring about this trip — often a ward desk, not the caller.
-              </p>
-              {fieldError('callbackNumber')}
-            </div>
           </div>
         </div>
 
@@ -671,36 +658,6 @@ export function TripForm({
             required
           />
           {fieldError('pickup.line1')}
-          <div className="ml-1 grid grid-cols-1 gap-3 border-l-2 border-slate-200 pl-3 sm:grid-cols-2 dark:border-slate-700">
-            <div>
-              <label htmlFor="pickup-entrance" className={labelClass}>
-                <DoorOpen className="mr-1 inline h-4 w-4" aria-hidden="true" />
-                Pickup entrance
-              </label>
-              <input
-                id="pickup-entrance"
-                className={inputClass}
-                value={form.pickupEntrance}
-                placeholder="Side door by the ramp"
-                onChange={(event) => setForm({ ...form, pickupEntrance: event.target.value })}
-              />
-              {fieldError('pickupEntrance')}
-            </div>
-            <div>
-              <label htmlFor="pickup-parking" className={labelClass}>
-                <SquareParking className="mr-1 inline h-4 w-4" aria-hidden="true" />
-                Pickup parking
-              </label>
-              <input
-                id="pickup-parking"
-                className={inputClass}
-                value={form.pickupParking}
-                placeholder="Two spots behind the building"
-                onChange={(event) => setForm({ ...form, pickupParking: event.target.value })}
-              />
-              {fieldError('pickupParking')}
-            </div>
-          </div>
         </div>
 
         <div className="space-y-3">
@@ -754,36 +711,6 @@ export function TripForm({
             required
           />
           {fieldError('dropoff.line1')}
-          <div className="ml-1 grid grid-cols-1 gap-3 border-l-2 border-slate-200 pl-3 sm:grid-cols-2 dark:border-slate-700">
-            <div>
-              <label htmlFor="dropoff-entrance" className={labelClass}>
-                <DoorOpen className="mr-1 inline h-4 w-4" aria-hidden="true" />
-                Dropoff entrance
-              </label>
-              <input
-                id="dropoff-entrance"
-                className={inputClass}
-                value={form.dropoffEntrance}
-                placeholder="Pavilion D, main doors"
-                onChange={(event) => setForm({ ...form, dropoffEntrance: event.target.value })}
-              />
-              {fieldError('dropoffEntrance')}
-            </div>
-            <div>
-              <label htmlFor="dropoff-parking" className={labelClass}>
-                <SquareParking className="mr-1 inline h-4 w-4" aria-hidden="true" />
-                Dropoff parking
-              </label>
-              <input
-                id="dropoff-parking"
-                className={inputClass}
-                value={form.dropoffParking}
-                placeholder="Drop-off loop, no waiting"
-                onChange={(event) => setForm({ ...form, dropoffParking: event.target.value })}
-              />
-              {fieldError('dropoffParking')}
-            </div>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -848,10 +775,87 @@ export function TripForm({
           <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800/60">
             More options
             <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-              Urgency, assignment, mobility, notes
+              Entrance, parking, callback, urgency, notes
             </span>
           </summary>
           <div className="mt-4 space-y-4">
+          <div>
+            <label htmlFor="callback-number" className={labelClass}>
+              Callback number
+            </label>
+            <input
+              id="callback-number"
+              type="tel"
+              className={inputClass}
+              value={form.callbackNumber}
+              placeholder="+1 514 555 9876"
+              onChange={(event) => setForm({ ...form, callbackNumber: event.target.value })}
+            />
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              The number to ring about this trip — often a ward desk, not the caller.
+            </p>
+            {fieldError('callbackNumber')}
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label htmlFor="pickup-entrance" className={labelClass}>
+                <DoorOpen className="mr-1 inline h-4 w-4" aria-hidden="true" />
+                Pickup entrance
+              </label>
+              <input
+                id="pickup-entrance"
+                className={inputClass}
+                value={form.pickupEntrance}
+                placeholder="Side door by the ramp"
+                onChange={(event) => setForm({ ...form, pickupEntrance: event.target.value })}
+              />
+              {fieldError('pickupEntrance')}
+            </div>
+            <div>
+              <label htmlFor="pickup-parking" className={labelClass}>
+                <SquareParking className="mr-1 inline h-4 w-4" aria-hidden="true" />
+                Pickup parking
+              </label>
+              <input
+                id="pickup-parking"
+                className={inputClass}
+                value={form.pickupParking}
+                placeholder="Two spots behind the building"
+                onChange={(event) => setForm({ ...form, pickupParking: event.target.value })}
+              />
+              {fieldError('pickupParking')}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label htmlFor="dropoff-entrance" className={labelClass}>
+                <DoorOpen className="mr-1 inline h-4 w-4" aria-hidden="true" />
+                Dropoff entrance
+              </label>
+              <input
+                id="dropoff-entrance"
+                className={inputClass}
+                value={form.dropoffEntrance}
+                placeholder="Pavilion D, main doors"
+                onChange={(event) => setForm({ ...form, dropoffEntrance: event.target.value })}
+              />
+              {fieldError('dropoffEntrance')}
+            </div>
+            <div>
+              <label htmlFor="dropoff-parking" className={labelClass}>
+                <SquareParking className="mr-1 inline h-4 w-4" aria-hidden="true" />
+                Dropoff parking
+              </label>
+              <input
+                id="dropoff-parking"
+                className={inputClass}
+                value={form.dropoffParking}
+                placeholder="Drop-off loop, no waiting"
+                onChange={(event) => setForm({ ...form, dropoffParking: event.target.value })}
+              />
+              {fieldError('dropoffParking')}
+            </div>
+          </div>
         <fieldset>
           <legend className={labelClass}>How urgent is this?</legend>
           <div className="space-y-2">

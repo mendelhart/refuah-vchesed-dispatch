@@ -142,6 +142,21 @@ export const mobilityLabel = (need: MobilityNeed): string => MOBILITY_LABELS[nee
 /** Digits-only tel: href; the display string keeps whatever the API sent. */
 export const telHref = (phone: string): string => `tel:${phone.replace(/[^\d+]/g, '')}`;
 
+/**
+ * North American numbers read the way people say them: (514) 555-9001.
+ * Anything else (international, extensions, partial input) is shown as stored
+ * rather than guessed at.
+ */
+export function formatPhone(phone: string | null | undefined): string {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  const national = digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits;
+  if (national.length === 10 && (digits.length === 10 || digits.length === 11)) {
+    return `(${national.slice(0, 3)}) ${national.slice(3, 6)}-${national.slice(6)}`;
+  }
+  return phone;
+}
+
 export function titleCase(value: string): string {
   return value
     .replace(/[_.]/g, ' ')

@@ -20,7 +20,7 @@ import { CalendarDays, List, Phone, Plus, Search, Trash2, Users } from 'lucide-r
 import { VOLUNTEER_CAPABILITIES, type VolunteerCapability } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
-import { formatDate, formatDateTime, relativeTime, telHref, titleCase } from '@/lib/format';
+import { formatDate, formatDateTime, relativeTime, telHref, titleCase, formatPhone } from '@/lib/format';
 import { Modal } from '@/components/Modal';
 import {
   EmptyState, ErrorState, InlineSpinner, ListSkeleton, PageHeader, cardClass, inputClass, labelClass,
@@ -308,7 +308,7 @@ function RosterTable({ rows, onOpen }: { rows: VolunteerRow[]; onOpen: (id: stri
                     {row.volunteer_number ? `${row.volunteer_number} · ` : ''}
                     {row.phone ? (
                       <a className="underline" href={telHref(row.phone)}>
-                        {row.phone}
+                        {formatPhone(row.phone)}
                       </a>
                     ) : (
                       'No phone'
@@ -657,7 +657,7 @@ function VolunteerDrawer({
             {row.phone ? (
               <a className={secondaryButtonClass} href={telHref(row.phone)}>
                 <Phone className="h-4 w-4" aria-hidden="true" />
-                {row.phone}
+                {formatPhone(row.phone)}
               </a>
             ) : null}
             {row.email ? (

@@ -24,13 +24,13 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  AlertOctagon, CalendarDays, Car, CheckCircle2, ClipboardList, Flame, MessageSquare, Package, Phone, Plus, Search,
-  Send, UserCheck, X,
+  AlertOctagon, CalendarDays, Car, CheckCircle2, CheckSquare, ChevronDown, ClipboardList, Flame, MessageSquare, Package,
+  Phone, Plus, Search, Send, UserCheck, X,
 } from 'lucide-react';
 import type { TripDto, TripStatus } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { invalidateTrips, qk, type TripListParams } from '@/lib/query';
-import { formatDateTime, formatTime, priorityRank, telHref } from '@/lib/format';
+import { formatDateTime, formatTime, priorityRank, telHref, formatPhone } from '@/lib/format';
 import { isFullTrip, type BoardSummaryResponse, type TripListResponse, type UserListResponse } from '@/types/api';
 import { TripCard } from '@/components/TripCard';
 import { TripForm } from '@/components/TripForm';
@@ -146,7 +146,7 @@ function dayBounds(): { from: string; to: string } {
 }
 
 const chipClass =
-  'inline-flex min-h-[44px] items-center gap-2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200';
+  'inline-flex min-h-[44px] max-w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200';
 
 /**
  * The strip above the board.
@@ -171,8 +171,8 @@ function BoardContextStrip(): React.JSX.Element | null {
   const hebrew = data.hebrewToday;
 
   return (
-    <div className="-mx-4 overflow-x-auto px-4">
-      <div className="flex w-max items-stretch gap-2 pb-1 lg:w-full lg:flex-wrap">
+    <div>
+      <div className="flex flex-wrap items-stretch gap-2">
         {hebrew ? (
           <span className={chipClass}>
             <CalendarDays className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
@@ -215,25 +215,31 @@ function BoardContextStrip(): React.JSX.Element | null {
         {data.onDutyNow?.phone ? (
           <a className={`${chipClass} font-medium text-[#E31E24]`} href={telHref(data.onDutyNow.phone)}>
             <Phone className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-            {data.onDutyNow.phone}
+            {formatPhone(data.onDutyNow.phone)}
           </a>
         ) : null}
 
+        {data.unreadConversations > 0 ? (
         <Link className={chipClass} to="/messages">
           <MessageSquare className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
           <span className="font-medium text-slate-900 dark:text-white">{data.unreadConversations}</span>
           unread
         </Link>
+        ) : null}
+        {waitingApplications > 0 ? (
         <Link className={chipClass} to="/admin/applications">
           <ClipboardList className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
           <span className="font-medium text-slate-900 dark:text-white">{waitingApplications}</span>
           waiting
         </Link>
+        ) : null}
+        {data.overdueEquipment > 0 ? (
         <Link className={chipClass} to="/equipment">
           <Package className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
           <span className="font-medium text-slate-900 dark:text-white">{data.overdueEquipment}</span>
           overdue
         </Link>
+        ) : null}
       </div>
     </div>
   );
@@ -247,6 +253,12 @@ export function BoardPage(): React.JSX.Element {
   const [search, setSearch] = useState('');
   const [formOpen, setFormOpen] = useState(params.get('new') === '1');
   const [selected, setSelected] = useState<string[]>([]);
+  // Bulk selection is a mode, not a permanent column: the checkbox gutter cost
+  // every card a sixth of its width on a phone for a once-a-morning action.
+  const [selectMode, setSelectMode] = useState(false);
+  // On a phone the six tiles pushed the first ride below the fold; they now
+  // sit behind a one-line summary (always open on a desktop).
+  const [statsOpen, setStatsOpen] = useState(false);
   const [bulkDialog, setBulkDialog] = useState<'assign' | 'offer' | null>(null);
   const [bulkVolunteerId, setBulkVolunteerId] = useState('');
   const [bulkReason, setBulkReason] = useState('');
@@ -404,6 +416,7 @@ export function BoardPage(): React.JSX.Element {
     const checked = selected.includes(trip.id);
     return (
       <div key={trip.id} className="flex items-start gap-2">
+        {selectMode ? (
         <label className="grid min-h-[44px] min-w-[44px] flex-shrink-0 cursor-pointer place-items-center rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
           <input
             type="checkbox"
@@ -413,6 +426,7 @@ export function BoardPage(): React.JSX.Element {
             aria-label={`Select ride ${trip.reference} for a bulk action`}
           />
         </label>
+        ) : null}
         <div className="min-w-0 flex-1">
           {rest ? (
             <p className="mb-1 inline-flex flex-wrap items-center gap-2 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-800 dark:bg-indigo-500/15 dark:text-indigo-200">
@@ -423,7 +437,7 @@ export function BoardPage(): React.JSX.Element {
               </span>
             </p>
           ) : null}
-          <TripCard trip={trip} />
+          <TripCard trip={trip} compact />
         </div>
       </div>
     );
@@ -444,7 +458,28 @@ export function BoardPage(): React.JSX.Element {
 
       <BoardContextStrip />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <button
+        type="button"
+        className="flex min-h-[44px] w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-4 text-left text-sm text-slate-700 lg:hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+        aria-expanded={statsOpen}
+        onClick={() => setStatsOpen((open) => !open)}
+      >
+        <span>
+          {summary.isPending ? (
+            'Loading counts…'
+          ) : (
+            <>
+              <span className="font-semibold text-[#E31E24]">{stats?.needsAttention ?? 0}</span> need a driver
+              {' · '}
+              <span className={cn('font-semibold', (stats?.overdue ?? 0) > 0 && 'text-[#E31E24]')}>{stats?.overdue ?? 0}</span> overdue
+              {' · '}
+              <span className="font-semibold">{stats?.unanswered ?? 0}</span> unanswered
+            </>
+          )}
+        </span>
+        <ChevronDown className={cn('h-4 w-4 flex-shrink-0 transition-transform', statsOpen && 'rotate-180')} aria-hidden="true" />
+      </button>
+      <div className={cn('grid-cols-2 gap-3 sm:grid-cols-3 lg:grid lg:grid-cols-6', statsOpen ? 'grid' : 'hidden')}>
         {[
           { label: 'Needs attention', value: stats?.needsAttention, accent: 'text-[#E31E24]' },
           { label: 'Offered', value: stats?.offered },
@@ -473,8 +508,8 @@ export function BoardPage(): React.JSX.Element {
         </p>
       ) : null}
 
-      <div className="-mx-4 overflow-x-auto px-4">
-        <div role="tablist" aria-label="Board segments" className="flex w-max gap-2 pb-1">
+      <div className="flex items-start gap-2">
+        <div role="tablist" aria-label="Board segments" className="flex flex-1 flex-wrap gap-2">
           {SEGMENTS.map((item) => (
             <button
               key={item.id}
@@ -483,7 +518,7 @@ export function BoardPage(): React.JSX.Element {
               aria-selected={item.id === segmentId}
               onClick={() => setSegmentId(item.id)}
               className={cn(
-                'min-h-[44px] whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors',
+                'min-h-[44px] whitespace-nowrap rounded-full px-3 text-sm font-medium transition-colors',
                 item.id === segmentId
                   ? 'bg-[#E31E24] text-white'
                   : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
@@ -493,6 +528,23 @@ export function BoardPage(): React.JSX.Element {
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          aria-pressed={selectMode}
+          className={cn(
+            'inline-flex min-h-[44px] flex-shrink-0 items-center gap-1 rounded-full px-3 text-sm font-medium',
+            selectMode
+              ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+              : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
+          )}
+          onClick={() => {
+            if (selectMode) setSelected([]);
+            setSelectMode((on) => !on);
+          }}
+        >
+          <CheckSquare className="h-4 w-4" aria-hidden="true" />
+          {selectMode ? 'Done' : 'Select'}
+        </button>
       </div>
 
       <div className="relative">
@@ -572,7 +624,10 @@ export function BoardPage(): React.JSX.Element {
             <button
               type="button"
               className="ml-auto inline-flex min-h-[44px] items-center gap-1 rounded-lg px-3 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-              onClick={() => setSelected([])}
+              onClick={() => {
+                setSelected([]);
+                setSelectMode(false);
+              }}
             >
               <X className="h-4 w-4" aria-hidden="true" />
               Clear

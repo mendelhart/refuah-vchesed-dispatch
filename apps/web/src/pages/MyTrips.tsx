@@ -20,8 +20,7 @@ import { api } from '@/lib/api';
 import { qk } from '@/lib/query';
 import {
   formatDateTime, mobilityLabel, priorityClass, priorityLabel, relativeTime, statusClass, statusLabel, telHref,
-  tripTypeLabel,
-} from '@/lib/format';
+  tripTypeLabel, formatPhone } from '@/lib/format';
 import { isFullTrip, type TripListResponse } from '@/types/api';
 import { useCancelTrip, useClaimTrip, useCompleteTrip, useStartEnRoute, useStartTrip } from '@/lib/trip-actions';
 import { OfferCountdown } from '@/components/Countdown';
@@ -177,7 +176,7 @@ function AssignedTripCard({ trip }: { trip: TripDto }): React.JSX.Element {
                   href={telHref(trip.callerPhone)}
                 >
                   <Phone className="h-4 w-4" aria-hidden="true" />
-                  {trip.callerPhone}
+                  {formatPhone(trip.callerPhone)}
                 </a>
               ) : null}
             </p>

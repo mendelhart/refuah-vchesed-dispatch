@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
-import { formatDate, formatDateTime, telHref, titleCase } from '@/lib/format';
+import { formatDate, formatDateTime, telHref, titleCase, formatPhone } from '@/lib/format';
 import { useAuth } from '@/lib/auth';
 import { Modal } from '@/components/Modal';
 import {
@@ -327,7 +327,7 @@ function ReviewPanel({ id, onClose }: { id: string; onClose: () => void }): Reac
             <dt className="sr-only">Phone</dt>
             <dd>
               <a className="min-h-[44px] font-medium text-[#E31E24] underline" href={telHref(app.phone)}>
-                {app.phone}
+                {formatPhone(app.phone)}
               </a>
             </dd>
           </div>

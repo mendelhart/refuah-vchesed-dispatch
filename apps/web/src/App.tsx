@@ -79,8 +79,8 @@ const PeoplePage = React.lazy(() =>
 const VehiclesPage = React.lazy(() =>
   import('@/pages/Vehicles').then((m) => ({ default: m.VehiclesPage })),
 );
-const ContactsPage = React.lazy(() =>
-  import('@/pages/Contacts').then((m) => ({ default: m.ContactsPage })),
+const ContactsHubPage = React.lazy(() =>
+  import('@/pages/ContactsHub').then((m) => ({ default: m.ContactsHubPage })),
 );
 
 const DISPATCH = ["dispatcher", "admin"] as const;
@@ -211,7 +211,7 @@ export function App(): React.JSX.Element {
           element={
             <Shell>
               <RequireRole roles={DISPATCH}>
-                <ContactsPage />
+                <ContactsHubPage />
               </RequireRole>
             </Shell>
           }

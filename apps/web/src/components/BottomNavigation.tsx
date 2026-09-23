@@ -11,6 +11,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
+  BookUser,
   Car,
   HeartHandshake,
   Home,
@@ -37,6 +38,7 @@ export interface BottomNavItem {
 export function bottomNavItems(
   role: Role,
   badges: { myTrips?: number; board?: number; messages?: number },
+  showMyRides = true,
 ): BottomNavItem[] {
   const isDispatch = role === 'dispatcher' || role === 'admin';
   const withBadge = (item: BottomNavItem, badge: number | undefined): BottomNavItem =>
@@ -47,7 +49,11 @@ export function bottomNavItems(
       { to: '/', label: 'Home', icon: Home },
       withBadge({ to: '/board', label: 'Board', icon: LayoutDashboard }, badges.board),
       withBadge({ to: '/messages', label: 'Messages', icon: MessageSquare }, badges.messages),
-      withBadge({ to: '/my-trips', label: 'My rides', icon: Car }, badges.myTrips),
+      // A dispatcher who also drives keeps My rides here; everyone else gets
+      // Contacts, the screen they reach for mid-call.
+      showMyRides
+        ? withBadge({ to: '/my-trips', label: 'My rides', icon: Car }, badges.myTrips)
+        : { to: '/contacts', label: 'Contacts', icon: BookUser },
       { to: '/settings', label: 'Settings', icon: SettingsIcon },
     ];
   }
