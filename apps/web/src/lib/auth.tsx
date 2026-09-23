@@ -6,6 +6,7 @@
  * find out who you are" path, and no cached role is trusted across a reload.
  */
 import React, { createContext, useCallback, useContext, useMemo } from 'react';
+import { clearTripCache } from './offline';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Role, SessionUser } from '@rvc/shared';
 import { ApiError, api } from './api';
@@ -85,6 +86,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
   const login = useCallback(
     async (email: string, password: string): Promise<SessionUser> => {
       const data = await api.post<SessionResponse>('/api/auth/login', { email, password });
+      // A previous user's saved rides must never show under this login.
+      await clearTripCache();
       queryClient.setQueryData(qk.auth.me(), data.user);
       await queryClient.invalidateQueries({ queryKey: qk.trips.all() });
       return data.user;
@@ -100,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
       // Whatever the server said, this browser is done with the session.
       queryClient.setQueryData(qk.auth.me(), null);
       queryClient.clear();
+      await clearTripCache();
     }
   }, [queryClient]);
 

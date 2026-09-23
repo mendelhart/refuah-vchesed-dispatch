@@ -8,6 +8,7 @@
  *  - BottomNavigation existed but was never mounted; it is mounted below.
  */
 import React, { useState } from 'react';
+import { useOnline } from '@/lib/offline';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -231,6 +232,8 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
     ...(boardContextQuery.data ? { messages: boardContextQuery.data.unreadConversations } : {}),
   };
 
+  const online = useOnline();
+
   const handleLogout = async (): Promise<void> => {
     await logout();
     navigate('/login', { replace: true });
@@ -238,6 +241,11 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
 
   return (
     <div className="min-h-screen bg-slate-50 transition-colors dark:bg-slate-950">
+      {!online ? (
+        <div role="status" className="sticky top-0 z-50 bg-amber-500 px-4 py-2 text-center text-sm font-semibold text-slate-950">
+          No connection. You are seeing the last saved copy, which may be out of date. Accepting and status updates need a connection.
+        </div>
+      ) : null}
       <ViewAsBanner />
       <header className="sticky top-0 z-50 bg-[#EA0029] text-white shadow-lg">
         <div className="flex items-center justify-between px-4 py-3">
