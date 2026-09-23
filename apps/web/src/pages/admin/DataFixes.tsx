@@ -158,7 +158,7 @@ function TripOutcomeSection(): React.JSX.Element {
           <input
             id="fix-reference"
             className={inputClass}
-            placeholder="Ride reference, e.g. RVC-260923-0001"
+            placeholder="Ride reference (RVC-…)"
             value={reference}
             onChange={(e) => setReference(e.target.value)}
             autoCapitalize="characters"
