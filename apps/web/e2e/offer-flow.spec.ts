@@ -13,7 +13,13 @@ import { STATE_FILES } from './helpers';
 const BASE = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:4173';
 const VOLUNTEER_2 = { email: 'volunteer2@refuahvchesed.test', password: 'ChangeMeInDev123!' };
 
-function pickupIn(hours: number): string {
+/**
+ * A pickup time nobody else in the suite uses. The same seeded volunteer is
+ * assigned here, and targeting (correctly) skips anyone already on a trip
+ * within 90 minutes, so a fixed "+5h" collides with earlier runs and retries.
+ */
+function uniquePickup(): string {
+  const hours = 72 + Math.floor(Math.random() * 24 * 60) * 3;
   return new Date(Date.now() + hours * 3_600_000).toISOString();
 }
 
@@ -37,7 +43,7 @@ async function createTrip(dispatch: APIRequestContext, caller: string): Promise<
       callerPhone: '514-555-8124',
       pickup: { line1: '1234 Avenue Bernard', city: 'Montreal', province: 'QC' },
       dropoff: { line1: '3755 Chemin de la Côte-Sainte-Catherine', city: 'Montreal', province: 'QC' },
-      pickupAt: pickupIn(5),
+      pickupAt: uniquePickup(),
       tripType: 'ride',
       priority: 'routine',
       groupSlug: 'chesed_on_the_go',
@@ -63,6 +69,7 @@ test.describe('offer, accept, race, complete, cancel', () => {
       data: { volunteerIds: [v1, v2], ignoreTargeting: true },
     });
     expect(offer.ok(), await offer.text()).toBeTruthy();
+    expect(((await offer.json()) as { offered: number }).offered).toBe(2);
 
     // Volunteer 1 sees the offer and accepts it on screen.
     await page.goto('/my-trips');
@@ -77,7 +84,9 @@ test.describe('offer, accept, race, complete, cancel', () => {
     expect(login.ok(), await login.text()).toBeTruthy();
     const late = await v2ctx.post(`/api/trips/${trip.id}/claim`, { data: {} });
     expect(late.ok()).toBeFalsy();
-    expect(await late.text()).toMatch(/another volunteer accepted|already/i);
+    // Once taken, the other open offers are closed, so the refusal reads as
+    // either "someone else took it" or "not offered to you". Both refuse.
+    expect(await late.text()).toMatch(/another volunteer accepted|already|not offered to you/i);
 
     // The dispatcher sees who has it.
     const detail = await dispatch.get(`/api/trips/${trip.id}`);
