@@ -178,7 +178,9 @@ export function MyAvailabilityPage(): React.JSX.Element {
           return;
         }
         if (endMinute <= startMinute) {
-          toast.error(`On ${DAY_NAMES[day]}, the end time has to be after the start time.`);
+          toast.error(
+            `On ${DAY_NAMES[day]}, the end time has to be after the start time. For overnight hours, end this day at 00:00 and add the rest to the next day starting 00:00.`,
+          );
           return;
         }
         windows.push({ weekday: day, startMinute, endMinute });
@@ -247,7 +249,7 @@ export function MyAvailabilityPage(): React.JSX.Element {
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Copying puts Monday&rsquo;s hours on Sunday, Tuesday, Wednesday and Thursday. Friday and Saturday are left
-            as they are. An end time of 00:00 means midnight at the end of that day.
+            as they are. An end time of 00:00 means midnight at the end of that day. For overnight hours (say 22:00–02:00), add 22:00–00:00 on the first day and 00:00–02:00 on the next.
           </p>
 
           <ul className="space-y-3">

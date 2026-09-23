@@ -39,7 +39,7 @@ implementation:
 | --- | --- |
 | `service_types` | What kinds of work exist. The three dispatchable slugs (`ride`, `equipment_delivery`, `hospital_food`) deliberately match `TRIP_TYPES`, so a trip maps to a service without a join table; `phone_duty` and `visits` are opt-ins that never produce an offer |
 | `volunteer_services` | A volunteer's own opt-in to a service. Self-serve: the volunteer owns these rows, and a dispatcher may set them during a phone call. Without this table targeting has nothing to filter on, and the legacy behaviour — offer everything to everyone — returns |
-| `availability_rules` | Weekly wall-clock windows in `America/Toronto`, stored as weekday (0 = Sunday, matching `extract(dow)`) plus start and end minutes from local midnight. **No rows means always available** |
+| `availability_rules` | Weekly wall-clock windows in `America/Toronto`, stored as weekday (0 = Sunday, matching `extract(dow)`) plus start and end minutes from local midnight. **No rows means always available**. Windows never cross midnight: an overnight shift such as 22:00–02:00 is two rows (22:00–24:00, i.e. end 1440, then 00:00–02:00 on the next weekday), which the UI asks for and targeting treats as continuous (test/availability-edges.test.ts) |
 | `availability_exceptions` | Dated overrides, `unavailable` (a holiday) or `available` (a one-off). An `unavailable` exception wins over everything |
 
 ### Callers
