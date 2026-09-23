@@ -439,6 +439,10 @@ export const notificationDeliveries = pgTable(
     providerMessageId: text('provider_message_id'),
     lastError: text('last_error'),
     destination: text('destination'),
+    /** Network that actually carried it: 'sms' when WhatsApp fell back. */
+    carriedBy: text('carried_by'),
+    /** Why the WhatsApp -> SMS fallback happened, when it did. */
+    fallbackReason: text('fallback_reason'),
     queuedAt: timestamp('queued_at', { withTimezone: true }).notNull().defaultNow(),
     nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }),
     sentAt: timestamp('sent_at', { withTimezone: true }),

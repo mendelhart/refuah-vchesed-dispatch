@@ -16,9 +16,9 @@ import {
   emailProvider,
   pushProvider,
   smsProvider,
-  whatsappProvider,
   PushSubscriptionGoneError,
 } from './providers/index.js';
+import { sendWhatsAppWithFallback } from './whatsapp-failover.js';
 import { smsMessages } from '../db/schema.js';
 
 /**
@@ -255,6 +255,7 @@ export async function deliverNotification(deliveryId: string): Promise<void> {
       attempts: notificationDeliveries.attempts,
       maxAttempts: notificationDeliveries.maxAttempts,
       destination: notificationDeliveries.destination,
+      notificationId: notificationDeliveries.notificationId,
       title: notifications.title,
       body: notifications.body,
       event: notifications.event,
@@ -349,9 +350,16 @@ export async function deliverNotification(deliveryId: string): Promise<void> {
 
     if (row.channel === 'whatsapp') {
       if (!row.destination) throw new Error('no destination phone number');
+      // Fall back to SMS only if this notification is not already going by
+      // SMS; otherwise the volunteer would get the same text twice.
+      const [smsSibling] = await db
+        .select({ id: notificationDeliveries.id })
+        .from(notificationDeliveries)
+        .where(and(eq(notificationDeliveries.notificationId, row.notificationId), eq(notificationDeliveries.channel, 'sms')))
+        .limit(1);
       const result = await withTimeout(
-        whatsappProvider.send(row.destination, row.body),
-        SEND_TIMEOUT_MS,
+        sendWhatsAppWithFallback(row.destination, row.body, { allowSmsFallback: !smsSibling }),
+        SEND_TIMEOUT_MS * 2,
         'WhatsApp send',
       );
       await db
@@ -362,6 +370,8 @@ export async function deliverNotification(deliveryId: string): Promise<void> {
           sentAt: new Date(),
           provider: result.provider,
           providerMessageId: result.providerMessageId,
+          carriedBy: result.carriedBy,
+          fallbackReason: result.fallbackReason,
           lastError: null,
         })
         .where(eq(notificationDeliveries.id, deliveryId));

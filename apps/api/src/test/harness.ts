@@ -20,6 +20,7 @@ import {
   resetMemoryObjectStore,
 } from '../services/providers/inmemory.js';
 import { VOLUNTEER_CAPABILITIES } from '@rvc/shared';
+import { resetWhatsAppHealth } from '../services/whatsapp-failover.js';
 import { pgArray } from '../lib/pg.js';
 
 export const PASSWORD = 'TestPassword123!';
@@ -96,6 +97,7 @@ export async function resetDb(): Promise<void> {
   faults.pushFailures = 0;
   extraFaults.emailFailures = 0;
   extraFaults.whatsappFailures = 0;
+  resetWhatsAppHealth();
 }
 
 export interface TestUser {
