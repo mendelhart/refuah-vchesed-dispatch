@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global URL, fetch, URLSearchParams, performance, setTimeout, console, process */
 /**
  * load-test.mjs — a busy hour, squeezed into a minute, against a TEST API.
  *
