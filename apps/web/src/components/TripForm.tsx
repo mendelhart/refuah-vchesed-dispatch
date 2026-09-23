@@ -18,7 +18,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { z } from 'zod';
 import { DoorOpen, Search, SquareParking, Star, UserRound, X } from 'lucide-react';
 import {
   ASSIGNMENT_MODES, MOBILITY_NEEDS, TRIP_TYPES, createTripSchema, updateTripSchema,
@@ -30,8 +29,9 @@ import type { ContactsResponse } from '@/types/api';
 import { saveCallerFromTrip } from '@/lib/save-caller';
 import { isFullTrip } from '@/types/api';
 import { mobilityLabel, relativeTime, tripTypeLabel } from '@/lib/format';
-import { AddressFields, emptyAddress, toAddressInput, type AddressDraft, type SavedPlace } from './AddressAutocomplete';
+import { AddressFields, type AddressDraft, type SavedPlace } from './AddressAutocomplete';
 import { Modal } from './Modal';
+import { blankForm, buildTripPayload, fieldErrors, fromTrip, type FormState } from './trip-form-model';
 import { InlineSpinner, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from './states';
 import type { GroupsResponse, TripResponse } from '@/types/api';
 
@@ -85,26 +85,6 @@ interface CallerProfileResponse {
   history: unknown[];
 }
 
-interface FormState {
-  callerId: string | null;
-  callerName: string;
-  callerPhone: string;
-  callbackNumber: string;
-  pickup: AddressDraft;
-  pickupEntrance: string;
-  pickupParking: string;
-  dropoff: AddressDraft;
-  dropoffEntrance: string;
-  dropoffParking: string;
-  pickupAt: string;
-  appointmentAt: string;
-  tripType: TripType;
-  priority: TripPriority;
-  groupSlug: string;
-  assignmentMode: AssignmentMode;
-  mobilityNeeds: MobilityNeed[];
-  passengerNotes: string;
-}
 
 /**
  * What each urgency actually changes, in the dispatcher's words.
@@ -133,11 +113,6 @@ const PRIORITY_CHOICES: { value: TripPriority; label: string; effect: string; ac
     accent: 'border-[#EA0029]',
   },
 ];
-
-/** `datetime-local` wants local wall-clock time, not an ISO-Z string. */
-function nowLocalInput(): string {
-  return toLocalInput(new Date().toISOString());
-}
 
 /**
  * Date and time as two cells, the way a dispatcher actually reads them back
@@ -184,81 +159,6 @@ function DateTimeFields(props: {
       {props.error}
     </div>
   );
-}
-
-/** `datetime-local` wants local wall-clock time, not an ISO-Z string. */
-function toLocalInput(iso: string | null | undefined): string {
-  if (!iso) return '';
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '';
-  const offset = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 16);
-}
-
-function blankForm(): FormState {
-  return {
-    callerId: null,
-    callerName: '',
-    callerPhone: '',
-    callbackNumber: '',
-    pickup: emptyAddress(),
-    pickupEntrance: '',
-    pickupParking: '',
-    dropoff: emptyAddress(),
-    dropoffEntrance: '',
-    dropoffParking: '',
-    pickupAt: nowLocalInput(),
-    appointmentAt: '',
-    tripType: 'ride',
-    priority: 'routine',
-    groupSlug: 'chesed_on_the_go',
-    assignmentMode: 'auto',
-    mobilityNeeds: [],
-    passengerNotes: '',
-  };
-}
-
-function fromTrip(trip: TripDto): FormState {
-  const draft = (address: TripDto['pickup']): AddressDraft => ({
-    line1: address.line1,
-    unit: address.unit ?? '',
-    city: address.city,
-    province: address.province,
-    postalCode: address.postalCode ?? '',
-    country: address.country,
-    notes: address.notes ?? '',
-    latitude: address.latitude,
-    longitude: address.longitude,
-  });
-  return {
-    callerId: trip.callerId,
-    callerName: trip.callerName ?? '',
-    callerPhone: trip.callerPhone ?? '',
-    callbackNumber: trip.callbackNumber ?? '',
-    pickup: draft(trip.pickup),
-    pickupEntrance: trip.pickupEntrance ?? '',
-    pickupParking: trip.pickupParking ?? '',
-    dropoff: draft(trip.dropoff),
-    dropoffEntrance: trip.dropoffEntrance ?? '',
-    dropoffParking: trip.dropoffParking ?? '',
-    pickupAt: toLocalInput(trip.pickupAt),
-    appointmentAt: toLocalInput(trip.appointmentAt),
-    tripType: trip.tripType,
-    priority: trip.priority,
-    groupSlug: trip.group.slug,
-    assignmentMode: trip.assignmentMode,
-    mobilityNeeds: trip.mobilityNeeds,
-    passengerNotes: trip.passengerNotes ?? '',
-  };
-}
-
-function fieldErrors(error: z.ZodError): Record<string, string> {
-  const errors: Record<string, string> = {};
-  for (const issue of error.issues) {
-    const key = issue.path.join('.') || 'form';
-    if (!errors[key]) errors[key] = issue.message;
-  }
-  return errors;
 }
 
 export function TripForm({
@@ -341,46 +241,7 @@ export function TripForm({
     enabled: open && Boolean(callerId),
   });
 
-  const payload = useMemo(() => {
-    // An omitted key means "leave it alone"; an explicit null means "clear it".
-    // Sending null for a field nobody ever filled in would wipe values a
-    // different screen may have set.
-    const text = (value: string, previous: string | null | undefined): string | null | undefined => {
-      const trimmed = value.trim();
-      if (trimmed) return trimmed;
-      return previous ? null : undefined;
-    };
-    const when = (value: string, previous: string | null | undefined): string | null | undefined => {
-      if (value) return new Date(value).toISOString();
-      return previous ? null : undefined;
-    };
-    const extras: Record<string, unknown> = {
-      callerId: form.callerId ?? (trip?.callerId ? null : undefined),
-      callbackNumber: text(form.callbackNumber, trip?.callbackNumber),
-      appointmentAt: when(form.appointmentAt, trip?.appointmentAt),
-      pickupEntrance: text(form.pickupEntrance, trip?.pickupEntrance),
-      pickupParking: text(form.pickupParking, trip?.pickupParking),
-      dropoffEntrance: text(form.dropoffEntrance, trip?.dropoffEntrance),
-      dropoffParking: text(form.dropoffParking, trip?.dropoffParking),
-    };
-    for (const key of Object.keys(extras)) {
-      if (extras[key] === undefined) delete extras[key];
-    }
-    return {
-      ...extras,
-      callerName: form.callerName.trim() || null,
-      callerPhone: form.callerPhone.trim() || null,
-      pickup: toAddressInput(form.pickup),
-      dropoff: toAddressInput(form.dropoff),
-      pickupAt: form.pickupAt ? new Date(form.pickupAt).toISOString() : '',
-      tripType: form.tripType,
-      priority: form.priority,
-      groupSlug: form.groupSlug,
-      assignmentMode: form.assignmentMode,
-      mobilityNeeds: form.mobilityNeeds,
-      passengerNotes: form.passengerNotes.trim() || null,
-    };
-  }, [form, trip]);
+  const payload = useMemo(() => buildTripPayload(form, trip), [form, trip]);
 
   const save = useMutation({
     mutationFn: async (): Promise<TripResponse> => {

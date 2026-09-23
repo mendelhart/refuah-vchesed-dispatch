@@ -201,6 +201,10 @@ jobs:
       - name: api tests
         run: npm run test --workspace=@rvc/api
 
+      # Pure logic behind the web screens (trip form model); no browser needed.
+      - name: web unit tests
+        run: npm test --workspace=@rvc/web
+
       # The Base44 import tooling has its own suite and no database dependency.
       - name: migration tooling tests
         run: npm test --workspace=@rvc/migrate
