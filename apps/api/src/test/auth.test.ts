@@ -66,13 +66,21 @@ describe('authentication', () => {
     expect((throttled.body.error as { code: string }).code).toBe('rate_limited');
   });
 
-  it('refuses an inactive account', async () => {
+  it('refuses a paused account, and says so only to the right password', async () => {
     await db.update(users).set({ status: 'inactive' }).where(eq(users.id, user.id));
     const res = await api('POST', '/api/auth/login', {
       payload: { email: user.email, password: PASSWORD },
       headers: { 'x-forwarded-for': '198.51.100.21' },
     });
-    expect(res.status).toBe(401);
+    // Right password on a paused account: refused, with a plain explanation.
+    expect(res.status).toBe(403);
+    expect(JSON.stringify(res.body)).toContain('paused');
+    // Wrong password on a paused account still looks like any wrong password.
+    const wrong = await api('POST', '/api/auth/login', {
+      payload: { email: user.email, password: 'not-the-password-1' },
+      headers: { 'x-forwarded-for': '198.51.100.22' },
+    });
+    expect(wrong.status).toBe(401);
   });
 
   it('refuses an expired session', async () => {
