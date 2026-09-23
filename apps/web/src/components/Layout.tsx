@@ -48,8 +48,9 @@ import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { FEATURE_ROUTES, useFeatures, type Features } from '@/lib/features';
 import { BottomNavigation, bottomNavItems } from './BottomNavigation';
-import type { BoardSummaryResponse, NotificationsResponse, TripListResponse } from '@/types/api';
+import type { BoardSummaryResponse, TripListResponse } from '@/types/api';
 import { exitViewAs, getViewAs } from '@/lib/viewAs';
+import { NotificationsBell } from './NotificationsBell';
 
 /** Where a screen lives: the main menu, or one tap further under More / My profile / Admin. */
 export type NavSection = 'main' | 'more' | 'profile' | 'admin';
@@ -210,16 +211,6 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
     queryFn: () => api.get<BoardSummaryResponse>('/api/trips/summary'),
     enabled: Boolean(user) && isDispatch,
   });
-  const notificationsQuery = useQuery({
-    queryKey: qk.me.notifications(),
-    queryFn: () => api.get<NotificationsResponse>('/api/notifications'),
-    enabled: Boolean(user),
-  });
-
-  // TODO: there is no in-app notification feed screen in the agreed route list,
-  // so the unread count is shown but never cleared. `POST /api/notifications/read`
-  // exists and should be called from a feed screen once one is specified.
-  const unread = notificationsQuery.data?.unread ?? 0;
   // The unread conversation count sits on the board context, which dispatchers
   // already poll; asking for it separately would double the traffic for one int.
   const boardContextQuery = useQuery({
@@ -260,11 +251,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
             >
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
-            {unread > 0 ? (
-              <span className="rounded-full bg-white/20 px-2 py-1 text-xs font-semibold" aria-label={`${unread} unread notifications`}>
-                {unread}
-              </span>
-            ) : null}
+            <NotificationsBell />
             <button
               type="button"
               onClick={() => setMenuOpen((open) => !open)}

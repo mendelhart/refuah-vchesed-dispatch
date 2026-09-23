@@ -45,6 +45,19 @@ test.describe('phone screenshots', () => {
     await context.close();
   });
 
+  test('volunteer-notifications-open', async ({ browser }) => {
+    const context = await browser.newContext({
+      storageState: STATE_FILES.volunteer, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
+    });
+    const page = await context.newPage();
+    await page.goto('/');
+    await page.getByRole('button', { name: /^Notifications/ }).click();
+    await page.getByText('Notifications', { exact: true }).waitFor({ timeout: 10_000 });
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: 'screenshots/volunteer-notifications-open.png' });
+    await context.close();
+  });
+
   test('admin-view-as-volunteer', async ({ browser }) => {
     const context = await browser.newContext({
       storageState: STATE_FILES.admin, viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
