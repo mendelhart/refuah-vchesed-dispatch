@@ -62,7 +62,7 @@ describe('authentication', () => {
       headers: { 'x-forwarded-for': '203.0.113.78' },
     });
     const rows = (await db.execute(sql`select action, entity_id, metadata::text as m, ip from audit_events
-      where action like 'auth.login_%' and (entity_id = ${user.id} or metadata::text like '%nobody-here%') order by created_at`)) as unknown as Array<{ action: string; entity_id: string; m: string; ip: string }>;
+      where action like 'auth.login_%' and (entity_id = ${user.id} or metadata::text like '%nobody-here%') order by occurred_at`)) as unknown as Array<{ action: string; entity_id: string; m: string; ip: string }>;
     expect(rows.length).toBe(1);
     expect(rows[0]!.action).toBe('auth.login_failed');
     expect(rows[0]!.entity_id).toBe(user.id);
