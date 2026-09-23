@@ -10,7 +10,7 @@ import { closeDb } from './client.js';
 const dryRun = process.argv.includes('--dry-run');
 rotateFieldKeys({ dryRun })
   .then((r) => {
-    console.log(JSON.stringify(r, null, 2));
+    process.stdout.write(JSON.stringify(r, null, 2) + '\n');
     return closeDb().then(() => process.exit(r.fields.unreadable + r.files.unreadable > 0 ? 2 : 0));
   })
   .catch(async (err) => {

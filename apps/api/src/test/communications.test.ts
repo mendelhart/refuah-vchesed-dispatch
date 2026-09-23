@@ -358,7 +358,7 @@ describe('communications and templates', () => {
 
     const [row] = await db.select().from(driverLicences).where(eq(driverLicences.userId, volunteer.id));
     expect(row!.numberCiphertext).not.toMatch(/B123456/);
-    expect(row!.numberCiphertext).toMatch(/^v1\./);
+    expect(row!.numberCiphertext).toMatch(/^v2\.k1\./);
 
     const res = await api('GET', '/api/me/licence', { cookie: volunteer.cookie });
     expect(JSON.stringify(res.body)).not.toMatch(/B123456/);

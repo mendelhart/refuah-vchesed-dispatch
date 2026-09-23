@@ -8,7 +8,7 @@ import { closeDb } from './client.js';
 
 checkFileConsistency()
   .then(async (r) => {
-    console.log(JSON.stringify(r, null, 2));
+    process.stdout.write(JSON.stringify(r, null, 2) + '\n');
     await closeDb();
     process.exit(r.missingObjects.length + r.corrupt.length + r.orphanObjects.length > 0 ? 2 : 0);
   })

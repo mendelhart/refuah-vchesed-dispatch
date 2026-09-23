@@ -62,33 +62,33 @@ export async function runHealthChecks(now = new Date()): Promise<{ status: 'ok' 
   }
 
   const stuck = await count(raw`select count(*) as n from jobs where status = 'running'
-    and locked_at < ${new Date(now.getTime() - THRESHOLDS.stuckRunningMinutes * 60_000)}`);
+    and locked_at < ${new Date(now.getTime() - THRESHOLDS.stuckRunningMinutes * 60_000).toISOString()}::timestamptz`);
   add({ name: 'jobs_stuck_running', ok: stuck === 0, severity: 'critical', value: stuck,
     detail: `jobs running for more than ${THRESHOLDS.stuckRunningMinutes} min` });
 
   const dead = await count(raw`select count(*) as n from jobs where status = 'dead'
-    and coalesce(completed_at, run_at) > ${new Date(now.getTime() - 86_400_000)}`);
+    and coalesce(completed_at, run_at) > ${new Date(now.getTime() - 86_400_000).toISOString()}::timestamptz`);
   add({ name: 'jobs_dead_24h', ok: dead < THRESHOLDS.deadJobs24h, severity: 'warning', value: dead,
     detail: 'jobs that exhausted their retries in the last 24h (includes recurring ride materialisation)' });
 
   const recurringDead = await count(raw`select count(*) as n from jobs where status = 'dead'
-    and kind = 'recurring.materialise' and run_at > ${new Date(now.getTime() - 86_400_000)}`);
+    and kind = 'recurring.materialise' and run_at > ${new Date(now.getTime() - 86_400_000).toISOString()}::timestamptz`);
   add({ name: 'recurring_materialise', ok: recurringDead === 0, severity: 'critical', value: recurringDead,
     detail: 'standing rides failed to be created for today' });
 
   const failedDeliveries = await count(raw`select count(*) as n from notification_deliveries
-    where status = 'failed' and failed_at > ${new Date(now.getTime() - 3_600_000)}`);
+    where status = 'failed' and failed_at > ${new Date(now.getTime() - 3_600_000).toISOString()}::timestamptz`);
   add({ name: 'delivery_failures_1h', ok: failedDeliveries < THRESHOLDS.deliveryFailures1h, severity: 'warning',
     value: failedDeliveries, detail: 'failed notification deliveries (SMS, WhatsApp, push, email) in the last hour' });
 
   const badSigs = await count(raw`select count(*) as n from sms_events where outcome = 'rejected_signature'
-    and created_at > ${new Date(now.getTime() - 3_600_000)}`);
+    and created_at > ${new Date(now.getTime() - 3_600_000).toISOString()}::timestamptz`);
   add({ name: 'webhook_signature_failures_1h', ok: badSigs < THRESHOLDS.signatureFailures1h, severity: 'warning',
     value: badSigs, detail: 'inbound webhooks rejected for a bad signature in the last hour' });
 
   const overdue = await count(raw`select count(*) as n from trips where status in ('new', 'pending', 'offered')
-    and pickup_at < ${new Date(now.getTime() + THRESHOLDS.overdueUnassignedMinutes * 60_000)}
-    and pickup_at > ${new Date(now.getTime() - 6 * 3_600_000)}`);
+    and pickup_at < ${new Date(now.getTime() + THRESHOLDS.overdueUnassignedMinutes * 60_000).toISOString()}::timestamptz
+    and pickup_at > ${new Date(now.getTime() - 6 * 3_600_000).toISOString()}::timestamptz`);
   add({ name: 'trips_unassigned_near_pickup', ok: overdue === 0, severity: 'warning', value: overdue,
     detail: `rides with no volunteer and pickup within ${THRESHOLDS.overdueUnassignedMinutes} min (or already past)` });
 
