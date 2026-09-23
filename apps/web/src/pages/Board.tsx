@@ -179,7 +179,11 @@ function BoardContextStrip(): React.JSX.Element | null {
           <span className={chipClass}>
             <CalendarDays className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
             <span>
-              <span className="font-medium text-slate-900 dark:text-white">{hebrew.hebrewDate}</span>
+              <span className="font-medium text-slate-900 dark:text-white">
+                {new Date(`${hebrew.date}T12:00:00`).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                {' · '}
+                {hebrew.hebrewDate}
+              </span>
               {hebrew.parsha ? (
                 <span className="ml-1 text-slate-500 lg:ml-0 lg:block lg:text-xs dark:text-slate-400">{hebrew.parsha}</span>
               ) : hebrew.holidays.length > 0 ? (
