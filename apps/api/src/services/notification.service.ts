@@ -326,9 +326,27 @@ export async function deliverNotification(deliveryId: string): Promise<void> {
     .limit(1);
 
   if (!row) return;
-  if (row.status === 'delivered' || row.status === 'failed' || row.status === 'skipped' || row.status === 'unknown') return;
+  // Only a queued delivery is ever sent. 'sent' / 'delivered' already went
+  // out (a duplicate or reclaimed job must not send again); 'failed',
+  // 'skipped' and 'unknown' are settled.
+  if (row.status !== 'queued' && row.status !== 'sending') return;
 
   const attempts = row.attempts + 1;
+
+  if (row.status === 'sending') {
+    // A previous attempt reached the provider call and never came back (the
+    // worker died or was redeployed mid-call). It may have been sent.
+    await db.update(notificationDeliveries)
+      .set({ status: 'unknown', lastError: 'worker stopped during the provider call; may have been sent, not retried', nextAttemptAt: null })
+      .where(and(eq(notificationDeliveries.id, deliveryId), eq(notificationDeliveries.status, 'sending')));
+    return;
+  }
+  // Claim it. Two jobs for the same delivery: exactly one proceeds.
+  const claimed = await db.update(notificationDeliveries)
+    .set({ status: 'sending' })
+    .where(and(eq(notificationDeliveries.id, deliveryId), eq(notificationDeliveries.status, 'queued')))
+    .returning({ id: notificationDeliveries.id });
+  if (claimed.length === 0) return;
 
   try {
     if (row.channel === 'inapp') {

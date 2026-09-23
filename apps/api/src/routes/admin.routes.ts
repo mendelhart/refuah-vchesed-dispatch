@@ -39,7 +39,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   /** Notification delivery — the screen that makes failures impossible to miss. */
   app.get('/api/notifications/deliveries', { preHandler: requireDispatcher }, async (req) => {
     const q = z.object({
-      status: z.enum(['queued', 'sent', 'delivered', 'failed', 'skipped']).optional(),
+      status: z.enum(['queued', 'sending', 'sent', 'delivered', 'failed', 'skipped', 'unknown']).optional(),
       limit: z.coerce.number().int().min(1).max(200).default(100),
     }).parse(req.query);
     const rows = await db.select({

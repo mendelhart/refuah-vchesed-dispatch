@@ -70,4 +70,29 @@ describe('notification delivery semantics', () => {
     await deliverNotification(id);
     expect(send).toHaveBeenCalledTimes(2);
   });
+
+  it('a duplicate or reclaimed job after the send does not text again', async () => {
+    const id = await smsDelivery();
+    const send = vi.spyOn(smsProvider, 'send');
+    await deliverNotification(id);
+    await deliverNotification(id);
+    expect(send).toHaveBeenCalledTimes(1);
+    expect((await row(id)).status).toBe('sent');
+  });
+
+  it('two jobs for the same delivery at once: one send', async () => {
+    const id = await smsDelivery();
+    const send = vi.spyOn(smsProvider, 'send');
+    await Promise.all([deliverNotification(id), deliverNotification(id), deliverNotification(id)]);
+    expect(send).toHaveBeenCalledTimes(1);
+  });
+
+  it('a worker that died mid-call leaves the delivery unknown, not re-sent', async () => {
+    const id = await smsDelivery();
+    await db.update(notificationDeliveries).set({ status: 'sending' }).where(eq(notificationDeliveries.id, id));
+    const send = vi.spyOn(smsProvider, 'send');
+    await deliverNotification(id);
+    expect(send).not.toHaveBeenCalled();
+    expect((await row(id)).status).toBe('unknown');
+  });
 });

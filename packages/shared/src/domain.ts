@@ -250,6 +250,8 @@ export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
 
 export const DELIVERY_STATUSES = [
   'queued',
+  /** Provider call in flight. */
+  'sending',
   'sent',
   'delivered',
   'failed',

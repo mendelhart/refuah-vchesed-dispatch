@@ -63,7 +63,7 @@ export function NotificationsAdminPage(): React.JSX.Element {
         aria-label="Filter deliveries by status"
       >
         <option value="">All statuses</option>
-        {['queued', 'sent', 'delivered', 'failed', 'unknown', 'skipped'].map((value) => (
+        {['queued', 'sending', 'sent', 'delivered', 'failed', 'unknown', 'skipped'].map((value) => (
           <option key={value} value={value}>
             {titleCase(value)}
           </option>
