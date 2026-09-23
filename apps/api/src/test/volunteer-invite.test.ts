@@ -24,7 +24,7 @@ describe('volunteer creation and invites', () => {
   it('creates a volunteer with only name and phone, sends nothing, and still offers them trips', async () => {
     const res = await api('POST', '/api/users', {
       cookie: admin.cookie,
-      payload: { fullName: 'Quiet Driver', phone: '514 555 7001', email: '' },
+      payload: { fullName: 'Quiet Driver', phone: '514 555 7001', email: '', groupSlugs: ['chesed_on_the_go'] },
     });
     expect(res.status).toBe(201);
     expect(res.body.inviteUrl).toBeNull();
@@ -39,10 +39,10 @@ describe('volunteer creation and invites', () => {
     expect(me?.email).toBeNull();
     expect(me?.activated).toBe(false);
 
-    const trip = await api('POST', '/api/trips', { cookie: dispatcher.cookie, payload: sampleTrip() });
+    const trip = await api('POST', '/api/trips', { cookie: dispatcher.cookie, payload: sampleTrip({ mobilityNeeds: [] }) });
     const tripId = (trip.body.trip as { id: string }).id;
     const offer = await api('POST', `/api/trips/${tripId}/offer`, { cookie: dispatcher.cookie, payload: {} });
-    expect(offer.status).toBe(200);
+    expect(offer.status, JSON.stringify(offer.body)).toBe(200);
     await drainJobs();
     expect(captured.sms.some((m) => m.to === '+15145557001')).toBe(true);
   });
@@ -61,13 +61,13 @@ describe('volunteer creation and invites', () => {
   });
 
   it('requires a phone for volunteers and an email for staff', async () => {
-    expect((await api('POST', '/api/users', { cookie: admin.cookie, payload: { fullName: 'No Phone' } })).status).toBe(400);
+    expect((await api('POST', '/api/users', { cookie: admin.cookie, payload: { fullName: 'No Phone' } })).status).toBe(422);
     expect((await api('POST', '/api/users', {
       cookie: admin.cookie, payload: { fullName: 'Staff Nomail', phone: '514 555 7003', role: 'dispatcher' },
-    })).status).toBe(400);
+    })).status).toBe(422);
     expect((await api('POST', '/api/users', {
       cookie: admin.cookie, payload: { fullName: 'Mail Tick', phone: '514 555 7004', inviteVia: ['email'] },
-    })).status).toBe(400);
+    })).status).toBe(422);
   });
 
   it('lets a phone-only volunteer finish setup and sign in with their phone', async () => {
