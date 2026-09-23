@@ -344,7 +344,7 @@ jobs:
           test -f apps/api/dist/db/migrate.js
           test -f apps/api/dist/jobs/worker.js
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       - name: build API image
         uses: docker/build-push-action@v6
