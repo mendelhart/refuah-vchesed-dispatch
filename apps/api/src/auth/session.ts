@@ -8,6 +8,7 @@ import { getNumberSetting } from '../lib/settings.js';
 import { Errors } from '../lib/errors.js';
 import { normalizePhone } from '../lib/phone.js';
 import { env, isProd } from '../env.js';
+import { recordAudit } from '../lib/audit.js';
 
 /** Whether coordinators and admins must pass two-step sign-in. */
 export function mfaEnforced(): boolean {
@@ -97,7 +98,21 @@ export async function authenticate(
   // "deactivated": account enumeration is a real risk for a volunteer roster.
   const genericFailure = Errors.unauthorized('Email/phone or password is incorrect');
 
+  // Failed attempts against a real account are audited (never the password,
+  // never unknown identifiers, which would turn the audit log into a list of
+  // typo'd emails and phone numbers). Attributed to the account targeted.
+  const auditFailure = async (userId: string, reason: 'bad_password' | 'locked', lockedNow = false): Promise<void> => {
+    await recordAudit({
+      actor: { userId: null, name: 'Unauthenticated', role: 'system', ip: ctx.ip ?? null, userAgent: ctx.userAgent ?? null },
+      action: lockedNow ? 'auth.login_locked' : 'auth.login_failed',
+      entityType: 'user',
+      entityId: userId,
+      metadata: { reason },
+    }).catch(() => undefined);
+  };
+
   if (row?.lockedUntil && row.lockedUntil > new Date()) {
+    await auditFailure(row.id, 'locked');
     throw Errors.rateLimited('Too many failed attempts. Try again in a few minutes.');
   }
 
@@ -115,6 +130,7 @@ export async function authenticate(
               : row.lockedUntil,
         })
         .where(eq(users.id, row.id));
+      await auditFailure(row.id, 'bad_password', failed === MAX_FAILED_LOGINS);
     }
     throw genericFailure;
   }

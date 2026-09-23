@@ -52,6 +52,24 @@ describe('authentication', () => {
     expect(row!.lockedUntil).not.toBeNull();
   });
 
+  it('audits failed logins against a real account without storing the password; ignores unknown ids', async () => {
+    await api('POST', '/api/auth/login', {
+      payload: { email: user.email, password: 'definitely-wrong-pw-123' },
+      headers: { 'x-forwarded-for': '203.0.113.77' },
+    });
+    await api('POST', '/api/auth/login', {
+      payload: { email: 'nobody-here@example.test', password: 'whatever-pw-123' },
+      headers: { 'x-forwarded-for': '203.0.113.78' },
+    });
+    const rows = (await db.execute(sql`select action, entity_id, metadata::text as m, ip from audit_events
+      where action like 'auth.login_%' and (entity_id = ${user.id} or metadata::text like '%nobody-here%') order by created_at`)) as unknown as Array<{ action: string; entity_id: string; m: string; ip: string }>;
+    expect(rows.length).toBe(1);
+    expect(rows[0]!.action).toBe('auth.login_failed');
+    expect(rows[0]!.entity_id).toBe(user.id);
+    expect(JSON.stringify(rows)).not.toContain('definitely-wrong');
+    expect(JSON.stringify(rows)).not.toContain('nobody-here');
+  });
+
   it('rate-limits the login endpoint', async () => {
     const results = [];
     for (let i = 0; i < 14; i += 1) {
