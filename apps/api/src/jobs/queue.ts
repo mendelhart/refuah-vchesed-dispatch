@@ -83,11 +83,22 @@ export async function claimJobs(workerId: string, limit: number): Promise<Claime
   }));
 }
 
-export async function completeJob(id: string): Promise<void> {
+/**
+ * Only the worker that holds the lock may settle a job. If this run was so slow
+ * that the job was reclaimed and picked up again, the late result is dropped
+ * instead of overwriting the newer run's state. (Omit workerId only in tests.)
+ */
+function ownedBy(id: string, workerId?: string) {
+  return workerId
+    ? and(eq(jobs.id, id), eq(jobs.status, 'running'), eq(jobs.lockedBy, workerId))
+    : eq(jobs.id, id);
+}
+
+export async function completeJob(id: string, workerId?: string): Promise<void> {
   await db
     .update(jobs)
     .set({ status: 'done', completedAt: new Date(), lockedAt: null, lockedBy: null, dedupeKey: null })
-    .where(eq(jobs.id, id));
+    .where(ownedBy(id, workerId));
 }
 
 export async function failJob(
@@ -95,6 +106,7 @@ export async function failJob(
   error: unknown,
   attempts: number,
   maxAttempts: number,
+  workerId?: string,
 ): Promise<void> {
   const message = error instanceof Error ? error.message : String(error);
   const dead = attempts >= maxAttempts;
@@ -110,22 +122,29 @@ export async function failJob(
       lockedBy: null,
       ...(dead ? { completedAt: new Date(), dedupeKey: null } : {}),
     })
-    .where(eq(jobs.id, id));
+    .where(ownedBy(id, workerId));
 }
 
-/** Requeue jobs whose worker died mid-run. */
+/**
+ * Requeue jobs whose worker died mid-run. A job that has already used all its
+ * attempts (each claim counts one) goes dead instead, so a job that crashes
+ * the worker every time cannot loop forever.
+ */
 export async function reclaimStalledJobs(olderThanMinutes = 10): Promise<number> {
+  const cutoff = new Date(Date.now() - olderThanMinutes * 60_000);
+  const stalled = and(eq(jobs.status, 'running'), lte(jobs.lockedAt, cutoff));
+  const killed = await db
+    .update(jobs)
+    .set({ status: 'dead', lockedAt: null, lockedBy: null, completedAt: new Date(), dedupeKey: null,
+      lastError: 'worker stopped mid-run on the final attempt' })
+    .where(and(stalled, raw`${jobs.attempts} >= ${jobs.maxAttempts}`))
+    .returning({ id: jobs.id });
   const result = await db
     .update(jobs)
     .set({ status: 'pending', lockedAt: null, lockedBy: null })
-    .where(
-      and(
-        eq(jobs.status, 'running'),
-        lte(jobs.lockedAt, new Date(Date.now() - olderThanMinutes * 60_000)),
-      ),
-    )
+    .where(stalled)
     .returning({ id: jobs.id });
-  return result.length;
+  return result.length + killed.length;
 }
 
 export async function deadJobCount(): Promise<number> {

@@ -64,15 +64,15 @@ export class Worker {
       await Promise.all(jobs.map(async (job) => {
         const handler = handlers[job.kind];
         if (!handler) {
-          await failJob(job.id, new Error(`no handler for ${job.kind}`), job.maxAttempts, job.maxAttempts);
+          await failJob(job.id, new Error(`no handler for ${job.kind}`), job.maxAttempts, job.maxAttempts, this.id);
           return;
         }
         try {
           await handler(job.payload);
-          await completeJob(job.id);
+          await completeJob(job.id, this.id);
         } catch (err) {
           logger.warn({ err, kind: job.kind, jobId: job.id, attempt: job.attempts }, 'job failed');
-          await failJob(job.id, err, job.attempts, job.maxAttempts);
+          await failJob(job.id, err, job.attempts, job.maxAttempts, this.id);
           if (job.attempts >= job.maxAttempts) {
             captureException(err, { source: 'job.dead', kind: job.kind, jobId: job.id, attempts: job.attempts });
           }
