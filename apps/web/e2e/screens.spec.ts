@@ -23,6 +23,28 @@ const SHOTS: Array<{ role: keyof typeof STATE_FILES; path: string; name: string 
 test.describe('phone screenshots', () => {
   test.skip(({ isMobile }) => !isMobile, 'phone project only');
 
+  // Give the seeded volunteer an upcoming ride so their Home shows the
+  // "Your next ride" card in the picture.
+  test.beforeAll(async ({ browser }) => {
+    const context = await browser.newContext({ storageState: STATE_FILES.dispatcher });
+    const page = await context.newPage();
+    await page.goto('/');
+    await page.evaluate(async () => {
+      const get = async (url: string) => (await fetch(url, { headers: { Accept: 'application/json' } })).json();
+      const people = await get('/api/users?search=Yaakov&limit=5');
+      const volunteer = people.users?.[0];
+      const board = await get('/api/trips?scope=board&limit=50');
+      const trip = (board.items ?? []).find((t: { status: string }) => t.status === 'pending');
+      if (!volunteer || !trip) return;
+      await fetch(`/api/trips/${trip.id}/assign`, {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ volunteerId: volunteer.id }),
+      });
+    });
+    await context.close();
+  });
+
   for (const shot of SHOTS) {
     test(shot.name, async ({ browser }) => {
       const context = await browser.newContext({
