@@ -19,6 +19,10 @@ function DispatcherHome(): React.JSX.Element {
     queryKey: qk.trips.summary(),
     queryFn: () => api.get<BoardSummaryResponse>('/api/trips/summary'),
   });
+  const impact = useQuery({
+    queryKey: qk.me.impact(),
+    queryFn: () => api.get<ImpactResponse>('/api/me/impact'),
+  });
 
   if (summary.isPending) return <ListSkeleton rows={2} lines={2} />;
   if (summary.isError) {
@@ -51,6 +55,20 @@ function DispatcherHome(): React.JSX.Element {
         <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
         Open the dispatch board
       </Link>
+      <section className={`${cardClass} flex flex-wrap items-center justify-between gap-3 p-4`}>
+        <div>
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Your stats</h2>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            {impact.data
+              ? `${impact.data.totals.completed} rides you drove · ${impact.data.totals.completedThisMonth} this month`
+              : 'Loading…'}
+          </p>
+        </div>
+        <Link to="/impact" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-[#EA0029] hover:underline">
+          Organization impact
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      </section>
     </>
   );
 }
