@@ -20,7 +20,7 @@ const DISPATCHER_SCREENS = [
   ['/volunteers', /volunteer/i],
   ['/duty', /duty|phone/i],
   ['/admin/applications', /application/i],
-  ['/admin/announcements', /announcement/i],
+  ['/admin/announcements', /broadcast|announcement/i],
   ['/admin/exports', /export/i],
   ['/equipment', /equipment/i],
   ['/calls', /call/i],

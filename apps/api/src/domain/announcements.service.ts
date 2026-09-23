@@ -10,6 +10,16 @@ import { notify } from '../services/notification.service.js';
 import { renderTemplate } from '../services/templates.service.js';
 import { enqueue } from '../jobs/queue.js';
 import { logger } from '../lib/logger.js';
+import { parsePhotoDataUrl } from '../lib/photo.js';
+import { env } from '../env.js';
+
+/** Broadcast pictures may be larger than ID photos: a flyer needs to be readable. */
+export const MAX_ANNOUNCEMENT_IMAGE_BYTES = 1024 * 1024;
+
+/** Public link to a broadcast's picture. The id is a random UUID, so it is unguessable. */
+export function announcementImageUrl(id: string): string {
+  return `${env.APP_URL.replace(/\/$/, '')}/api/announcements/${id}/image`;
+}
 
 /**
  * Broadcasts.
@@ -89,12 +99,13 @@ export async function previewAnnouncement(audience: Audience) {
 
 export async function createAnnouncement(
   actor: AuditActor,
-  input: { title: string; body: string; audience: Audience; channels: NotificationChannel[] },
+  input: { title: string; body: string; audience: Audience; channels: NotificationChannel[]; image?: string | null },
 ) {
   if (!input.title.trim()) throw Errors.validation('Give the announcement a title.');
   if (!input.body.trim()) throw Errors.validation('An empty announcement has nothing to say.');
+  // No channels ticked means each person gets it their preferred way.
   const channels = input.channels.filter((c) => NOTIFICATION_CHANNELS.includes(c));
-  if (!channels.length) throw Errors.validation('Choose at least one channel.');
+  if (input.image) parsePhotoDataUrl(input.image, MAX_ANNOUNCEMENT_IMAGE_BYTES);
 
   const recipients = await resolveAudience(input.audience);
   const max = await getNumberSetting(SETTING_KEYS.broadcastMaxRecipients);
@@ -111,6 +122,7 @@ export async function createAnnouncement(
       body: input.body.trim(),
       audience: input.audience as Record<string, unknown>,
       channels,
+      imageData: input.image || null,
       status: 'draft',
       recipientCount: recipients.length,
       createdById: actor.userId!,
@@ -122,7 +134,7 @@ export async function createAnnouncement(
     action: 'announcement.created',
     entityType: 'announcement',
     entityId: row!.id,
-    next: { title: row!.title, channels, recipientCount: recipients.length },
+    next: { title: row!.title, channels, recipientCount: recipients.length, hasImage: Boolean(input.image) },
   });
   return { ...row!, recipients: recipients.length };
 }
@@ -182,6 +194,11 @@ export async function deliverAnnouncement(announcementId: string): Promise<void>
 
   const [org] = await db.select().from(organizationInfo).limit(1);
   const recipients = await resolveAudience(row.audience as Audience);
+  const imageUrl = row.imageData ? announcementImageUrl(row.id) : null;
+  // The picture travels as a link in the text, so it works on every channel
+  // today, and as imageUrl in the payload for carriers that can attach media.
+  const message = imageUrl ? `${row.body}\n\nPicture: ${imageUrl}` : row.body;
+  const channels = row.channels as NotificationChannel[];
 
   let sent = 0;
   let failed = 0;
@@ -189,22 +206,23 @@ export async function deliverAnnouncement(announcementId: string): Promise<void>
     try {
       const sms = await renderTemplate('announcement.broadcast', 'sms', {
         title: row.title,
-        message: row.body,
+        message,
         orgName: org?.name ?? "Refuah V'Chesed",
       });
       const email = await renderTemplate('announcement.broadcast', 'email', {
         title: row.title,
-        message: row.body,
+        message,
         orgName: org?.name ?? "Refuah V'Chesed",
       });
       await notify({
         userId: recipient.id,
         event: 'announcement.broadcast',
         title: row.title,
-        body: row.channels.includes('email') && !row.channels.includes('sms') ? email.body : sms.body,
+        body: channels.includes('email') && !channels.includes('sms') ? email.body : sms.body,
         subject: email.subject ?? row.title,
-        payload: { announcementId },
-        forceChannels: row.channels as NotificationChannel[],
+        payload: { announcementId, ...(imageUrl ? { imageUrl } : {}) },
+        // Nothing ticked: leave it to each person's own preference.
+        ...(channels.length ? { forceChannels: channels } : {}),
       });
       sent++;
     } catch (err) {
@@ -240,6 +258,7 @@ export async function listAnnouncements(limit = 50) {
       body: announcements.body,
       status: announcements.status,
       channels: announcements.channels,
+      hasImage: raw<boolean>`${announcements.imageData} is not null`,
       recipientCount: announcements.recipientCount,
       sentAt: announcements.sentAt,
       createdAt: announcements.createdAt,
@@ -249,4 +268,14 @@ export async function listAnnouncements(limit = 50) {
     .innerJoin(users, eq(users.id, announcements.createdById))
     .orderBy(raw`${announcements.createdAt} desc`)
     .limit(limit);
+}
+
+export async function getAnnouncementImage(id: string): Promise<{ mime: string; bytes: Buffer } | null> {
+  const [row] = await db
+    .select({ image: announcements.imageData })
+    .from(announcements)
+    .where(eq(announcements.id, id))
+    .limit(1);
+  if (!row?.image) return null;
+  return parsePhotoDataUrl(row.image, MAX_ANNOUNCEMENT_IMAGE_BYTES);
 }

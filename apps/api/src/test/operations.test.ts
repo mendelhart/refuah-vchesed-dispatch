@@ -367,12 +367,37 @@ describe('operations: roster, equipment, exports, broadcasts, calendar', () => {
     expect((preview.body.sample as string[])[0]).toBe(awake.fullName);
   });
 
-  it('refuses a dispatcher the ability to broadcast', async () => {
-    const res = await api('POST', '/api/announcements', {
+  it('lets a coordinator broadcast, and refuses a volunteer', async () => {
+    const volunteer = await createTestUser({ role: 'volunteer' });
+    const ok = await api('POST', '/api/announcements', {
       cookie: dispatcher.cookie,
       payload: { title: 'x', body: 'y', audience: {}, channels: ['sms'] },
     });
+    expect(ok.status).toBe(201);
+    const res = await api('POST', '/api/announcements', {
+      cookie: volunteer.cookie,
+      payload: { title: 'x', body: 'y', audience: {}, channels: ['sms'] },
+    });
     expect(res.status).toBe(403);
+  });
+
+  it('sends a picture as a public link, on each person\'s preferred channel when none is ticked', async () => {
+    const one = await createTestUser({ role: 'volunteer' });
+    const pixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    const draft = await api('POST', '/api/announcements', {
+      cookie: admin.cookie,
+      payload: { title: 'Simcha', body: 'You are invited.', audience: { groupSlugs: ['chesed_on_the_go'] }, channels: [], image: pixel },
+    });
+    expect(draft.status).toBe(201);
+    const id = (draft.body.announcement as { id: string }).id;
+    const sent = await api('POST', `/api/announcements/${id}/send`, { cookie: admin.cookie, payload: { confirmRecipientCount: 1 } });
+    expect(sent.status).toBe(200);
+    await deliverAnnouncement(id);
+    await drainJobs();
+    const text = captured.sms.find((m) => m.to === one.phone);
+    expect(text?.body).toMatch(new RegExp(`/api/announcements/${id}/image`));
+    const image = await api('GET', `/api/announcements/${id}/image`);
+    expect(image.status).toBe(200);
   });
 
   // --- bulk operations -----------------------------------------------------

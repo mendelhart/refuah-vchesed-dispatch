@@ -28,6 +28,7 @@ import {
   listAnnouncements,
   previewAnnouncement,
   sendAnnouncement,
+  getAnnouncementImage,
 } from '../domain/announcements.service.js';
 import { readFile } from '../services/files.service.js';
 import { assignTrip, offerTrip, duplicateTrip, type TripActor } from '../domain/dispatch.service.js';
@@ -178,17 +179,29 @@ export async function opsRoutes(app: FastifyInstance): Promise<void> {
     announcements: await listAnnouncements(),
   }));
 
-  app.post('/api/announcements', { preHandler: requireAdmin }, async (req, reply) => {
+  // Coordinators broadcast too (simchas, reminders); the recipient-count
+  // confirmation and the max-recipients ceiling still apply to everyone.
+  app.post('/api/announcements', { preHandler: requireDispatcher, bodyLimit: 2_000_000 }, async (req, reply) => {
     const body = announcementSchema.parse(req.body);
     const row = await createAnnouncement(actorFrom(req), body);
     reply.status(201);
     return { announcement: row };
   });
 
-  app.post('/api/announcements/:id/send', { preHandler: requireAdmin }, async (req) => {
+  app.post('/api/announcements/:id/send', { preHandler: requireDispatcher }, async (req) => {
     const { id } = idParam.parse(req.params);
     const body = sendAnnouncementSchema.parse(req.body);
     return sendAnnouncement(actorFrom(req), id, body.confirmRecipientCount);
+  });
+
+  // Public on purpose: SMS, WhatsApp and email recipients open this link
+  // without signing in. The id is a random UUID and only a picture is served.
+  app.get('/api/announcements/:id/image', async (req, reply) => {
+    const { id } = idParam.parse(req.params);
+    const image = await getAnnouncementImage(id);
+    if (!image) throw Errors.notFound('Picture');
+    reply.header('Content-Type', image.mime).header('Cache-Control', 'public, max-age=604800, immutable');
+    return reply.send(image.bytes);
   });
 
   // -------------------------------------------------------------------------

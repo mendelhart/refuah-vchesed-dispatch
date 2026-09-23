@@ -13,8 +13,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { AlertTriangle, Megaphone, Users } from 'lucide-react';
-import { NOTIFICATION_CHANNELS, ROLES, type NotificationChannel, type Role, ROLE_LABELS_PLURAL } from '@rvc/shared';
+import { AlertTriangle, ImagePlus, Megaphone, Users, X } from 'lucide-react';
+import { photoFileToDataUrl } from '@/lib/photo';
+import { ROLES, type NotificationChannel, type Role, ROLE_LABELS_PLURAL } from '@rvc/shared';
 import { ApiError, api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
 import { formatDateTime, titleCase } from '@/lib/format';
@@ -46,6 +47,7 @@ interface AnnouncementRow {
   body: string;
   status: string;
   channels: string[];
+  hasImage?: boolean;
   recipientCount: number | null;
   sentAt: string | null;
   createdAt: string;
@@ -55,6 +57,37 @@ interface AnnouncementRow {
 interface AnnouncementListResponse {
   announcements: AnnouncementRow[];
 }
+
+type ChannelState = 'live' | 'test' | 'off';
+interface MessagingStatus { channels: Partial<Record<NotificationChannel, ChannelState>> }
+
+/** The channels a broadcast can go out on, in plain words. */
+const BROADCAST_CHANNELS: { id: NotificationChannel; label: string }[] = [
+  { id: 'whatsapp', label: 'WhatsApp' },
+  { id: 'sms', label: 'Text (SMS)' },
+  { id: 'email', label: 'Email' },
+  { id: 'push', label: 'App notification' },
+];
+
+function channelNote(state: ChannelState | undefined): string | null {
+  if (state === 'test') return 'test mode - logged only, not sent';
+  if (state === 'off') return 'not set up yet';
+  return null;
+}
+
+function channelsText(channels: string[]): string {
+  if (!channels.length) return "each person's preferred way";
+  return channels
+    .map((c) => BROADCAST_CHANNELS.find((b) => b.id === c)?.label ?? c.toUpperCase())
+    .join(', ');
+}
+
+type SendTo = 'everyone' | 'volunteers' | 'coordinators';
+const SEND_TO: { id: SendTo; label: string; roles: Role[] }[] = [
+  { id: 'everyone', label: 'Everyone', roles: [...ROLES] },
+  { id: 'volunteers', label: 'Volunteers', roles: ['volunteer'] },
+  { id: 'coordinators', label: 'Coordinators', roles: ['dispatcher', 'admin'] },
+];
 
 interface ServicesResponse {
   services: { id: string; slug: string; name: string; description: string | null }[];
@@ -95,7 +128,10 @@ export function AnnouncementsPage(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [channels, setChannels] = useState<NotificationChannel[]>(['sms']);
+  // Empty = each person's preferred way, which is the sensible default.
+  const [channels, setChannels] = useState<NotificationChannel[]>([]);
+  const [image, setImage] = useState<string | null>(null);
+  const [imageBusy, setImageBusy] = useState(false);
   const [groupSlugs, setGroupSlugs] = useState<string[]>([]);
   const [serviceSlugs, setServiceSlugs] = useState<string[]>([]);
   const [roles, setRoles] = useState<Role[]>(['volunteer']);
@@ -137,6 +173,14 @@ export function AnnouncementsPage(): React.JSX.Element {
     queryKey: qk.services.list(),
     queryFn: () => api.get<ServicesResponse>('/api/services'),
   });
+  const messaging = useQuery({
+    queryKey: ['messaging', 'status'] as const,
+    queryFn: () => api.get<MessagingStatus>('/api/messaging/status'),
+    staleTime: 60_000,
+  });
+  const sendTo: SendTo | null =
+    SEND_TO.find((o) => o.roles.length === roles.length && o.roles.every((r) => roles.includes(r)))?.id ?? null;
+
   const history = useQuery({
     queryKey: qk.announcements.list(),
     queryFn: () => api.get<AnnouncementListResponse>('/api/announcements'),
@@ -149,7 +193,7 @@ export function AnnouncementsPage(): React.JSX.Element {
 
   const send = useMutation({
     mutationFn: async (count: number) => {
-      const signature = JSON.stringify({ title: title.trim(), body: body.trim(), audience, channels });
+      const signature = JSON.stringify({ title: title.trim(), body: body.trim(), audience, channels, image });
       let draftId = draftRef.current?.signature === signature ? draftRef.current.id : null;
       if (!draftId) {
         const created = await api.post<{ announcement: { id: string } }>('/api/announcements', {
@@ -157,6 +201,7 @@ export function AnnouncementsPage(): React.JSX.Element {
           body: body.trim(),
           audience,
           channels,
+          ...(image ? { image } : {}),
         });
         draftId = created.announcement.id;
         draftRef.current = { signature, id: draftId };
@@ -172,6 +217,7 @@ export function AnnouncementsPage(): React.JSX.Element {
       setConflictMessage(null);
       setTitle('');
       setBody('');
+      setImage(null);
       toast.success(`Queued for ${data.queued} people.`);
     },
     onError: (error: unknown) => {
@@ -190,21 +236,46 @@ export function AnnouncementsPage(): React.JSX.Element {
   const count = preview.data?.count ?? null;
   const overLimit = preview.data?.overLimit ?? false;
   const segments = smsSegments(body).segments;
-  const smsSelected = channels.includes('sms');
-  const ready = title.trim().length > 0 && body.trim().length > 0 && channels.length > 0 && (count ?? 0) > 0;
+  const smsSelected = channels.includes('sms') || channels.length === 0;
+  const ready = title.trim().length > 0 && body.trim().length > 0 && (count ?? 0) > 0;
 
   const toggle = <T extends string>(list: T[], value: T): T[] =>
     list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Announcements" subtitle="A message to many people at once, sent on purpose" />
+      <PageHeader title="Broadcast" subtitle="Send a message, with a picture if you like, to everyone or a group" />
 
       <section className={panelClass}>
         <h2 className="mb-3 font-semibold text-slate-900 dark:text-white">Who it goes to</h2>
 
         <fieldset className="mb-4">
-          <legend className={labelClass}>Groups</legend>
+          <legend className={labelClass}>Send to</legend>
+          <div className="grid grid-cols-3 gap-2" role="radiogroup">
+            {SEND_TO.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                role="radio"
+                aria-checked={sendTo === option.id}
+                onClick={() => setRoles(option.roles)}
+                className={`min-h-[44px] rounded-xl border px-2 text-sm font-medium ${
+                  sendTo === option.id
+                    ? 'border-[#EA0029] bg-[#EA0029] text-white'
+                    : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            To reach only one group or one service, tick it below. Nothing ticked means all of them.
+          </p>
+        </fieldset>
+
+        <fieldset className="mb-4">
+          <legend className={labelClass}>Only these groups</legend>
           {groups.isPending ? (
             <InlineSpinner label="Loading groups" />
           ) : groups.isError ? (
@@ -238,7 +309,7 @@ export function AnnouncementsPage(): React.JSX.Element {
         </fieldset>
 
         <fieldset className="mb-4">
-          <legend className={labelClass}>Services</legend>
+          <legend className={labelClass}>Only people who do these services</legend>
           {services.isPending ? (
             <InlineSpinner label="Loading services" />
           ) : services.isError ? (
@@ -268,7 +339,9 @@ export function AnnouncementsPage(): React.JSX.Element {
           )}
         </fieldset>
 
-        <fieldset className="mb-4">
+        <details className="mb-2">
+          <summary className="min-h-[44px] cursor-pointer py-2 text-sm font-medium text-slate-700 dark:text-slate-200">More options</summary>
+        <fieldset className="mb-4 mt-2">
           <legend className={labelClass}>Roles</legend>
           <ul className="flex flex-wrap gap-2">
             {ROLES.map((role) => (
@@ -319,6 +392,7 @@ export function AnnouncementsPage(): React.JSX.Element {
             Include people who have snoozed notifications
           </label>
         </div>
+        </details>
 
         <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
           {preview.isPending ? (
@@ -384,29 +458,97 @@ export function AnnouncementsPage(): React.JSX.Element {
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{body.length} of 1000 characters</p>
         </div>
 
+        <div className="mb-4">
+          <span className={labelClass}>Picture (optional)</span>
+          {image ? (
+            <div className="relative inline-block">
+              <img src={image} alt="Picture that will be sent" className="max-h-64 rounded-xl border border-slate-200 dark:border-slate-700" />
+              <button
+                type="button"
+                onClick={() => setImage(null)}
+                aria-label="Remove picture"
+                className="absolute right-2 top-2 grid h-11 w-11 place-items-center rounded-full bg-black/60 text-white"
+              >
+                <X className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </div>
+          ) : (
+            <label className={`${secondaryButtonClass} cursor-pointer`}>
+              <ImagePlus className="h-5 w-5" aria-hidden="true" />
+              {imageBusy ? 'Preparing picture...' : 'Add a picture'}
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                disabled={imageBusy}
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = '';
+                  if (!file) return;
+                  setImageBusy(true);
+                  try {
+                    setImage(await photoFileToDataUrl(file, 1280));
+                  } catch (err) {
+                    toast.error(errorMessage(err));
+                  } finally {
+                    setImageBusy(false);
+                  }
+                }}
+              />
+            </label>
+          )}
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            For example a simcha invitation or a flyer. People get a link to the picture with the message.
+          </p>
+        </div>
+
         <fieldset>
-          <legend className={labelClass}>Channels</legend>
+          <legend className={labelClass}>How to send it</legend>
           <ul className="flex flex-wrap gap-2">
-            {NOTIFICATION_CHANNELS.map((channel) => (
-              <li key={channel}>
-                <label
-                  className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full border px-4 text-sm ${
-                    channels.includes(channel)
-                      ? 'border-[#EA0029] bg-[#EA0029] text-white'
-                      : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    className="sr-only"
-                    checked={channels.includes(channel)}
-                    onChange={() => setChannels((current) => toggle(current, channel))}
-                  />
-                  {channel.toUpperCase()}
-                </label>
-              </li>
-            ))}
+            <li>
+              <button
+                type="button"
+                aria-pressed={channels.length === 0}
+                onClick={() => setChannels([])}
+                className={`flex min-h-[44px] items-center rounded-full border px-4 text-sm ${
+                  channels.length === 0
+                    ? 'border-[#EA0029] bg-[#EA0029] text-white'
+                    : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
+                }`}
+              >
+                Each person&apos;s preferred way
+              </button>
+            </li>
+            {BROADCAST_CHANNELS.map(({ id, label }) => {
+              const note = channelNote(messaging.data?.channels[id]);
+              return (
+                <li key={id}>
+                  <label
+                    className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full border px-4 text-sm ${
+                      channels.includes(id)
+                        ? 'border-[#EA0029] bg-[#EA0029] text-white'
+                        : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="sr-only"
+                      checked={channels.includes(id)}
+                      onChange={() => setChannels((current) => toggle(current, id))}
+                    />
+                    {label}
+                    {note ? <span className="text-xs opacity-80">({note})</span> : null}
+                  </label>
+                </li>
+              );
+            })}
           </ul>
+          {messaging.data && Object.values(messaging.data.channels).some((s) => s !== 'live') ? (
+            <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+              Channels in test mode are logged in Admin &gt; Notifications but not actually sent. Everyone also sees it
+              in the app.
+            </p>
+          ) : null}
         </fieldset>
 
         {smsSelected && count !== null && segments > 0 ? (
@@ -436,7 +578,7 @@ export function AnnouncementsPage(): React.JSX.Element {
           </button>
           {ready ? null : (
             <span className="text-sm text-slate-500 dark:text-slate-400">
-              A title, a message, a channel and at least one recipient are needed.
+              A title, a message and at least one recipient are needed.
             </span>
           )}
         </div>
@@ -459,7 +601,7 @@ export function AnnouncementsPage(): React.JSX.Element {
                     <p className="font-medium text-slate-900 dark:text-white">{row.title}</p>
                     <p className="mt-1 whitespace-pre-wrap text-sm text-slate-600 dark:text-slate-400">{row.body}</p>
                     <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {row.createdBy} · {row.channels.map((channel) => channel.toUpperCase()).join(', ')} ·{' '}
+                      {row.createdBy} · {channelsText(row.channels)} ·{row.hasImage ? ' with picture ·' : ''}{' '}
                       {row.recipientCount ?? 0} {row.recipientCount === 1 ? 'person' : 'people'} ·{' '}
                       {formatDateTime(row.sentAt ?? row.createdAt)}
                     </p>
@@ -535,7 +677,7 @@ function ConfirmSendModal({
       >
         <p className="text-sm text-slate-700 dark:text-slate-200">
           <span className="font-semibold">{title}</span> goes to {count} {count === 1 ? 'person' : 'people'} by{' '}
-          {channels.map((channel) => channel.toUpperCase()).join(', ')}. It cannot be recalled.
+          {channelsText(channels)}. It cannot be recalled.
         </p>
 
         {conflictMessage ? (

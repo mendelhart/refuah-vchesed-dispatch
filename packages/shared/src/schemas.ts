@@ -679,7 +679,10 @@ export const announcementSchema = z.object({
   title: z.string().trim().min(1, 'Give it a title').max(120),
   body: z.string().trim().min(1, 'Write the message').max(1000),
   audience: audienceSchema,
-  channels: z.array(z.enum(NOTIFICATION_CHANNELS)).min(1, 'Choose at least one channel').max(5),
+  /** Empty means "each person's preferred way". */
+  channels: z.array(z.enum(NOTIFICATION_CHANNELS)).max(6).default([]),
+  /** Optional picture, a JPEG/PNG data URL shrunk in the browser. */
+  image: z.string().max(1_400_000).optional().nullable(),
 });
 
 export const sendAnnouncementSchema = z.object({

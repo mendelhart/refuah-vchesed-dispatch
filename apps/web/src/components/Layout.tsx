@@ -99,7 +99,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/admin/applications', label: 'Applications', icon: UserPlus, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'New volunteer sign-ups to review' },
 
   { to: '/admin/people', label: 'People', icon: Users, roles: ['admin'], dispatch: 'admin', hint: 'Accounts, roles, invites, how each person is reached' },
-  { to: '/admin/announcements', label: 'Announcements', icon: Megaphone, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Message many volunteers at once' },
+  { to: '/admin/announcements', label: 'Broadcast', icon: Megaphone, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Message everyone or a group, with a picture' },
   { to: '/admin/notifications', label: 'Notifications', icon: Bell, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Every message sent, and whether it arrived' },
   { to: '/admin/templates', label: 'Message templates', icon: MessageSquareText, roles: ['admin'], dispatch: 'admin', hint: 'Wording of the texts' },
   { to: '/impact', label: 'Organization impact', icon: HeartHandshake, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Rides, volunteers and people helped, all together' },

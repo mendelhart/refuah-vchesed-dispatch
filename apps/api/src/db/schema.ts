@@ -1333,6 +1333,8 @@ export const announcements = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     title: text('title').notNull(),
     body: text('body').notNull(),
+    /** Optional picture as a data URL; served publicly by id so SMS/WhatsApp/email can show it. */
+    imageData: text('image_data'),
     /** Recipient selection, replayed when sending so the audit shows the query. */
     audience: jsonb('audience').$type<Record<string, unknown>>().notNull(),
     channels: text('channels').array().notNull().default(sql`'{}'::text[]`),

@@ -106,6 +106,13 @@
       "when": 1790129392987,
       "tag": "0014_suspend",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1790129452987,
+      "tag": "0015_announcement_image",
+      "breakpoints": true
     }
   ]
 }

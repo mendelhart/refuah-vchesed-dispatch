@@ -11,12 +11,12 @@ import { Errors } from './errors.js';
 const DATA_URL = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/;
 export const MAX_PHOTO_BYTES = 400 * 1024;
 
-export function parsePhotoDataUrl(input: string): { mime: string; bytes: Buffer } {
+export function parsePhotoDataUrl(input: string, maxBytes = MAX_PHOTO_BYTES): { mime: string; bytes: Buffer } {
   const m = DATA_URL.exec(input);
   if (!m) throw Errors.validation('That photo could not be read. Use a JPEG or PNG picture.', { field: 'photo' });
   const bytes = Buffer.from(m[2]!, 'base64');
   if (bytes.length === 0) throw Errors.validation('That photo is empty.', { field: 'photo' });
-  if (bytes.length > MAX_PHOTO_BYTES) throw Errors.validation('That photo is too large.', { field: 'photo' });
+  if (bytes.length > maxBytes) throw Errors.validation('That photo is too large.', { field: 'photo' });
   return { mime: m[1]!, bytes };
 }
 
