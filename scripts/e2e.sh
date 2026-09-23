@@ -46,7 +46,7 @@ node apps/api/dist/index.js &
 api_pid=$!
 
 echo "→ starting the built web app on :4173"
-( cd apps/web && npx vite preview --port 4173 --strictPort ) &
+( cd apps/web && npx vite preview --port 4173 --strictPort --host 127.0.0.1 ) &
 web_pid=$!
 
 for i in $(seq 1 40); do
