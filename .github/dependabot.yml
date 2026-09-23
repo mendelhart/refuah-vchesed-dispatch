@@ -1,0 +1,20 @@
+# Automated dependency and base-image update PRs (spec §18). Weekly, grouped,
+# and capped so they stay reviewable. Every PR runs the full CI suite before it
+# can be merged; nothing is upgraded without passing tests.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }
+    open-pull-requests-limit: 3
+  - package-ecosystem: docker
+    directory: /
+    schedule: { interval: monthly }
+    open-pull-requests-limit: 3

@@ -125,6 +125,11 @@ jobs:
       - name: eslint
         run: npx eslint . --max-warnings=0
 
+      # Known vulnerabilities in what ships to production. High or critical
+      # fails the build; moderate dev-only advisories are left to Dependabot.
+      - name: dependency audit (production deps)
+        run: npm audit --omit=dev --audit-level=high
+
   # ---------------------------------------------------------------------------
   # api-tests — against a real Postgres 16, with the real migrations applied.
   #
