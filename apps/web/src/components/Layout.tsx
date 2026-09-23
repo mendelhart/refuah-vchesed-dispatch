@@ -104,7 +104,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/admin/notifications', label: 'Notifications', icon: Bell, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Every message sent, and whether it arrived' },
   { to: '/admin/templates', label: 'Message templates', icon: MessageSquareText, roles: ['admin'], dispatch: 'admin', hint: 'Wording of the texts' },
   { to: '/impact', label: 'Organization impact', icon: HeartHandshake, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Rides, volunteers and people helped, all together' },
-  { to: '/admin/exports', label: 'Exports', icon: Download, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Download data' },
+  { to: '/admin/exports', label: 'Exports', icon: Download, roles: ['admin'], dispatch: 'admin', hint: 'Download data' },
   { to: '/admin/audit', label: 'Audit log', icon: FileText, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Who changed what' },
   { to: '/admin/settings', label: 'Dispatch settings', icon: ShieldCheck, roles: ['admin'], dispatch: 'admin', hint: 'Timings, limits, call quiet hours, announcements on/off' },
 ];

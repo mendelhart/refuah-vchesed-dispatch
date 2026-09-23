@@ -215,7 +215,7 @@ describe('operations: roster, equipment, exports, broadcasts, calendar', () => {
     await api('POST', '/api/trips', { cookie: dispatcher.cookie, payload: sampleTrip() });
 
     const requested = await api('POST', '/api/exports', {
-      cookie: dispatcher.cookie,
+      cookie: admin.cookie,
       payload: { kind: 'trips' },
     });
     expect(requested.status).toBe(202);
@@ -229,9 +229,14 @@ describe('operations: roster, equipment, exports, broadcasts, calendar', () => {
     expect(row!.fileId).toBeTruthy();
     expect(row!.expiresAt).not.toBeNull();
 
-    const download = await api('GET', `/api/exports/${exportId}/download`, { cookie: dispatcher.cookie });
+    const download = await api('GET', `/api/exports/${exportId}/download`, { cookie: admin.cookie });
     expect(download.status).toBe(200);
     expect(String(download.raw.body)).toMatch(/reference/);
+  });
+
+  it('keeps exports away from coordinators', async () => {
+    const res = await api('POST', '/api/exports', { cookie: dispatcher.cookie, payload: { kind: 'trips' } });
+    expect(res.status).toBe(403);
   });
 
   it('produces the monthly board report', async () => {
@@ -250,10 +255,10 @@ describe('operations: roster, equipment, exports, broadcasts, calendar', () => {
     expect(String(download.raw.body)).toMatch(/avg_minutes_to_accept/);
   });
 
-  it('keeps one dispatcher’s export away from another', async () => {
-    const other = await createTestUser({ role: 'dispatcher' });
+  it('keeps one admin’s export away from a coordinator', async () => {
+    const other = dispatcher;
     const requested = await api('POST', '/api/exports', {
-      cookie: dispatcher.cookie,
+      cookie: admin.cookie,
       payload: { kind: 'volunteers' },
     });
     const exportId = (requested.body.export as { id: string }).id;

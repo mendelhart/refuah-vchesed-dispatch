@@ -20,6 +20,8 @@ server {
   root /usr/share/nginx/html;
   index index.html;
 
+  include /etc/nginx/snippets/security-headers.conf;
+
   gzip on;
   gzip_types text/css application/javascript application/json image/svg+xml;
 
@@ -27,11 +29,13 @@ server {
   location /assets/ {
     expires 1y;
     add_header Cache-Control "public, immutable";
+    include /etc/nginx/snippets/security-headers.conf;
   }
 
   # Not hashed, and the one file that decides whether a client can update.
   location = /service-worker.js {
     add_header Cache-Control "no-cache";
+    include /etc/nginx/snippets/security-headers.conf;
   }
 
   location /api/ {

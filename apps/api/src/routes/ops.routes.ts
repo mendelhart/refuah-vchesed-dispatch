@@ -133,12 +133,13 @@ export async function opsRoutes(app: FastifyInstance): Promise<void> {
   // -------------------------------------------------------------------------
   // Exports
   // -------------------------------------------------------------------------
-  app.get('/api/exports', { preHandler: requireDispatcher }, async (req) => {
+  // Exports contain patient data, so they are admin-only (audit, Sep 2026).
+  app.get('/api/exports', { preHandler: requireAdmin }, async (req) => {
     const user = currentUser(req);
     return { exports: await listExports(user.role === 'admin' ? undefined : user.id) };
   });
 
-  app.post('/api/exports', { preHandler: requireDispatcher }, async (req, reply) => {
+  app.post('/api/exports', { preHandler: requireAdmin }, async (req, reply) => {
     const body = exportRequestSchema.parse(req.body);
     const { kind, ...params } = body;
     const row = await requestExport(actorFrom(req), kind, params);
@@ -146,7 +147,7 @@ export async function opsRoutes(app: FastifyInstance): Promise<void> {
     return { export: row };
   });
 
-  app.get('/api/exports/:id/download', { preHandler: requireDispatcher }, async (req, reply) => {
+  app.get('/api/exports/:id/download', { preHandler: requireAdmin }, async (req, reply) => {
     const { id } = idParam.parse(req.params);
     const row = await getExport(id);
     if (row.status !== 'ready' || !row.fileId) {

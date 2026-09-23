@@ -66,6 +66,7 @@ COPY --from=build /app/apps/web/dist /usr/share/nginx/html
 # container start and writes the result into conf.d/.
 COPY deploy/web-nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY deploy/rvc-proxy.conf          /etc/nginx/snippets/rvc-proxy.conf
+COPY deploy/security-headers.conf   /etc/nginx/snippets/security-headers.conf
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

@@ -401,7 +401,7 @@ export function App(): React.JSX.Element {
           path="/admin/exports"
           element={
             <Shell>
-              <RequireRole roles={DISPATCH}>
+              <RequireRole roles={ADMIN}>
                 <ExportsPage />
               </RequireRole>
             </Shell>

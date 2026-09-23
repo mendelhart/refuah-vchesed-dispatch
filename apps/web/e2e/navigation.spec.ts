@@ -21,7 +21,6 @@ const DISPATCHER_SCREENS = [
   ['/duty', /duty|phone/i],
   ['/admin/applications', /application/i],
   ['/admin/announcements', /broadcast|announcement/i],
-  ['/admin/exports', /export/i],
   ['/equipment', /equipment/i],
   ['/calls', /call/i],
   ['/contacts', /contact/i],
