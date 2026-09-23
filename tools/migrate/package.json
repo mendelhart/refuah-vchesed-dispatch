@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@rvc/shared": "*",
-    "drizzle-orm": "^0.38.4",
+    "drizzle-orm": "^0.45.3",
     "postgres": "^3.4.5",
     "zod": "^3.24.2"
   },
