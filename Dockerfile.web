@@ -50,7 +50,7 @@ RUN npm run build --workspace=@rvc/web
 # -----------------------------------------------------------------------------
 # runtime — nginx.
 # -----------------------------------------------------------------------------
-FROM nginx:1.27-alpine
+FROM nginx:1.27-alpine AS web
 
 # Where the browser should send /api and /webhooks. Overridden per environment;
 # the default is only useful to someone running the two containers side by side.

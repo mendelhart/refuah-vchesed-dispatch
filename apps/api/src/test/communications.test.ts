@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { and, eq } from 'drizzle-orm';
-import { api, createTestUser, drainJobs, getApp, resetDb, sampleTrip, shutdown, type TestUser } from './harness.js';
+import { api, createTestUser, drainJobs, getApp, rejectsWith, resetDb, sampleTrip, shutdown, type TestUser } from './harness.js';
 import { db } from '../db/client.js';
 import {
   driverLicences,
@@ -120,9 +120,10 @@ describe('communications and templates', () => {
       .where(and(eq(messageTemplates.key, 'sms.help'), eq(messageTemplates.channel, 'sms')));
     await api('PATCH', `/api/templates/${row!.id}`, { cookie: admin.cookie, payload: { body: 'Edited.' } });
 
-    await expect(
+    await rejectsWith(
       db.update(messageTemplateVersions).set({ body: 'rewritten history' }),
-    ).rejects.toThrow(/append-only/i);
+      /append-only/i
+    );
   });
 
   it('refuses a dispatcher the template editor', async () => {
@@ -302,9 +303,10 @@ describe('communications and templates', () => {
     expect(reviewed.status).toBe('on_file');
 
     // 'verified' is not a decision a person can make.
-    await expect(
+    await rejectsWith(
       reviewLicence(SYSTEM_ACTOR, licence.id, 'verified' as never),
-    ).rejects.toThrow(/verification service/i);
+      /verification service/i
+    );
 
     const res = await api('POST', `/api/licences/${licence.id}/review`, {
       cookie: admin.cookie,

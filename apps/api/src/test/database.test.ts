@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { auditEvents, trips } from '../db/schema.js';
-import { api, createTestUser, getApp, resetDb, sampleTrip, shutdown, type TestUser } from './harness.js';
+import { api, createTestUser, getApp, rejectsWith, resetDb, sampleTrip, shutdown, type TestUser } from './harness.js';
 
 /**
  * Database guarantees.
@@ -25,39 +25,44 @@ describe('database guarantees', () => {
     const created = await api('POST', '/api/trips', { cookie: dispatcher.cookie, payload: sampleTrip() });
     const tripId = (created.body.trip as { id: string }).id;
     // The exact shape of the audit's headline defect.
-    await expect(
+    await rejectsWith(
       db.execute(sql`update trips set status = 'accepted' where id = ${tripId}`),
-    ).rejects.toThrow(/trips_engaged_requires_volunteer_chk/);
+      /trips_engaged_requires_volunteer_chk/
+    );
   });
 
   it('refuses a cancelled trip with no reason', async () => {
     const created = await api('POST', '/api/trips', { cookie: dispatcher.cookie, payload: sampleTrip() });
     const tripId = (created.body.trip as { id: string }).id;
-    await expect(
+    await rejectsWith(
       db.execute(sql`update trips set status = 'cancelled', cancelled_at = now() where id = ${tripId}`),
-    ).rejects.toThrow(/trips_cancelled_has_reason_chk/);
+      /trips_cancelled_has_reason_chk/
+    );
   });
 
   it('refuses an unknown status', async () => {
     const created = await api('POST', '/api/trips', { cookie: dispatcher.cookie, payload: sampleTrip() });
     const tripId = (created.body.trip as { id: string }).id;
-    await expect(
+    await rejectsWith(
       db.execute(sql`update trips set status = 'whatever' where id = ${tripId}`),
-    ).rejects.toThrow(/trips_status_chk/);
+      /trips_status_chk/
+    );
   });
 
   it('refuses a non-E.164 phone number', async () => {
-    await expect(
+    await rejectsWith(
       db.execute(sql`update users set phone = '5145551234' where id = ${dispatcher.id}`),
-    ).rejects.toThrow(/users_phone_e164_chk/);
+      /users_phone_e164_chk/
+    );
   });
 
   it('keeps phone numbers unique among live users, so SMS resolves one person', async () => {
     const a = await createTestUser({ role: 'volunteer' });
     const b = await createTestUser({ role: 'volunteer' });
-    await expect(
+    await rejectsWith(
       db.execute(sql`update users set phone = ${a.phone} where id = ${b.id}`),
-    ).rejects.toThrow(/users_phone_live_uq/);
+      /users_phone_live_uq/
+    );
   });
 
   it('allows at most one accepted offer per trip', async () => {
@@ -68,9 +73,10 @@ describe('database guarantees', () => {
     await api('POST', `/api/trips/${tripId}/offer`, { cookie: dispatcher.cookie, payload: {} });
     await api('POST', `/api/trips/${tripId}/claim`, { cookie: v1.cookie, payload: {} });
     void v2;
-    await expect(
+    await rejectsWith(
       db.execute(sql`update trip_offers set status = 'accepted', responded_at = now() where trip_id = ${tripId} and status <> 'accepted'`),
-    ).rejects.toThrow(/trip_offers_one_accepted_uq/);
+      /trip_offers_one_accepted_uq/
+    );
   });
 
   it('allows at most one live assignment per trip', async () => {
@@ -78,12 +84,13 @@ describe('database guarantees', () => {
     const created = await api('POST', '/api/trips', { cookie: dispatcher.cookie, payload: sampleTrip() });
     const tripId = (created.body.trip as { id: string }).id;
     await api('POST', `/api/trips/${tripId}/assign`, { cookie: dispatcher.cookie, payload: { volunteerId: v.id } });
-    await expect(
+    await rejectsWith(
       db.execute(sql`
         insert into trip_assignments (trip_id, volunteer_id, source)
         values (${tripId}, ${v.id}, 'dispatcher')
       `),
-    ).rejects.toThrow(/trip_assignments_one_live_uq/);
+      /trip_assignments_one_live_uq/
+    );
   });
 
   it('makes audit_events append-only', async () => {
@@ -91,10 +98,8 @@ describe('database guarantees', () => {
     const before = await db.select().from(auditEvents);
     expect(before.length).toBeGreaterThan(0);
 
-    await expect(db.execute(sql`update audit_events set action = 'tampered'`))
-      .rejects.toThrow(/append-only/);
-    await expect(db.execute(sql`delete from audit_events`))
-      .rejects.toThrow(/append-only/);
+    await rejectsWith(db.execute(sql`update audit_events set action = 'tampered'`), /append-only/);
+    await rejectsWith(db.execute(sql`delete from audit_events`), /append-only/);
 
     const after = await db.select().from(auditEvents);
     expect(after).toHaveLength(before.length);
@@ -103,7 +108,7 @@ describe('database guarantees', () => {
   it('rolls the whole transaction back when any step fails', async () => {
     const countTrips = async () => (await db.select().from(trips)).length;
     const before = await countTrips();
-    await expect(
+    await rejectsWith(
       db.transaction(async (tx) => {
         await tx.execute(sql`
           insert into addresses (line1) values ('1 Test'), ('2 Test')
@@ -115,19 +120,21 @@ describe('database guarantees', () => {
         `);
         throw new Error('deliberate failure after the writes');
       }),
-    ).rejects.toThrow(/deliberate failure/);
+      /deliberate failure/
+    );
     expect(await countTrips()).toBe(before);
   });
 
   it('enforces referential integrity on the assigned volunteer', async () => {
     const created = await api('POST', '/api/trips', { cookie: dispatcher.cookie, payload: sampleTrip() });
     const tripId = (created.body.trip as { id: string }).id;
-    await expect(
+    await rejectsWith(
       db.execute(sql`
         update trips set status = 'assigned', assigned_volunteer_id = '00000000-0000-0000-0000-000000000000'
         where id = ${tripId}
       `),
-    ).rejects.toThrow(/foreign key|violates/i);
+      /foreign key|violates/i
+    );
   });
 
   it('issues unique trip references even under concurrency', async () => {

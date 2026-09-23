@@ -8,6 +8,7 @@ import { getNumberSetting } from '../lib/settings.js';
 import { notify } from '../services/notification.service.js';
 import { renderTemplate } from '../services/templates.service.js';
 import { formatClock } from '../lib/time.js';
+import { pgErrorCode } from '../lib/pg.js';
 import { logger } from '../lib/logger.js';
 
 /**
@@ -69,8 +70,9 @@ export async function createShift(
     });
     return row!;
   } catch (err) {
-    // 23P01 is exclusion_violation — the overlap guard.
-    if ((err as { code?: string }).code === '23P01') {
+    // 23P01 is exclusion_violation — the overlap guard. drizzle-orm >=0.45
+    // wraps the driver error, so read the code off the cause chain.
+    if (pgErrorCode(err) === '23P01') {
       const clash = await shiftAt(input.startsAt, kind);
       throw Errors.conflict(
         clash

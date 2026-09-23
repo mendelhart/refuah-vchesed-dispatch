@@ -1,3 +1,4 @@
+import { expect } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { sql as raw } from 'drizzle-orm';
 import type { Role } from '@rvc/shared';
@@ -22,6 +23,32 @@ import { VOLUNTEER_CAPABILITIES } from '@rvc/shared';
 import { pgArray } from '../lib/pg.js';
 
 export const PASSWORD = 'TestPassword123!';
+
+/** Full message text of an error, walking the `cause` chain. drizzle-orm
+ *  >=0.45 wraps driver errors in `Failed query: ...` with the Postgres text
+ *  underneath, so assertions on constraint messages must look through it. */
+export function errorText(err: unknown): string {
+  let text = '';
+  let cur: unknown = err;
+  const seen = new Set<unknown>();
+  while (cur && !seen.has(cur)) {
+    seen.add(cur);
+    if (cur instanceof Error) text += '\n' + cur.message;
+    cur = (cur as { cause?: unknown }).cause;
+  }
+  return text;
+}
+
+/** Like `expect(p).rejects.toThrow(re)` but matches against the cause chain. */
+export async function rejectsWith(promise: Promise<unknown>, re: RegExp): Promise<void> {
+  try {
+    await promise;
+  } catch (err) {
+    expect(errorText(err)).toMatch(re);
+    return;
+  }
+  throw new Error(`expected the promise to reject with ${re}, but it resolved`);
+}
 
 let app: FastifyInstance | null = null;
 
