@@ -102,7 +102,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
     const [target] = await db.select({ id: users.id, fullName: users.fullName, role: users.role, status: users.status })
       .from(users).where(eq(users.id, id));
     if (!target || target.status !== 'active' || target.role === 'admin') {
-      throw Errors.forbidden('You can preview active volunteers and dispatchers only.');
+      throw Errors.forbidden('You can preview active volunteers and coordinators only.');
     }
     await recordAudit({
       actor: actorFrom(req), action: 'admin.view_as_started', entityType: 'user', entityId: target.id,

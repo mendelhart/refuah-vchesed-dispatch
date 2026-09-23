@@ -334,7 +334,7 @@ export function MessagesPage(): React.JSX.Element {
                       {titleCase(thread.data.thread.status)}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {ownerId ? `Taken by ${ownerName ?? 'another dispatcher'}` : 'Nobody has taken this yet'}
+                      {ownerId ? `Taken by ${ownerName ?? 'another coordinator'}` : 'Nobody has taken this yet'}
                     </p>
                   </div>
 

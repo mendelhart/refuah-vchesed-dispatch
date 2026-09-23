@@ -18,6 +18,7 @@ import type { UserListResponse } from '@/types/api';
 import {
   EmptyState, ErrorState, ListSkeleton, PageHeader, cardClass, inputClass, primaryButtonClass,
 } from '@/components/states';
+import { roleLabel } from '@rvc/shared';
 
 export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}): React.JSX.Element {
   const { user } = useAuth();
@@ -38,7 +39,7 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
       api.get<UserListResponse>('/api/users', { status: 'active', ...(search ? { search } : {}), limit: 200 }),
   });
 
-  // Admins, then dispatchers (the coordinators), then volunteers; A-Z within.
+  // Admins, then coordinators (role 'dispatcher'), then volunteers; A-Z within.
   const ROLE_ORDER: Record<string, number> = { admin: 0, dispatcher: 1, volunteer: 2 };
   const roster = (people.data?.users ?? [])
     .filter((p) => roleFilter === 'all' || p.role === roleFilter)
@@ -47,7 +48,7 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
   const ROLE_CHIPS = [
     { id: 'all', label: 'All' },
     { id: 'admin', label: 'Admins' },
-    { id: 'dispatcher', label: 'Dispatchers / coordinators' },
+    { id: 'dispatcher', label: 'Coordinators' },
     { id: 'volunteer', label: 'Volunteers' },
   ] as const;
 
@@ -57,7 +58,7 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
         title={title}
         subtitle="Everyone on the roster"
         actions={
-          user?.role === 'admin' ? (
+          user?.role === 'admin' || user?.role === 'dispatcher' ? (
             <button type="button" className={primaryButtonClass} onClick={() => setAdding(true)}>
               <Plus className="h-4 w-4" aria-hidden="true" />
               Add volunteer
@@ -121,7 +122,7 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
                 <div className="min-w-0">
                   <p className="truncate font-medium text-slate-900 dark:text-white">{person.fullName}</p>
                   <p className="text-xs capitalize text-slate-500 dark:text-slate-400">
-                    {person.role}
+                    {roleLabel(person.role)}
                     {person.groupSlugs.length > 0 ? ` · ${person.groupSlugs.map(titleCase).join(', ')}` : ''}
                   </p>
                   {person.phone ? (

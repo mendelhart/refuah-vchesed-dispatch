@@ -49,7 +49,7 @@ export async function startCall(
   let contactId: string | null = null;
 
   if (args.counterparty === 'contact') {
-    if (user.role === 'volunteer') throw Errors.forbidden('Only dispatchers can call org contacts.');
+    if (user.role === 'volunteer') throw Errors.forbidden('Only coordinators can call org contacts.');
     if (!args.contactId) throw Errors.validation('Choose a contact to call.');
     const [contact] = await db.select().from(contacts)
       .where(and(eq(contacts.id, args.contactId), isNull(contacts.deletedAt))).limit(1);
@@ -76,7 +76,7 @@ export async function startCall(
       destination = trip.callerPhone; counterpartyName = trip.callerName;
       basis = isDispatcher ? 'dispatcher calling trip caller' : 'assigned volunteer calling trip caller';
     } else {
-      if (!isDispatcher) throw Errors.forbidden('Only dispatchers can call the assigned volunteer.');
+      if (!isDispatcher) throw Errors.forbidden('Only coordinators can call the assigned volunteer.');
       if (!trip.assignedVolunteerId) throw Errors.validation('No volunteer is assigned to this trip.');
       const [vol] = await db.select({ phone: users.phone, fullName: users.fullName })
         .from(users).where(eq(users.id, trip.assignedVolunteerId)).limit(1);

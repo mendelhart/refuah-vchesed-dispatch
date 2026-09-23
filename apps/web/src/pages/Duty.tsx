@@ -255,7 +255,7 @@ export function DutyPage(): React.JSX.Element {
         <EmptyState
           icon={CalendarDays}
           title="No shifts this week."
-          hint={canEdit ? 'Add one so the line has somebody on it.' : 'A dispatcher can add shifts to this week.'}
+          hint={canEdit ? 'Add one so the line has somebody on it.' : 'A coordinator can add shifts to this week.'}
         />
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-7">

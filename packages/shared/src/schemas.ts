@@ -272,7 +272,7 @@ export const createUserSchema = z
       ctx.addIssue({ code: 'custom', path: ['phone'], message: 'A mobile number is needed so the volunteer can get ride offers.' });
     }
     if (v.role !== 'volunteer' && !v.email) {
-      ctx.addIssue({ code: 'custom', path: ['email'], message: 'Dispatchers and administrators need an email address to sign in.' });
+      ctx.addIssue({ code: 'custom', path: ['email'], message: 'Coordinators and admins need an email address to sign in.' });
     }
     if (v.inviteVia.includes('email') && !v.email) {
       ctx.addIssue({ code: 'custom', path: ['inviteVia'], message: 'Add an email address to invite by email.' });

@@ -30,7 +30,7 @@ export async function applyViewAs(req: FastifyRequest): Promise<void> {
   }
   const user = await loadSessionUser(target);
   if (!user || user.status !== 'active' || user.role === 'admin') {
-    throw Errors.forbidden('You can preview active volunteers and dispatchers only.');
+    throw Errors.forbidden('You can preview active volunteers and coordinators only.');
   }
   req.viewAsBy = { id: req.user.id, fullName: req.user.fullName };
   req.user = { ...user, sessionId: req.user.sessionId };

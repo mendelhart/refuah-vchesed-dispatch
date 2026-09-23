@@ -129,7 +129,7 @@ Details: {{appUrl}}`,
     key: 'trip.assigned',
     channel: 'sms',
     locale: 'en',
-    description: 'A dispatcher assigned this trip directly.',
+    description: 'A coordinator assigned this trip directly.',
     variables: TRIP_VARS,
     body: `You have been assigned trip {{reference}}.
 Pick up {{when}}
@@ -175,7 +175,7 @@ Please do not travel.`,
     key: 'trip.escalated',
     channel: 'sms',
     locale: 'en',
-    description: 'Sent to dispatchers when an offer goes unanswered.',
+    description: 'Sent to coordinators when an offer goes unanswered.',
     variables: ['reference', 'when', 'offered', 'minutes', 'appUrl'],
     body: `No answer on trip {{reference}} ({{when}}) after {{minutes}} min — {{offered}} asked.
 {{appUrl}}`,

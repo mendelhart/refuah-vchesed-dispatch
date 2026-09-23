@@ -799,7 +799,7 @@ function ApproveModal({
             onChange={(event) => setRole(event.target.value as 'volunteer' | 'dispatcher')}
           >
             <option value="volunteer">Volunteer</option>
-            <option value="dispatcher">Dispatcher</option>
+            <option value="dispatcher">Coordinator</option>
           </select>
         </div>
 

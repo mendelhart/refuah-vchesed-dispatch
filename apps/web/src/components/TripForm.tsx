@@ -877,7 +877,7 @@ export function TripForm({
           >
             {ASSIGNMENT_MODES.map((mode) => (
               <option key={mode} value={mode}>
-                {mode === 'auto' ? 'Auto-assign (first response wins)' : 'Dispatcher approval'}
+                {mode === 'auto' ? 'Auto-assign (first response wins)' : 'Coordinator approval'}
               </option>
             ))}
           </select>

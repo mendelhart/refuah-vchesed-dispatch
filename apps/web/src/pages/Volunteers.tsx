@@ -121,7 +121,8 @@ export function VolunteersPage(): React.JSX.Element {
   const [view, setView] = useState<'list' | 'calendar'>('list');
   // ?open=<id> (from Contacts > Volunteers) opens that volunteer straight away.
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  // Admins and coordinators can both add volunteers.
+  const canAdd = user?.role === 'admin' || user?.role === 'dispatcher';
   const [adding, setAdding] = useState(false);
   const [openId, setOpenId] = useState<string | null>(() => new URLSearchParams(window.location.search).get('open'));
 
@@ -161,7 +162,7 @@ export function VolunteersPage(): React.JSX.Element {
         title="Volunteers"
         subtitle="Who is on the roster, what they do, and when they can be asked"
         actions={
-          isAdmin ? (
+          canAdd ? (
             <button type="button" className={primaryButtonClass} onClick={() => setAdding(true)}>
               <Plus className="h-4 w-4" aria-hidden="true" />
               Add volunteer

@@ -496,7 +496,7 @@ function ExceptionModal({
             onChange={(event) => setReason(event.target.value)}
           />
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Only a dispatcher sees this, and only so they know not to chase you.
+            Only a coordinator sees this, and only so they know not to chase you.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

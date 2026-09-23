@@ -164,7 +164,7 @@ export function TripCard({ trip, compact = false }: { trip: TripDto; compact?: b
           <p className={`${compact ? 'hidden' : 'flex'} flex-wrap items-center gap-2 pt-1 text-xs text-slate-400 dark:text-slate-500`}>
             <span>
               {trip.group.name} · {tripTypeLabel(trip.tripType)}
-              {trip.assignmentMode === 'admin_approval' ? ' · needs dispatcher approval' : ''}
+              {trip.assignmentMode === 'admin_approval' ? ' · needs coordinator approval' : ''}
             </span>
             {trip.recurringRideId ? (
               <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-slate-600 dark:bg-slate-800 dark:text-slate-300">

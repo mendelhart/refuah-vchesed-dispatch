@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Copy, UserPlus, Users } from 'lucide-react';
-import { ROLES, type InviteChannel, type Role } from '@rvc/shared';
+import { ROLES, type InviteChannel, type Role, roleLabel } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
 import { titleCase, formatPhone } from '@/lib/format';
@@ -74,7 +74,7 @@ export function PeoplePage(): React.JSX.Element {
     <div className="space-y-6">
       <PageHeader
         title="People"
-        subtitle="Volunteers, dispatchers and administrators"
+        subtitle="Volunteers, coordinators and admins"
         actions={
           <button type="button" className={primaryButtonClass} onClick={() => setOpen(true)}>
             <UserPlus className="h-4 w-4" aria-hidden="true" />
@@ -117,7 +117,7 @@ export function PeoplePage(): React.JSX.Element {
       ) : people.isError ? (
         <ErrorState error={people.error} onRetry={() => void people.refetch()} what="the roster" />
       ) : people.data.users.length === 0 ? (
-        <EmptyState icon={Users} title="Nobody on the roster yet." hint="Invite your first dispatcher or volunteer to get started." />
+        <EmptyState icon={Users} title="Nobody on the roster yet." hint="Invite your first coordinator or volunteer to get started." />
       ) : (
         <ul className="space-y-2">
           {people.data.users.map((person) => (
@@ -151,7 +151,7 @@ export function PeoplePage(): React.JSX.Element {
                 >
                   {ROLES.map((role) => (
                     <option key={role} value={role}>
-                      {titleCase(role)}
+                      {roleLabel(role)}
                     </option>
                   ))}
                 </select>

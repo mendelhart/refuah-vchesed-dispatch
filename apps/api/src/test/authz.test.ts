@@ -51,6 +51,17 @@ describe('authorization', () => {
     expect((await api('GET', '/api/audit', { cookie: volunteer.cookie })).status).toBe(403);
   });
 
+  it('lets a coordinator add a volunteer, but not a coordinator or admin', async () => {
+    expect((await api('POST', '/api/users', {
+      cookie: dispatcher.cookie,
+      payload: { fullName: 'New Driver', phone: '514 555 7090', email: '', role: 'volunteer' },
+    })).status).toBe(201);
+    expect((await api('POST', '/api/users', {
+      cookie: dispatcher.cookie,
+      payload: { email: 'c@y.test', fullName: 'C Y', role: 'dispatcher' },
+    })).status).toBe(403);
+  });
+
   it('refuses a dispatcher admin-only actions', async () => {
     expect((await api('POST', '/api/users', {
       cookie: dispatcher.cookie,

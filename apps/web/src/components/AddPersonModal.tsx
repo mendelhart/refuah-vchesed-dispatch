@@ -5,11 +5,11 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ROLES, createUserSchema, type InviteChannel, type Role } from '@rvc/shared';
+import { ROLES, createUserSchema, type InviteChannel, type Role, roleLabel } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
-import { titleCase } from '@/lib/format';
 import { Modal } from '@/components/Modal';
+import { useAuth } from '@/lib/auth';
 import { inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '@/components/states';
 import type { CreateUserResponse, GroupsResponse } from '@/types/api';
 
@@ -30,6 +30,9 @@ interface Props {
 
 export function AddPersonModal({ open, onClose, onAdded, defaultRole = 'volunteer', title = 'Add someone' }: Props): React.JSX.Element {
   const queryClient = useQueryClient();
+  const { user: me } = useAuth();
+  // Coordinators may add volunteers; only admins choose another role.
+  const roleChoices = me?.role === 'admin' ? ROLES : (['volunteer'] as const);
   const emptyForm = { email: '', fullName: '', phone: '', role: defaultRole, groupSlug: '', inviteVia: [] as InviteChannel[] };
   const [form, setForm] = useState(emptyForm);
   const toggleVia = (channel: InviteChannel) =>
@@ -128,9 +131,9 @@ export function AddPersonModal({ open, onClose, onAdded, defaultRole = 'voluntee
                 Role
               </label>
               <select id="person-role" className={inputClass} value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value as Role })}>
-                {ROLES.map((role) => (
+                {roleChoices.map((role) => (
                   <option key={role} value={role}>
-                    {titleCase(role)}
+                    {roleLabel(role)}
                   </option>
                 ))}
               </select>

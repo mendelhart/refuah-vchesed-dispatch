@@ -17,6 +17,7 @@ import { qk } from '@/lib/query';
 import { formatPhone, telHref, titleCase } from '@/lib/format';
 import type { ContactsResponse, UserListResponse } from '@/types/api';
 import { EmptyState, ErrorState, ListSkeleton, cardClass, inputClass } from '@/components/states';
+import { roleLabel } from '@rvc/shared';
 
 const CallersPage = React.lazy(() => import('@/pages/Callers').then((m) => ({ default: m.CallersPage })));
 const DirectoryPage = React.lazy(() => import('@/pages/Directory').then((m) => ({ default: m.DirectoryPage })));
@@ -97,7 +98,7 @@ function AllContacts({ onOpenCaller }: { onOpenCaller: (id: string) => void }): 
     for (const u of team.data?.users ?? []) {
       out.push({
         key: `t-${u.id}`, kind: 'team', id: u.id, name: u.fullName,
-        detail: `Team · ${u.role}`, phone: u.phone ?? null,
+        detail: `Team · ${roleLabel(u.role)}`, phone: u.phone ?? null,
       });
     }
     return out.sort((a, b) => a.name.localeCompare(b.name));

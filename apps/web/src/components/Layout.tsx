@@ -51,6 +51,7 @@ import { BottomNavigation, bottomNavItems } from './BottomNavigation';
 import type { BoardSummaryResponse, TripListResponse } from '@/types/api';
 import { exitViewAs, getViewAs } from '@/lib/viewAs';
 import { NotificationsBell } from './NotificationsBell';
+import { roleLabel } from '@rvc/shared';
 
 /** Where a screen lives: the main menu, or one tap further under More / My profile / Admin. */
 export type NavSection = 'main' | 'more' | 'profile' | 'admin';
@@ -322,7 +323,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
           <div className="border-t border-slate-200 p-4 dark:border-slate-700">
             <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{user?.fullName}</p>
             <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user?.email}</p>
-            <p className="mt-1 text-xs font-medium capitalize text-[#EA0029]">{role}</p>
+            <p className="mt-1 text-xs font-medium capitalize text-[#EA0029]">{roleLabel(role)}</p>
             <button
               type="button"
               onClick={handleLogout}

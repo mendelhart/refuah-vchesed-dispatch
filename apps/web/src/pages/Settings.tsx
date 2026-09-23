@@ -19,6 +19,7 @@ import {
   ErrorState, ListSkeleton, PageHeader, cardClass, inputClass, labelClass, primaryButtonClass, secondaryButtonClass,
 } from '@/components/states';
 import type { MeStatusResponse, MuteResponse, SessionResponse } from '@/types/api';
+import { roleLabel } from '@rvc/shared';
 
 /**
  * How a volunteer wants to hear from us: App, SMS, WhatsApp or a phone call.
@@ -171,7 +172,7 @@ export function SettingsPage(): React.JSX.Element {
           </div>
           <div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Signed in as {user?.email} · {user?.role}
+              Signed in as {user?.email} · {roleLabel(user?.role)}
             </p>
           </div>
           <button type="submit" className={primaryButtonClass} disabled={saveProfile.isPending}>

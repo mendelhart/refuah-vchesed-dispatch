@@ -92,6 +92,13 @@
       "when": 1790129272987,
       "tag": "0012_voice_channel",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790129332987,
+      "tag": "0013_coordinator_cleanup",
+      "breakpoints": true
     }
   ]
 }

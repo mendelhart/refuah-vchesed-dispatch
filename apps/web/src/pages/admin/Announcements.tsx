@@ -14,7 +14,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { AlertTriangle, Megaphone, Users } from 'lucide-react';
-import { NOTIFICATION_CHANNELS, ROLES, type NotificationChannel, type Role } from '@rvc/shared';
+import { NOTIFICATION_CHANNELS, ROLES, type NotificationChannel, type Role, ROLE_LABELS_PLURAL } from '@rvc/shared';
 import { ApiError, api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
 import { formatDateTime, titleCase } from '@/lib/format';
@@ -286,7 +286,7 @@ export function AnnouncementsPage(): React.JSX.Element {
                     checked={roles.includes(role)}
                     onChange={() => setRoles((current) => toggle(current, role))}
                   />
-                  {titleCase(role)}
+                  {ROLE_LABELS_PLURAL[role]}
                 </label>
               </li>
             ))}

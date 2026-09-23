@@ -14,6 +14,17 @@
 export const ROLES = ['volunteer', 'dispatcher', 'admin'] as const;
 export type Role = (typeof ROLES)[number];
 
+/**
+ * What each role is called on screen. The stored value stays 'dispatcher' (it
+ * is in the database, the API and every permission check); the organisation
+ * calls these people coordinators, so that is the word users see.
+ */
+export const ROLE_LABELS: Record<Role, string> = { volunteer: 'Volunteer', dispatcher: 'Coordinator', admin: 'Admin' };
+export const ROLE_LABELS_PLURAL: Record<Role, string> = { volunteer: 'Volunteers', dispatcher: 'Coordinators', admin: 'Admins' };
+export function roleLabel(role: string | null | undefined): string {
+  return (role && ROLE_LABELS[role as Role]) || (role ?? '');
+}
+
 /** Roles that may act on the dispatcher board. */
 export const DISPATCH_ROLES: readonly Role[] = ['dispatcher', 'admin'];
 
@@ -146,7 +157,7 @@ export const TRIP_STATE_MACHINE: Readonly<Record<TripTransition, TransitionRule>
     to: 'assigned',
     roles: ['dispatcher', 'admin'],
     volunteerMustOwn: false,
-    description: 'Dispatcher assigns a named volunteer directly.',
+    description: 'A coordinator assigns a named volunteer directly.',
   },
   claim: {
     from: ['offered'],

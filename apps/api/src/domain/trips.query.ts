@@ -261,7 +261,7 @@ export async function listTrips(
 
   switch (args.scope) {
     case 'board': {
-      if (!dispatcher) throw Errors.forbidden('The dispatcher board is not available to volunteers.');
+      if (!dispatcher) throw Errors.forbidden('The dispatch board is not available to volunteers.');
       if (!args.status?.length) conditions.push(inArray(trips.status, [...OPEN_TRIP_STATUSES]));
       break;
     }

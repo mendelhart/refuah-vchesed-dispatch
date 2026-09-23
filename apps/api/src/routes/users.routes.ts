@@ -72,8 +72,12 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     return { users: await listUsers(user.role, q) };
   });
 
-  app.post('/api/users', { preHandler: requireAdmin }, async (req, reply) => {
+  // Coordinators (role 'dispatcher') may add volunteers; anything else is admin-only.
+  app.post('/api/users', { preHandler: requireDispatcher }, async (req, reply) => {
     const body = createUserSchema.parse(req.body);
+    if (currentUser(req).role !== 'admin' && body.role !== 'volunteer') {
+      throw Errors.forbidden('Only an admin can add coordinators or admins.');
+    }
     const { user, inviteUrl, invitedVia } = await createUser(actorFrom(req), body);
     reply.status(201);
     // The invite URL is returned to the admin so they can pass it on until
