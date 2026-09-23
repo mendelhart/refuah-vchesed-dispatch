@@ -12,6 +12,7 @@ import { qk } from '@/lib/query';
 import { useAuth } from '@/lib/auth';
 import { formatDateTime, relativeTime } from '@/lib/format';
 import { isFullTrip, type BoardSummaryResponse, type ImpactResponse, type TripListResponse } from '@/types/api';
+import { WelcomeCard } from '@/components/WelcomeCard';
 import { EmptyState, ErrorState, ListSkeleton, PageHeader, cardClass, primaryButtonClass } from '@/components/states';
 
 function DispatcherHome(): React.JSX.Element {
@@ -74,6 +75,7 @@ function DispatcherHome(): React.JSX.Element {
 }
 
 function VolunteerHome(): React.JSX.Element {
+  const { user } = useAuth();
   const available = useQuery({
     queryKey: qk.trips.list({ scope: 'available', limit: 10 }),
     queryFn: () => api.get<TripListResponse>('/api/trips', { scope: 'available', limit: 10 }),
@@ -104,6 +106,7 @@ function VolunteerHome(): React.JSX.Element {
 
   return (
     <div className="space-y-6">
+      {user ? <WelcomeCard userId={user.id} completedRides={impact.isError ? undefined : totals?.completed} /> : null}
       <section aria-label="Your stats" className="grid grid-cols-3 gap-3">
         {statTiles.map((tile) => (
           <div key={tile.label} className={`${cardClass} p-3`}>
