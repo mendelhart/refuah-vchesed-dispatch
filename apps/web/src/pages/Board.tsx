@@ -31,7 +31,6 @@ import { formatWeekdayTime, formatPhone } from '@/lib/format';
 import { isFullTrip, type BoardSummaryResponse, type TripListResponse, type UserListResponse } from '@/types/api';
 import { TripCard } from '@/components/TripCard';
 import { TripForm } from '@/components/TripForm';
-import { BackupDownload } from '@/components/BackupDownload';
 import { OperationalStatus } from '@/components/OperationalStatus';
 import { Modal } from '@/components/Modal';
 import { EmptyState, ErrorState, InlineSpinner, ListSkeleton, PageHeader, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '@/components/states';
@@ -256,7 +255,6 @@ export function BoardPage(): React.JSX.Element {
       />
 
       <OperationalStatus />
-      <BackupDownload />
       <BoardContextStrip />
 
       <button

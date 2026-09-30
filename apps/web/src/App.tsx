@@ -66,6 +66,7 @@ const AnnouncementsPage = React.lazy(() =>
 const DataFixesPage = React.lazy(() =>
   import('@/pages/admin/DataFixes').then((m) => ({ default: m.DataFixesPage })),
 );
+const BackupPage = React.lazy(() => import('@/pages/admin/Backup').then((m) => ({ default: m.BackupPage })));
 const ExportsPage = React.lazy(() =>
   import('@/pages/admin/Exports').then((m) => ({ default: m.ExportsPage })),
 );
@@ -410,6 +411,12 @@ export function App(): React.JSX.Element {
                 <DataFixesPage />
               </RequireRole>
             </Shell>
+          }
+        />
+        <Route
+          path="/admin/backup"
+          element={
+            <Shell><RequireRole roles={ADMIN}><BackupPage /></RequireRole></Shell>
           }
         />
         <Route

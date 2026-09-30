@@ -6,10 +6,12 @@ test.describe('approved admin fixes', () => {
   test('admin sees backup controls and private health status at phone width', async ({ page }) => {
     await page.goto('/board');
     await expect(page.getByLabel('System status')).toBeAttached();
+    await expect(page.getByLabel(/Encryption passphrase/)).toHaveCount(0);
+    await page.goto('/admin/backup');
     await page.getByText(/Backup needed: no full download/).click();
     await expect(page.getByLabel(/Encryption passphrase/)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Download encrypted full backup' })).toBeDisabled();
-    await page.screenshot({ path: 'screenshots/approved-admin-backup.png', fullPage: true });
+    await page.screenshot({ path: 'screenshots/approved-admin-backup-menu.png', fullPage: true });
   });
   test('admin can create a password reset link without sending it', async ({ page }) => {
     await page.goto('/admin/people');
