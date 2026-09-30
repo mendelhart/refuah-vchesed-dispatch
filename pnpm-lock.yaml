@@ -18,7 +18,7 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
       typescript-eslint:
-        specifier: ^8.24.0
+        specifier: ^8.70.1
         version: 8.70.1(eslint@9.39.5(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3)
 
 packages:
