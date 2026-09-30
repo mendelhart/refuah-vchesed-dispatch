@@ -13,6 +13,14 @@ describe('job queue reliability', () => {
 
   const job = async (id: string) => (await db.select().from(jobs).where(eq(jobs.id, id)))[0]!;
 
+  it('returns a claimed wake batch in due-time order, not UPDATE RETURNING order', async () => {
+    const now = Date.now();
+    const later = await enqueue('cleanup.sessions', {}, { runAt: new Date(now - 1000) });
+    const earliest = await enqueue('cleanup.tokens', {}, { runAt: new Date(now - 3000) });
+    const middle = await enqueue('cleanup.retention', {}, { runAt: new Date(now - 2000) });
+    expect((await claimJobs('ordered', 3)).map((row) => row.id)).toEqual([earliest, middle, later]);
+  });
+
   it('two workers claiming at once never get the same job', async () => {
     for (let i = 0; i < 20; i += 1) await enqueue('cleanup.sessions', { i });
     const [a, b] = await Promise.all([claimJobs('w-a', 15), claimJobs('w-b', 15)]);
