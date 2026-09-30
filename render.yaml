@@ -161,6 +161,17 @@ services:
       - key: PUBLIC_SIGNUP_ENABLED
         value: 'false'
 
+      # Approved private operational check. Does not replace any existing key.
+      - key: HEALTH_CHECK_TOKEN
+        generateValue: true
+
+      # Remains disabled until the owner approves all three periods.
+      - key: PERSONAL_RETENTION_ENABLED
+        value: 'false'
+
+      - key: DATABASE_EXPIRES_AT
+        value: '2026-10-22'
+
       - key: LOG_LEVEL
         value: info
 

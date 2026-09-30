@@ -477,6 +477,10 @@ export function TripForm({
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {!trip && <label className="flex min-h-11 items-center gap-2 text-sm">
+            <input type="checkbox" checked={form.isTest} onChange={(event) => setForm({ ...form, isTest: event.target.checked })} />
+            Test ride (excluded from stats and health warnings)
+          </label>}
           <div>
             <label htmlFor="trip-type" className={labelClass}>
               Trip type

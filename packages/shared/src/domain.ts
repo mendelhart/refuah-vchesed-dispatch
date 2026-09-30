@@ -288,6 +288,7 @@ export const NOTIFICATION_EVENTS = [
   'equipment.due_reminder',
   'equipment.overdue',
   'equipment.returned',
+  'system.health_alert',
   'announcement.broadcast',
   'duty.shift_reminder',
   'sms.reply_received',

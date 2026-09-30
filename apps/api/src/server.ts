@@ -5,6 +5,7 @@ import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import { DatabaseRateLimitStore } from './lib/rate-limit-store.js';
 import { ZodError } from 'zod';
 import { env, isProd } from './env.js';
 import { logger } from './lib/logger.js';
@@ -49,6 +50,8 @@ export async function buildServer(): Promise<FastifyInstance> {
 
   await app.register(rateLimit, {
     global: true,
+    store: DatabaseRateLimitStore,
+    skipOnError: false,
     max: 300,
     timeWindow: '1 minute',
     keyGenerator: (req) => req.user?.id ?? req.ip,

@@ -91,6 +91,9 @@ RUN --mount=type=cache,target=/root/.npm \
 # =============================================================================
 FROM base AS runtime
 
+# Admin full-backup download needs a PostgreSQL client, not a new service.
+RUN apk add --no-cache postgresql-client
+
 ENV NODE_ENV=production \
     PORT=8080 \
     HOST=0.0.0.0 \

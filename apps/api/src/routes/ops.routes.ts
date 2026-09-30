@@ -195,13 +195,12 @@ export async function opsRoutes(app: FastifyInstance): Promise<void> {
     return sendAnnouncement(actorFrom(req), id, body.confirmRecipientCount);
   });
 
-  // Public on purpose: SMS, WhatsApp and email recipients open this link
-  // without signing in. The id is a random UUID and only a picture is served.
-  app.get('/api/announcements/:id/image', async (req, reply) => {
+  // Pictures are private: recipients must sign in before opening the link.
+  app.get('/api/announcements/:id/image', { preHandler: requireAuth }, async (req, reply) => {
     const { id } = idParam.parse(req.params);
     const image = await getAnnouncementImage(id);
     if (!image) throw Errors.notFound('Picture');
-    reply.header('Content-Type', image.mime).header('Cache-Control', 'public, max-age=604800, immutable');
+    reply.header('Content-Type', image.mime).header('Cache-Control', 'private, no-store');
     return reply.send(image.bytes);
   });
 

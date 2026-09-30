@@ -21,7 +21,7 @@ export async function volunteerImpact(userId: string, limit = 50) {
       where ${trips.status} in ('assigned','accepted','en_route','in_progress')
     )::int`,
     firstAt: raw<string | null>`min(${trips.completedAt})`,
-  }).from(trips).where(eq(trips.assignedVolunteerId, userId));
+  }).from(trips).where(and(eq(trips.isTest, false), eq(trips.assignedVolunteerId, userId)));
 
   const recent = await db.select({
     id: trips.id, reference: trips.reference, status: trips.status,
@@ -61,19 +61,19 @@ export async function organizationImpact() {
       count(distinct assigned_volunteer_id) filter (where status = 'completed' and completed_at >= now() - interval '30 days')::int as volunteers_last_30_days,
       count(distinct coalesce(caller_id::text, caller_phone)) filter (where status = 'completed')::int as people_helped,
       min(completed_at) as first_at
-    from trips where deleted_at is null
+    from trips where is_test = false and deleted_at is null
   `)) as unknown as Array<Record<string, number | string | null>>;
 
   const byType = (await db.execute(raw`
     select trip_type, count(*)::int as n from trips
-     where deleted_at is null and status = 'completed'
+     where is_test = false and deleted_at is null and status = 'completed'
      group by trip_type order by n desc
   `)) as unknown as Array<{ trip_type: string; n: number }>;
 
   const byMonth = (await db.execute(raw`
     select to_char(date_trunc('month', completed_at at time zone 'America/Toronto'), 'YYYY-MM') as month, count(*)::int as n
       from trips
-     where deleted_at is null and status = 'completed'
+     where is_test = false and deleted_at is null and status = 'completed'
        and completed_at >= date_trunc('month', now() at time zone 'America/Toronto') - interval '11 months'
      group by 1 order by 1
   `)) as unknown as Array<{ month: string; n: number }>;

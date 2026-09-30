@@ -275,6 +275,7 @@ export const trips = pgTable(
      * a sequence — never a 4-digit random value, and never used for authorisation.
      */
     reference: text('reference').notNull(),
+    isTest: boolean('is_test').notNull().default(false),
 
     status: text('status').notNull().default('pending'),
     priority: text('priority').notNull().default('routine'),

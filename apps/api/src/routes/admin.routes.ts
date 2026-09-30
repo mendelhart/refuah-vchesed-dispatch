@@ -1,3 +1,6 @@
+import { encryptedFullBackup } from '../domain/backup.service.js';
+import { runHealthChecks } from '../lib/health-checks.js';
+import { env } from '../env.js';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { and, desc, eq, gte, sql as raw } from 'drizzle-orm';
@@ -12,6 +15,26 @@ import { recordAudit } from '../lib/audit.js';
 import { Errors } from '../lib/errors.js';
 
 export async function adminRoutes(app: FastifyInstance): Promise<void> {
+  app.get('/api/admin/health', { preHandler: requireAdmin }, async () => ({
+    ...await runHealthChecks(), databaseExpiresAt: env.DATABASE_EXPIRES_AT ?? null,
+  }));
+
+  app.get('/api/admin/backup/status', { preHandler: requireAdmin }, async () => {
+    const [last] = await db.select({ at: auditEvents.occurredAt }).from(auditEvents)
+      .where(eq(auditEvents.action, 'backup.downloaded')).orderBy(desc(auditEvents.occurredAt)).limit(1);
+    return { lastDownloadedAt: last?.at ?? null, overdue: !last || Date.now() - last.at.getTime() > 7 * 86_400_000 };
+  });
+
+  app.post('/api/admin/backup/download', { preHandler: requireAdmin,
+    config: { rateLimit: { max: 2, timeWindow: '1 hour' } } }, async (req, reply) => {
+    const { passphrase } = z.object({ passphrase: z.string().min(16).max(200) }).parse(req.body);
+    const bytes = await encryptedFullBackup(passphrase);
+    await recordAudit({ actor: actorFrom(req), action: 'backup.downloaded', entityType: 'database', entityId: 'full' });
+    reply.header('Cache-Control', 'no-store').header('Content-Type', 'application/octet-stream')
+      .header('Content-Disposition', `attachment; filename="rvc-${new Date().toISOString().slice(0, 10)}.rvc"`);
+    return reply.send(bytes);
+  });
+
   /** Audit search. Read-only by construction: the table rejects writes. */
   app.get('/api/audit', { preHandler: requireDispatcher }, async (req) => {
     const q = z.object({

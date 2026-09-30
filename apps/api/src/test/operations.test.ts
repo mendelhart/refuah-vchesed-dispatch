@@ -401,7 +401,7 @@ describe('operations: roster, equipment, exports, broadcasts, calendar', () => {
     expect(res.status).toBe(403);
   });
 
-  it('sends a picture as a public link, on each person\'s preferred channel when none is ticked', async () => {
+  it('sends a picture as a sign-in-only link, on each person\'s preferred channel when none is ticked', async () => {
     const one = await createTestUser({ role: 'volunteer' });
     const pixel = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
     const draft = await api('POST', '/api/announcements', {
@@ -416,7 +416,8 @@ describe('operations: roster, equipment, exports, broadcasts, calendar', () => {
     await drainJobs();
     const text = captured.sms.find((m) => m.to === one.phone);
     expect(text?.body).toMatch(new RegExp(`/api/announcements/${id}/image`));
-    const image = await api('GET', `/api/announcements/${id}/image`);
+    expect((await api('GET', `/api/announcements/${id}/image`)).status).toBe(401);
+    const image = await api('GET', `/api/announcements/${id}/image`, { cookie: admin.cookie });
     expect(image.status).toBe(200);
   });
 

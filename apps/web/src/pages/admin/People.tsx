@@ -1,3 +1,4 @@
+import { useConfirmation } from '@/components/useConfirmation';
 /**
  * People: the roster an administrator maintains. Invites come back as a link
  * the admin passes on by hand until transactional email is wired up, which is
@@ -22,6 +23,7 @@ import { AddPersonModal, channelLabel } from '@/components/AddPersonModal';
 import { PhotoButton } from '@/components/PhotoButton';
 
 export function PeoplePage(): React.JSX.Element {
+  const confirmation = useConfirmation();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
@@ -70,6 +72,12 @@ export function PeoplePage(): React.JSX.Element {
     onError: (error: unknown) => toast.error(errorMessage(error)),
   });
 
+  const resetPassword = useMutation({
+    mutationFn: (id: string) => api.post<{ resetUrl: string }>(`/api/users/${id}/password-reset`, {}),
+    onSuccess: (data) => { setInviteUrl(data.resetUrl); setInvitedVia([]); toast.success('Password-reset link created. It expires in one hour.'); },
+    onError: (error: unknown) => toast.error(errorMessage(error)),
+  });
+
   const resetMfa = useMutation({
     mutationFn: (id: string) => api.post(`/api/users/${id}/mfa/reset`, {}),
     onSuccess: () => toast.success('Two-step sign-in reset. They set it up again at their next sign-in.'),
@@ -78,6 +86,7 @@ export function PeoplePage(): React.JSX.Element {
 
   return (
     <div className="space-y-6">
+      {confirmation.dialog}
       <PageHeader
         title="People"
         subtitle="Volunteers, coordinators and admins"
@@ -94,7 +103,7 @@ export function PeoplePage(): React.JSX.Element {
           <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
             {invitedVia.length
               ? `Invite sent by ${invitedVia.map(channelLabel).join(' and ')}. You can also pass on this link yourself - it expires in a week.`
-              : 'Send this set-up link to them - it expires in a week.'}
+              : inviteUrl.includes('/reset-password') ? 'Send this password-reset link to them - it expires in one hour.' : 'Send this set-up link to them - it expires in a week.'}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <code className="min-w-0 flex-1 break-all rounded bg-white px-2 py-1 text-xs dark:bg-slate-900">{inviteUrl}</code>
@@ -111,6 +120,11 @@ export function PeoplePage(): React.JSX.Element {
               <Copy className="h-4 w-4" aria-hidden="true" />
               Copy
             </button>
+            <a className={secondaryButtonClass} href={`sms:?body=${encodeURIComponent(inviteUrl)}`}>Text</a>
+            <button type="button" className={secondaryButtonClass} onClick={() => {
+              if (navigator.share) void navigator.share({ text: inviteUrl }).catch(() => {});
+              else toast.info('Copy the link and paste it in WhatsApp.');
+            }}>WhatsApp / Share</button>
             <button type="button" className={secondaryButtonClass} onClick={() => { setInviteUrl(null); setInvitedVia([]); }}>
               Done
             </button>
@@ -185,13 +199,14 @@ export function PeoplePage(): React.JSX.Element {
                 <button type="button" className={secondaryButtonClass} onClick={() => resendInvite.mutate(person.id)}>
                   Invite link
                 </button>
+                <button type="button" className={secondaryButtonClass} onClick={() => resetPassword.mutate(person.id)}>Reset password</button>
                 {person.role !== 'volunteer' ? (
                   <button
                     type="button"
                     className={secondaryButtonClass}
                     title="Lost phone: clear their authenticator. They are signed out and set it up again."
                     onClick={() => {
-                      if (window.confirm(`Reset two-step sign-in for ${person.fullName}? They will be signed out and set up a new authenticator at next sign-in.`)) resetMfa.mutate(person.id);
+                      confirmation.ask({ title: `Reset two-step sign-in for ${person.fullName}?`, action: () => resetMfa.mutate(person.id) });
                     }}
                   >
                     Reset 2-step
@@ -212,8 +227,7 @@ export function PeoplePage(): React.JSX.Element {
                     type="button"
                     className={secondaryButtonClass}
                     onClick={() => {
-                      const reason = window.prompt(`Why is ${person.fullName} being deactivated?`);
-                      if (reason) deactivate.mutate({ id: person.id, reason });
+                      confirmation.ask({ title: `Deactivate ${person.fullName}?`, reason: true, action: (reason) => deactivate.mutate({ id: person.id, reason }) });
                     }}
                   >
                     Deactivate

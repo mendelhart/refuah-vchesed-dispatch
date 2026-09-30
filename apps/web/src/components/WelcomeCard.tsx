@@ -9,6 +9,7 @@ import { cardClass } from '@/components/states';
  * nothing to store on the server.
  */
 const STEPS = [
+  { to: '/my-trips', icon: ListChecks, title: 'Open a ride offer and accept', hint: 'Read the pickup and time first. The first volunteer to accept gets the ride.' },
   { to: '/my-availability', icon: CalendarRange, title: 'Tell us when you are free', hint: 'We only ask you at those times.' },
   { to: '/my-profile', icon: ListChecks, title: 'Say what you can help with', hint: 'Rides, deliveries, your car and how many seats.' },
   { to: '/my-id-card', icon: IdCard, title: 'Add a photo to your ID card', hint: 'Hospital desks use it to check who you are.' },
@@ -43,7 +44,7 @@ export function WelcomeCard({ userId, completedRides }: { userId: string; comple
       <div className="p-5 md:p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Welcome! Three quick steps</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Welcome! Start here</h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
               When a ride comes up that fits you, we send it to you. Tap it to see the details and say yes if you can.
               The first volunteer to say yes gets it, and the office can see who took it.

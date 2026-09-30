@@ -40,6 +40,7 @@ export interface AddressDto {
 
 /** What a dispatcher sees. */
 export interface TripDto {
+  isTest?: boolean;
   id: string;
   reference: string;
   status: TripStatus;

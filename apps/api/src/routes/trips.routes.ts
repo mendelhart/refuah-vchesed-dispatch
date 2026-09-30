@@ -83,6 +83,7 @@ export async function tripRoutes(app: FastifyInstance): Promise<void> {
   app.post('/api/trips', { preHandler: requireDispatcher }, async (req, reply) => {
     const body = createTripSchema.parse(req.body);
     const trip = await createTrip(tripActor(req), {
+      isTest: body.isTest,
       callerId: body.callerId ?? null,
       callerName: body.callerName ?? null,
       callerPhone: body.callerPhone ?? null,

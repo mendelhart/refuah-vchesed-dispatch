@@ -61,7 +61,7 @@ export async function claimJobs(workerId: string, limit: number): Promise<Claime
     with claimed as (
       select id from jobs
       where status = 'pending' and run_at <= now()
-      order by run_at
+      order by run_at, id
       for update skip locked
       limit ${limit}
     )

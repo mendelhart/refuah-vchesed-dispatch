@@ -1,3 +1,4 @@
+import { useConfirmation } from '@/components/useConfirmation';
 /**
  * The duty roster: who is answering the phone.
  *
@@ -82,6 +83,7 @@ function toLocalInput(date: Date): string {
 }
 
 export function DutyPage(): React.JSX.Element {
+  const confirmation = useConfirmation();
   const queryClient = useQueryClient();
   const { hasRole } = useAuth();
   const canEdit = hasRole(['dispatcher', 'admin']);
@@ -159,6 +161,7 @@ export function DutyPage(): React.JSX.Element {
 
   return (
     <div className="space-y-6">
+      {confirmation.dialog}
       <PageHeader
         title="Duty roster"
         subtitle="Who is on the phone, and when"
@@ -307,7 +310,7 @@ export function DutyPage(): React.JSX.Element {
                           className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-xs font-medium text-slate-600 hover:text-[#EA0029] dark:text-slate-400"
                           disabled={remove.isPending}
                           onClick={() => {
-                            if (window.confirm(`Take ${shift.fullName} off this shift?`)) remove.mutate(shift.id);
+                            confirmation.ask({ title: `Take ${shift.fullName} off this shift?`, action: () => remove.mutate(shift.id) });
                           }}
                         >
                           <Trash2 className="h-3 w-3" aria-hidden="true" />

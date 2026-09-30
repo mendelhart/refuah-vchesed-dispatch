@@ -18,7 +18,6 @@ import {
   LayoutDashboard,
   Menu,
   MessageSquare,
-  Settings as SettingsIcon,
 } from 'lucide-react';
 import type { Role } from '@rvc/shared';
 import { cn } from '@/lib/utils';
@@ -54,7 +53,7 @@ export function bottomNavItems(
       showMyRides
         ? withBadge({ to: '/my-trips', label: 'My rides', icon: Car }, badges.myTrips)
         : { to: '/contacts', label: 'Contacts', icon: BookUser },
-      { to: '/settings', label: 'Settings', icon: SettingsIcon },
+      { to: '/more', label: 'More', icon: Menu },
     ];
   }
 

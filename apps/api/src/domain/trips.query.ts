@@ -33,6 +33,7 @@ const dropoff = aliasedTable(addresses, 'dropoff');
 const assignee = aliasedTable(users, 'assignee');
 
 const baseSelection = {
+  isTest: trips.isTest,
   id: trips.id,
   reference: trips.reference,
   status: trips.status,
@@ -109,6 +110,7 @@ function toDto(r: Row): TripDto {
     OPEN_TRIP_STATUSES.includes(status) && pickupAt.getTime() < Date.now() - 15 * 60_000;
 
   return {
+    isTest: Boolean(r.isTest),
     id: r.id as string,
     reference: r.reference as string,
     status,
@@ -383,7 +385,7 @@ export async function boardSummary(user: AuthenticatedUser): Promise<BoardSummar
       unanswered: raw<number>`count(*) filter (where ${trips.status} = 'offered' and ${trips.escalatedAt} is not null)::int`,
     })
     .from(trips)
-    .where(and(isNull(trips.deletedAt), inArray(trips.status, [...OPEN_TRIP_STATUSES])));
+    .where(and(eq(trips.isTest, false), isNull(trips.deletedAt), inArray(trips.status, [...OPEN_TRIP_STATUSES])));
   return (
     row ?? { needsAttention: 0, offered: 0, assigned: 0, inProgress: 0, overdue: 0, unanswered: 0 }
   );

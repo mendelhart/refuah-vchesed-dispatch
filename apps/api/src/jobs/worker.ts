@@ -22,14 +22,27 @@ export class Worker {
   private timer: NodeJS.Timeout | null = null;
   private housekeeping: NodeJS.Timeout | null = null;
   private running = false;
+  private starting = false;
   private stopping = false;
 
   start(): void {
-    if (this.timer) return;
+    if (this.timer || this.starting) return;
+    this.starting = true;
     logger.info({ worker: this.id }, 'background worker started');
-    this.timer = setInterval(() => void this.tick(), env.WORKER_POLL_MS);
-    this.housekeeping = setInterval(() => void this.runHousekeeping(), 5 * 60_000);
-    void this.runHousekeeping();
+    this.stopping = false;
+    // Do not race normal polling with the ordered boot catch-up.
+    void this.catchUp().finally(() => {
+      this.starting = false;
+      if (this.stopping) return;
+      this.timer = setInterval(() => void this.tick(), env.WORKER_POLL_MS);
+      this.housekeeping = setInterval(() => void this.runHousekeeping(), 5 * 60_000);
+    });
+  }
+
+  /** Reclaim stale work and drain due jobs immediately after boot, not after the first timer. */
+  async catchUp(): Promise<number> {
+    await this.runHousekeeping();
+    return this.drain(100, true);
   }
 
   async stop(): Promise<void> {
@@ -44,24 +57,24 @@ export class Worker {
   }
 
   /** Exposed for tests: drain the queue synchronously instead of waiting. */
-  async drain(maxPasses = 20): Promise<number> {
+  async drain(maxPasses = 20, sequential = false): Promise<number> {
     let processed = 0;
     for (let i = 0; i < maxPasses; i += 1) {
-      const n = await this.tick();
+      const n = await this.tick(sequential);
       processed += n;
       if (n === 0) break;
     }
     return processed;
   }
 
-  private async tick(): Promise<number> {
+  private async tick(sequential = false): Promise<number> {
     if (this.running || this.stopping) return 0;
     this.running = true;
     workerHeartbeat.lastTickAt = new Date();
     try {
       const jobs = await claimJobs(this.id, env.WORKER_CONCURRENCY);
       if (jobs.length === 0) return 0;
-      await Promise.all(jobs.map(async (job) => {
+      const handle = async (job: (typeof jobs)[number]): Promise<void> => {
         const handler = handlers[job.kind];
         if (!handler) {
           await failJob(job.id, new Error(`no handler for ${job.kind}`), job.maxAttempts, job.maxAttempts, this.id);
@@ -77,7 +90,9 @@ export class Worker {
             captureException(err, { source: 'job.dead', kind: job.kind, jobId: job.id, attempts: job.attempts });
           }
         }
-      }));
+      };
+      if (sequential) { for (const job of jobs) await handle(job); }
+      else await Promise.all(jobs.map(handle));
       return jobs.length;
     } catch (err) {
       captureException(err, { source: 'worker.tick' });

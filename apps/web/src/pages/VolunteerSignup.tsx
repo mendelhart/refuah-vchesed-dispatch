@@ -1,3 +1,4 @@
+import { DAY_NAMES,DAY_PARTS,EMPTY_FORM,buildAvailability,toggle,type FormState } from './signup-model';
 /**
  * Public volunteer signup. No session, no Layout, no navigation.
  *
@@ -12,36 +13,21 @@
  * was open — the server rejects anything under three seconds. Both are the
  * page's own bookkeeping and neither is ever shown to the applicant.
  */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, HeartHandshake } from 'lucide-react';
-import { VOLUNTEER_CAPABILITIES, type VolunteerCapability } from '@rvc/shared';
-import { api, errorMessage } from '@/lib/api';
-import { qk } from '@/lib/query';
 import {
-  ErrorState, ListSkeleton, inputClass, labelClass, primaryButtonClass, secondaryButtonClass,
+ErrorState,ListSkeleton,inputClass,labelClass,primaryButtonClass,secondaryButtonClass,
 } from '@/components/states';
+import { api,errorMessage } from '@/lib/api';
+import { qk } from '@/lib/query';
+import { VOLUNTEER_CAPABILITIES,type VolunteerCapability } from '@rvc/shared';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import { AlertTriangle,ArrowLeft,ArrowRight,Check,HeartHandshake } from 'lucide-react';
+import React,{ useEffect,useMemo,useRef,useState } from 'react';
 
 interface SignupOptions {
   services: { slug: string; name: string; description: string | null }[];
   groups: { slug: string; name: string }[];
   consent: { version: string; text: string };
 }
-
-interface AvailabilityWindow {
-  weekday: number;
-  startMinute: number;
-  endMinute: number;
-}
-
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
-
-/** Rough day parts, so the question can be answered with a thumb in a queue. */
-const DAY_PARTS = [
-  { key: 'morning', label: 'Morning', startMinute: 8 * 60, endMinute: 12 * 60 },
-  { key: 'afternoon', label: 'Afternoon', startMinute: 12 * 60, endMinute: 17 * 60 },
-  { key: 'evening', label: 'Evening', startMinute: 17 * 60, endMinute: 22 * 60 },
-] as const;
 
 const CAPABILITY_LABELS: Record<VolunteerCapability, string> = {
   wheelchair: 'A folding wheelchair',
@@ -60,84 +46,6 @@ const CONTACT_OPTIONS = [
 ] as const;
 
 const STEPS = ['Who you are', 'What you can help with', 'When you are around', 'Confirm'] as const;
-
-interface FormState {
-  fullName: string;
-  email: string;
-  phone: string;
-  addressLine: string;
-  city: string;
-  postalCode: string;
-  serviceArea: string;
-  requestedServices: string[];
-  requestedGroups: string[];
-  capabilities: VolunteerCapability[];
-  hasVehicle: boolean;
-  vehicleType: string;
-  vehicleSeats: string;
-  availabilityNote: string;
-  availabilityParts: string[];
-  languages: string[];
-  otherLanguage: string;
-  referredBy: string;
-  notes: string;
-  notificationPreference: string;
-  consentContact: boolean;
-  consentBackgroundCheck: boolean;
-  website: string;
-}
-
-const EMPTY_FORM: FormState = {
-  fullName: '',
-  email: '',
-  phone: '',
-  addressLine: '',
-  city: '',
-  postalCode: '',
-  serviceArea: '',
-  requestedServices: [],
-  requestedGroups: [],
-  capabilities: [],
-  hasVehicle: true,
-  vehicleType: '',
-  vehicleSeats: '',
-  availabilityNote: '',
-  availabilityParts: [],
-  languages: [],
-  otherLanguage: '',
-  referredBy: '',
-  notes: '',
-  notificationPreference: 'sms',
-  consentContact: false,
-  consentBackgroundCheck: false,
-  website: '',
-};
-
-/** Contiguous day parts become one window, so a full day is one row not three. */
-function buildAvailability(parts: string[]): AvailabilityWindow[] {
-  const windows: AvailabilityWindow[] = [];
-  for (let weekday = 0; weekday < DAY_NAMES.length; weekday += 1) {
-    let open: AvailabilityWindow | null = null;
-    for (const part of DAY_PARTS) {
-      if (!parts.includes(`${weekday}:${part.key}`)) {
-        if (open) windows.push(open);
-        open = null;
-        continue;
-      }
-      if (open && open.endMinute === part.startMinute) open.endMinute = part.endMinute;
-      else {
-        if (open) windows.push(open);
-        open = { weekday, startMinute: part.startMinute, endMinute: part.endMinute };
-      }
-    }
-    if (open) windows.push(open);
-  }
-  return windows;
-}
-
-function toggle<T>(list: T[], value: T): T[] {
-  return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
-}
 
 export function VolunteerSignupPage(): React.JSX.Element {
   const mountedAt = useRef(Date.now());

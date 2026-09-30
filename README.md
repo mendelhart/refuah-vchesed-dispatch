@@ -354,3 +354,7 @@ Things that are deliberately not finished, so nobody discovers them at 2am:
 
 These are tracked in the code with the same wording. Fix them, then delete the
 bullet.
+
+## Role naming
+
+The internal `dispatcher` role is labeled Coordinator in the app. Coordinators manage volunteers; only admins manage coordinators and admins.

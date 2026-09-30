@@ -1,3 +1,4 @@
+import { cleanupPersonalRetention } from '../../domain/personal-retention.service.js';
 import type { JobKind } from '@rvc/shared';
 import { deliverNotification } from '../../services/notification.service.js';
 import { materialiseDueRides, offerDueRecurringTrips } from '../../domain/recurring.service.js';
@@ -56,6 +57,7 @@ export const handlers: Record<JobKind, JobHandler> = {
     logger.info({ purged: n }, 'expired sessions purged');
   },
   'cleanup.tokens': async () => {
+    await db.execute(raw`delete from rate_limit_buckets where expires_at < now() - interval '1 day'`);
     await db.delete(authTokens).where(raw`expires_at < now() - interval '7 days'`);
   },
   /**
@@ -64,6 +66,7 @@ export const handlers: Record<JobKind, JobHandler> = {
    * and is aged out on a configurable window (see docs/SECURITY.md).
    */
   'cleanup.retention': async () => {
+    await cleanupPersonalRetention();
     const [notifDays, smsDays, callDays] = await Promise.all([
       getNumberSetting(SETTING_KEYS.notificationRetentionDays),
       getNumberSetting(SETTING_KEYS.smsEventRetentionDays),

@@ -258,6 +258,7 @@ async function rememberCallerAddress(
 // ---------------------------------------------------------------------------
 
 export interface CreateTripArgs {
+  isTest?: boolean;
   /** Existing directory entry, when the dispatcher picked a repeat caller. */
   callerId?: string | null;
   callerName?: string | null;
@@ -302,6 +303,7 @@ export async function createTrip(actor: TripActor, args: CreateTripArgs, exec?: 
       .insert(trips)
       .values({
         reference,
+        isTest: args.isTest ?? false,
         status: 'pending',
         priority: args.priority,
         tripType: args.tripType,

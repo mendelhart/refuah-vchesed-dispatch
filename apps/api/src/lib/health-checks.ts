@@ -12,8 +12,10 @@
  * failing check to the error aggregator (Sentry when SENTRY_DSN is set), at
  * most once an hour per check.
  */
-import { sql as raw } from 'drizzle-orm';
+import { and, eq, isNull, sql as raw } from 'drizzle-orm';
 import { db } from '../db/client.js';
+import { users } from '../db/schema.js';
+import { notify } from '../services/notification.service.js';
 import { env } from '../env.js';
 import { objectStore } from '../services/providers/index.js';
 import { captureMessage } from './monitoring.js';
@@ -87,7 +89,7 @@ export async function runHealthChecks(now = new Date()): Promise<{ status: 'ok' 
   add({ name: 'webhook_signature_failures_1h', ok: badSigs < THRESHOLDS.signatureFailures1h, severity: 'warning',
     value: badSigs, detail: 'inbound webhooks rejected for a bad signature in the last hour' });
 
-  const overdue = await count(raw`select count(*) as n from trips where status in ('new', 'pending', 'offered')
+  const overdue = await count(raw`select count(*) as n from trips where is_test = false and status in ('new', 'pending', 'offered')
     and pickup_at < ${new Date(now.getTime() + THRESHOLDS.overdueUnassignedMinutes * 60_000).toISOString()}::timestamptz
     and pickup_at > ${new Date(now.getTime() - 6 * 3_600_000).toISOString()}::timestamptz`);
   add({ name: 'trips_unassigned_near_pickup', ok: overdue === 0, severity: 'warning', value: overdue,
@@ -117,6 +119,17 @@ export async function alertOnFailingChecks(now = new Date()): Promise<string[]> 
     if (prev && now.getTime() - prev < 3_600_000) continue;
     lastAlerted.set(c.name, now.getTime());
     captureMessage(`health check failing: ${c.name}`, { check: c });
+    // Exactly push + in-app: never silently add SMS, WhatsApp or calls.
+    try {
+      const admins = await db.select({ id: users.id }).from(users).where(and(eq(users.role, 'admin'), eq(users.status, 'active'), isNull(users.deletedAt)));
+      for (const admin of admins) {
+        await notify({ userId: admin.id, event: 'system.health_alert', title: 'Dispatch needs attention',
+          body: `${c.name}: ${c.detail}`, forceChannels: ['push', 'inapp'], exactChannels: true });
+      }
+    } catch {
+      // A database outage prevents persisted alerts. The Board polls independently;
+      // the aggregator/log still records the failure. Do not claim a push was sent.
+    }
     fired.push(c.name);
   }
   return fired;

@@ -1,3 +1,4 @@
+import { useConfirmation } from '@/components/useConfirmation';
 /**
  * The repeat-caller directory.
  *
@@ -159,6 +160,7 @@ function CallerListButton({
 }
 
 export function CallersPage({ initialCallerId = null }: { initialCallerId?: string | null } = {}): React.JSX.Element {
+  const confirmation = useConfirmation();
   const queryClient = useQueryClient();
 
   const [term, setTerm] = useState('');
@@ -284,6 +286,7 @@ export function CallersPage({ initialCallerId = null }: { initialCallerId?: stri
 
   return (
     <div className="space-y-6">
+      {confirmation.dialog}
       <PageHeader
         title="Patients"
         subtitle="Everyone we drive: numbers, addresses, how to get in"
@@ -411,7 +414,7 @@ export function CallersPage({ initialCallerId = null }: { initialCallerId?: stri
                       disabled={removeCaller.isPending}
                       onClick={() => {
                         const c = profile.data.caller;
-                        if (window.confirm(`Delete ${c.name} from Contacts? Past trips keep their details.`)) removeCaller.mutate(c.id);
+                        confirmation.ask({ title: `Delete ${c.name} from Contacts? Past trips keep their details.`, action: () => removeCaller.mutate(c.id) });
                       }}
                     >
                       <Trash2 className="h-4 w-4" aria-hidden="true" />
@@ -520,7 +523,7 @@ export function CallersPage({ initialCallerId = null }: { initialCallerId?: stri
                           aria-label={`Remove ${row.address.line1}`}
                           className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
                           onClick={() => {
-                            if (window.confirm(`Remove ${row.address.line1} from this caller?`)) removeAddress.mutate(row.id);
+                            confirmation.ask({ title: `Remove ${row.address.line1} from this caller?`, action: () => removeAddress.mutate(row.id) });
                           }}
                         >
                           <Trash2 className="h-4 w-4" aria-hidden="true" />

@@ -197,6 +197,16 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     return { user: { id: updated.id, fullName: updated.fullName, status: updated.status } };
   });
 
+  app.post('/api/users/:id/password-reset', { preHandler: requireAdmin }, async (req, reply) => {
+    const { id } = idParam.parse(req.params);
+    const [person] = await db.select({ id: users.id }).from(users).where(and(eq(users.id, id), isNull(users.deletedAt))).limit(1);
+    if (!person) throw Errors.notFound('Person');
+    const { url } = await issueAuthToken(id, 'password_reset', 60);
+    await recordAudit({ actor: actorFrom(req), action: 'auth.reset_link_created', entityType: 'user', entityId: id });
+    reply.header('Cache-Control', 'no-store');
+    return { resetUrl: url };
+  });
+
   // Lost phone: clear someone's authenticator so they set it up again at next sign-in.
   app.post('/api/users/:id/mfa/reset', { preHandler: requireAdmin }, async (req) => {
     const { id } = idParam.parse(req.params);

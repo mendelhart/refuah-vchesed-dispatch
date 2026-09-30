@@ -1,3 +1,5 @@
+import { FILTERS, HOSPITAL_ROLE, type Filter } from './contacts-model';
+import { useConfirmation } from '@/components/useConfirmation';
 /**
  * Contacts — the numbers dispatch calls that are not a caller or a volunteer
  * (clinics, hospital desks, the on-call rav). Calls are placed through the
@@ -25,16 +27,8 @@ import {
 import type { ContactRow, ContactsResponse, StartCallResponse } from '@/types/api';
 import { formatPhone } from '@/lib/format';
 
-const HOSPITAL_ROLE = 'Hospital';
-type Filter = 'all' | 'hospitals' | 'other';
-
-const FILTERS: { value: Filter; label: string }[] = [
-  { value: 'hospitals', label: 'Hospitals' },
-  { value: 'other', label: 'Other services' },
-  { value: 'all', label: 'All' },
-];
-
 export function ContactsPage(): React.JSX.Element {
+  const confirmation = useConfirmation();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>('hospitals');
@@ -116,6 +110,7 @@ export function ContactsPage(): React.JSX.Element {
 
   return (
     <div className="space-y-6">
+      {confirmation.dialog}
       <PageHeader
         title="Hospitals"
         subtitle="Hospitals, clinics and other numbers dispatch calls"
@@ -195,7 +190,7 @@ export function ContactsPage(): React.JSX.Element {
                   aria-label={`Remove ${contact.name}`}
                   className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
                   onClick={() => {
-                    if (window.confirm(`Remove ${contact.name} from contacts?`)) remove.mutate(contact.id);
+                    confirmation.ask({ title: `Remove ${contact.name} from contacts?`, action: () => remove.mutate(contact.id) });
                   }}
                 >
                   <Trash2 className="h-4 w-4" aria-hidden="true" />

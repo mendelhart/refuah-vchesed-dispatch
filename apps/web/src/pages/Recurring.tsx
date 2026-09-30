@@ -1,3 +1,4 @@
+import { blankForm,type FormState } from './recurring-form-model';
 /**
  * Standing rides — dialysis three mornings a week, physio every second Tuesday.
  *
@@ -8,24 +9,24 @@
  * a pickup that lands in Shabbos or yom tov is created but deliberately not
  * offered, and the reason is shown rather than left for someone to work out.
  */
-import React, { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { CalendarDays, CircleStop, Pause, Play, Plus, RefreshCw, Repeat } from 'lucide-react';
-import {
-  MOBILITY_NEEDS, RECURRENCE_FREQUENCIES, TRIP_PRIORITIES, TRIP_TYPES, endRecurringRideSchema, recurringRideSchema,
-  type MobilityNeed, type RecurrenceFrequency, type TripPriority, type TripStatus, type TripType,
-} from '@rvc/shared';
-import { api, errorMessage } from '@/lib/api';
-import { qk } from '@/lib/query';
-import { formatDate, formatDateTime, formatMinuteOfDay, mobilityLabel, priorityLabel, statusClass, statusLabel, titleCase, tripTypeLabel } from '@/lib/format';
+import { AddressFields,toAddressInput } from '@/components/AddressAutocomplete';
 import { Modal } from '@/components/Modal';
-import { AddressFields, emptyAddress, toAddressInput, type AddressDraft } from '@/components/AddressAutocomplete';
 import {
-  EmptyState, ErrorState, ListSkeleton, PageHeader, cardClass, inputClass, labelClass, panelClass, primaryButtonClass,
-  secondaryButtonClass,
+EmptyState,ErrorState,ListSkeleton,PageHeader,cardClass,inputClass,labelClass,panelClass,primaryButtonClass,
+secondaryButtonClass,
 } from '@/components/states';
+import { api,errorMessage } from '@/lib/api';
+import { formatDate,formatDateTime,formatMinuteOfDay,mobilityLabel,priorityLabel,statusClass,statusLabel,titleCase,tripTypeLabel } from '@/lib/format';
+import { qk } from '@/lib/query';
 import type { GroupsResponse } from '@/types/api';
+import {
+MOBILITY_NEEDS,RECURRENCE_FREQUENCIES,TRIP_PRIORITIES,TRIP_TYPES,endRecurringRideSchema,recurringRideSchema,
+type MobilityNeed,type RecurrenceFrequency,type TripPriority,type TripStatus,type TripType,
+} from '@rvc/shared';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import { CalendarDays,CircleStop,Pause,Play,Plus,RefreshCw,Repeat } from 'lucide-react';
+import React,{ useState } from 'react';
+import { toast } from 'sonner';
 
 interface RecurringRideCore {
   id: string;
@@ -114,58 +115,6 @@ function describeSchedule(ride: RecurringRideCore): string {
     .map((day) => WEEKDAY_SHORT[day] ?? String(day))
     .join(', ');
   return `${FREQUENCY_LABELS[ride.frequency] ?? titleCase(ride.frequency)} on ${days || 'no days chosen'} at ${time}`;
-}
-
-interface FormState {
-  callerName: string;
-  callerPhone: string;
-  callbackNumber: string;
-  pickup: AddressDraft;
-  dropoff: AddressDraft;
-  pickupEntrance: string;
-  pickupParking: string;
-  dropoffEntrance: string;
-  dropoffParking: string;
-  tripType: TripType;
-  priority: TripPriority;
-  groupSlug: string;
-  mobilityNeeds: MobilityNeed[];
-  passengerNotes: string;
-  appointmentOffsetMinutes: string;
-  frequency: RecurrenceFrequency;
-  byWeekday: number[];
-  byMonthDay: string;
-  pickupTime: string;
-  startDate: string;
-  endDate: string;
-  leadTimeMinutes: string;
-}
-
-function blankForm(): FormState {
-  return {
-    callerName: '',
-    callerPhone: '',
-    callbackNumber: '',
-    pickup: emptyAddress(),
-    dropoff: emptyAddress(),
-    pickupEntrance: '',
-    pickupParking: '',
-    dropoffEntrance: '',
-    dropoffParking: '',
-    tripType: 'ride',
-    priority: 'routine',
-    groupSlug: 'chesed_on_the_go',
-    mobilityNeeds: [],
-    passengerNotes: '',
-    appointmentOffsetMinutes: '',
-    frequency: 'weekly',
-    byWeekday: [],
-    byMonthDay: '1',
-    pickupTime: '09:00',
-    startDate: '',
-    endDate: '',
-    leadTimeMinutes: '1440',
-  };
 }
 
 function WeekdayPicker({

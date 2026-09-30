@@ -297,10 +297,10 @@ export async function reactivateUser(actor: AuditActor, userId: string) {
 }
 
 /** Housekeeping: end pauses whose date has passed. */
-export async function endExpiredSuspensions(): Promise<number> {
+export async function endExpiredSuspensions(now = new Date()): Promise<number> {
   const rows = await db.update(users)
     .set({ status: 'active', suspendedUntil: null, suspensionReason: null })
-    .where(and(eq(users.status, 'inactive'), isNull(users.deletedAt), raw`${users.suspendedUntil} is not null and ${users.suspendedUntil} <= now()`))
+    .where(and(eq(users.status, 'inactive'), isNull(users.deletedAt), raw`${users.suspendedUntil} is not null and ${users.suspendedUntil} <= ${now.toISOString()}::timestamptz`))
     .returning({ id: users.id });
   return rows.length;
 }

@@ -139,6 +139,7 @@ const jobCardFields = {
 
 export const createTripSchema = z
   .object({
+    isTest: z.boolean().default(false),
     ...jobCardFields,
     callerName: z.string().trim().max(120).optional().nullable(),
     callerPhone: phoneInputSchema.optional().nullable(),

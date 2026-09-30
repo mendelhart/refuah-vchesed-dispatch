@@ -8,6 +8,7 @@ import type { AssignmentMode, MobilityNeed, TripDto, TripPriority, TripType } fr
 import { emptyAddress, toAddressInput, type AddressDraft } from './address-draft';
 
 export interface FormState {
+  isTest: boolean;
   callerId: string | null;
   callerName: string;
   callerPhone: string;
@@ -44,6 +45,7 @@ export function toLocalInput(iso: string | null | undefined): string {
 
 export function blankForm(): FormState {
   return {
+    isTest: false,
     callerId: null,
     callerName: '',
     callerPhone: '',
@@ -78,6 +80,7 @@ export function fromTrip(trip: TripDto): FormState {
     longitude: address.longitude,
   });
   return {
+    isTest: trip.isTest ?? false,
     callerId: trip.callerId,
     callerName: trip.callerName ?? '',
     callerPhone: trip.callerPhone ?? '',
@@ -140,6 +143,7 @@ export function buildTripPayload(form: FormState, trip?: TripDto | null) {
   }
   return {
     ...extras,
+    ...(trip ? {} : { isTest: form.isTest }),
     callerName: form.callerName.trim() || null,
     callerPhone: form.callerPhone.trim() || null,
     pickup: toAddressInput(form.pickup),

@@ -1,4 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { setSetting } from '../lib/settings.js';
+import { SETTING_KEYS } from '@rvc/shared';
 import { eq, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { tripAssignments, tripOffers, trips } from '../db/schema.js';
@@ -32,6 +34,17 @@ describe('concurrent acceptance', () => {
     expect(offered.body.offered).toBe(volunteerCount);
     return { tripId, volunteers };
   }
+
+  it('busy-hour load: 50 offers with simultaneous accepts has one winner and one assignment', async () => {
+    await setSetting(SETTING_KEYS.offerBatchSize, 50, dispatcher.id);
+    const { tripId, volunteers } = await offeredTrip(50);
+    const responses = await Promise.all(volunteers.map((volunteer) =>
+      api('POST', `/api/trips/${tripId}/claim`, { cookie: volunteer.cookie, payload: {} })));
+    expect(responses.filter((response) => response.status === 200)).toHaveLength(1);
+    expect(responses.filter((response) => response.status === 409)).toHaveLength(49);
+    const assignments = await db.select().from(tripAssignments).where(eq(tripAssignments.tripId, tripId));
+    expect(assignments).toHaveLength(1);
+  });
 
   it('two volunteers accepting at the same instant: exactly one succeeds', async () => {
     const { tripId, volunteers } = await offeredTrip(2);
