@@ -3,7 +3,7 @@ import { and, eq, isNull, sql as raw } from 'drizzle-orm';
 import { db, type Executor } from '../db/client.js';
 import { storedFiles } from '../db/schema.js';
 import { Errors } from '../lib/errors.js';
-import { recordAudit, type AuditActor } from '../lib/audit.js';
+import { recordAudit, SYSTEM_ACTOR, type AuditActor } from '../lib/audit.js';
 import { decryptBuffer, encryptBuffer, fieldEncryptionAvailable, sha256Hex } from '../lib/crypto.js';
 import { objectStore } from './providers/index.js';
 import { logger } from '../lib/logger.js';
@@ -212,8 +212,12 @@ export async function purgeExpiredFiles(): Promise<number> {
     .from(storedFiles)
     .where(and(isNull(storedFiles.deletedAt), raw`${storedFiles.purgeAfter} < now()`));
   for (const f of due) {
-    await objectStore.delete(f.storageKey).catch(() => {});
-    await db.update(storedFiles).set({ deletedAt: new Date() }).where(eq(storedFiles.id, f.id));
+    // A failed delete must stay eligible for retry, not become a false success.
+    await objectStore.delete(f.storageKey);
+    await db.transaction(async (tx) => {
+      await tx.update(storedFiles).set({ deletedAt: new Date() }).where(eq(storedFiles.id, f.id));
+      await recordAudit({ actor: SYSTEM_ACTOR, action: 'file.retention_purged', entityType: 'stored_file', entityId: f.id }, tx);
+    });
   }
   if (due.length) logger.info({ purged: due.length }, 'expired files purged');
   return due.length;

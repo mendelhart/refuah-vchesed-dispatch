@@ -165,10 +165,9 @@ services:
       - key: HEALTH_CHECK_TOKEN
         generateValue: true
 
-      # Remains disabled until the owner approves all three periods.
-      # Owner confirmed all three classes at 12 months; activation remains separate.
+      # Owner confirmed final mapping and activation September 30, 2026.
       - key: PERSONAL_RETENTION_ENABLED
-        value: 'false'
+        value: 'true'
       - key: REMOVED_LICENCE_RETENTION_MONTHS
         value: '12'
       - key: REJECTED_APPLICATION_RETENTION_MONTHS

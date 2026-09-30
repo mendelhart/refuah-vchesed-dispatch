@@ -9,6 +9,10 @@ import { sql as raw } from 'drizzle-orm';
 import { createDecipheriv, scryptSync } from 'node:crypto';
 import { calendarMonthCutoff, cleanupPersonalRetention } from '../domain/personal-retention.service.js';
 import { api, createTestUser, getApp, resetDb, sampleTrip, shutdown } from './harness.js';
+import { env } from '../env.js';
+import { purgeExpiredFiles } from '../services/files.service.js';
+import { objectStore } from '../services/providers/index.js';
+import { vi } from 'vitest';
 import { DatabaseRateLimitStore } from '../lib/rate-limit-store.js';
 
 beforeAll(async () => { await getApp(); });
@@ -25,6 +29,36 @@ describe('approved free fixes', () => {
     expect(calendarMonthCutoff(new Date('2024-02-29T12:30:00Z'), 12).toISOString()).toBe('2023-02-28T12:30:00.000Z');
     expect(calendarMonthCutoff(new Date('2026-03-31T12:30:00Z'), 1).toISOString()).toBe('2026-02-28T12:30:00.000Z');
     expect(calendarMonthCutoff(new Date('2026-09-30T12:30:00Z'), 12).toISOString()).toBe('2025-09-30T12:30:00.000Z');
+  });
+
+  it('enabled scheduled entry requires all three periods and applies the configured mapping', async () => {
+    const previous = { enabled: env.PERSONAL_RETENTION_ENABLED, licence: env.REMOVED_LICENCE_RETENTION_MONTHS, application: env.REJECTED_APPLICATION_RETENTION_MONTHS, trip: env.OLD_TRIP_PERSONAL_RETENTION_MONTHS };
+    try {
+      env.PERSONAL_RETENTION_ENABLED = true;
+      env.REMOVED_LICENCE_RETENTION_MONTHS = undefined;
+      await expect(cleanupPersonalRetention()).rejects.toThrow('All approved');
+      env.REMOVED_LICENCE_RETENTION_MONTHS = 12;
+      env.REJECTED_APPLICATION_RETENTION_MONTHS = 12;
+      env.OLD_TRIP_PERSONAL_RETENTION_MONTHS = 12;
+      expect(await cleanupPersonalRetention()).toEqual({ disabled: false });
+    } finally {
+      env.PERSONAL_RETENTION_ENABLED = previous.enabled;
+      env.REMOVED_LICENCE_RETENTION_MONTHS = previous.licence;
+      env.REJECTED_APPLICATION_RETENTION_MONTHS = previous.application;
+      env.OLD_TRIP_PERSONAL_RETENTION_MONTHS = previous.trip;
+    }
+  });
+
+  it('failed file purge stays retryable and successful purge is audited', async () => {
+    const id = crypto.randomUUID();
+    await db.execute(raw`insert into stored_files (id,storage_key,content_type,byte_size,sha256,purge_after) values (${id}, ${id}, 'image/png', 5, 'test', now() - interval '1 day')`);
+    const remove = vi.spyOn(objectStore, 'delete').mockRejectedValueOnce(new Error('temporary storage error'));
+    try { await expect(purgeExpiredFiles()).rejects.toThrow('temporary storage error'); } finally { remove.mockRestore(); }
+    const retry = await db.execute(raw`select deleted_at from stored_files where id = ${id}`);
+    expect(retry[0]!.deleted_at).toBeNull();
+    expect(await purgeExpiredFiles()).toBe(1);
+    const audit = await db.execute(raw`select count(*)::int as n from audit_events where action = 'file.retention_purged' and entity_id = ${id}`);
+    expect(audit[0]!.n).toBe(1);
   });
 
   it('personal retention remains disabled without approved periods', async () => {
