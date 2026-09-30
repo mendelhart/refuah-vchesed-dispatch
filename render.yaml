@@ -166,8 +166,15 @@ services:
         generateValue: true
 
       # Remains disabled until the owner approves all three periods.
+      # Owner confirmed all three classes at 12 months; activation remains separate.
       - key: PERSONAL_RETENTION_ENABLED
         value: 'false'
+      - key: REMOVED_LICENCE_RETENTION_MONTHS
+        value: '12'
+      - key: REJECTED_APPLICATION_RETENTION_MONTHS
+        value: '12'
+      - key: OLD_TRIP_PERSONAL_RETENTION_MONTHS
+        value: '12'
 
       - key: DATABASE_EXPIRES_AT
         value: '2026-10-22'

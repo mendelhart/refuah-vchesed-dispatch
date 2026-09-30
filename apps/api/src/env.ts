@@ -12,9 +12,9 @@ const bool = (def: boolean) =>
 
 const envSchema = z.object({
   PERSONAL_RETENTION_ENABLED: bool(false),
-  REMOVED_LICENCE_RETENTION_DAYS: z.coerce.number().int().positive().optional(),
-  REJECTED_APPLICATION_RETENTION_DAYS: z.coerce.number().int().positive().optional(),
-  OLD_TRIP_PERSONAL_RETENTION_DAYS: z.coerce.number().int().positive().optional(),
+  REMOVED_LICENCE_RETENTION_MONTHS: z.coerce.number().int().positive().optional(),
+  REJECTED_APPLICATION_RETENTION_MONTHS: z.coerce.number().int().positive().optional(),
+  OLD_TRIP_PERSONAL_RETENTION_MONTHS: z.coerce.number().int().positive().optional(),
   DATABASE_EXPIRES_AT: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(8080),

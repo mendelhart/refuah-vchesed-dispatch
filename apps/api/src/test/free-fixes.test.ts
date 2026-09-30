@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { db } from '../db/client.js';
 import { sql as raw } from 'drizzle-orm';
 import { createDecipheriv, scryptSync } from 'node:crypto';
-import { cleanupPersonalRetention } from '../domain/personal-retention.service.js';
+import { calendarMonthCutoff, cleanupPersonalRetention } from '../domain/personal-retention.service.js';
 import { api, createTestUser, getApp, resetDb, sampleTrip, shutdown } from './harness.js';
 import { DatabaseRateLimitStore } from '../lib/rate-limit-store.js';
 
@@ -21,6 +21,12 @@ const increment = (store: DatabaseRateLimitStore, key: string, window = 60_000) 
   });
 
 describe('approved free fixes', () => {
+  it('uses calendar months, including leap-year and month-end clamping', () => {
+    expect(calendarMonthCutoff(new Date('2024-02-29T12:30:00Z'), 12).toISOString()).toBe('2023-02-28T12:30:00.000Z');
+    expect(calendarMonthCutoff(new Date('2026-03-31T12:30:00Z'), 1).toISOString()).toBe('2026-02-28T12:30:00.000Z');
+    expect(calendarMonthCutoff(new Date('2026-09-30T12:30:00Z'), 12).toISOString()).toBe('2025-09-30T12:30:00.000Z');
+  });
+
   it('personal retention remains disabled without approved periods', async () => {
     expect(await cleanupPersonalRetention()).toEqual({ disabled: true });
   });
@@ -127,7 +133,7 @@ describe('disabled personal retention engine rehearsal', () => {
     await db.execute(raw`update users set deleted_at = now() - interval '100 days' where id = ${volunteer.id}`);
     await db.execute(raw`insert into driver_licences (user_id,front_file_id,back_file_id) values (${volunteer.id}, ${file}, ${unshared}), (${active.id}, ${file}, null)`);
     const { applyPersonalRetention } = await import('../domain/personal-retention.service.js');
-    await applyPersonalRetention({ removedLicenceDays: 1, rejectedApplicationDays: 1, oldTripDays: 1 });
+    await applyPersonalRetention({ removedLicenceMonths: 1, rejectedApplicationMonths: 1, oldTripMonths: 1 });
     const old = await db.execute(raw`select full_name,notes from volunteer_applications where id = ${application}`);
     expect(old[0]).toMatchObject({ full_name: '[removed]', notes: null });
     const shared = await db.execute(raw`select purge_after from stored_files where id = ${file}`);
@@ -149,7 +155,7 @@ describe('disabled personal retention engine rehearsal', () => {
     await db.execute(raw`insert into contacts (name, phone, address_id) values ('Shared clinic', '+15145550001', ${original})`);
     await db.execute(raw`update trips set status = 'completed', completed_at = now() - interval '100 days' where id = ${id}`);
     const { applyPersonalRetention } = await import('../domain/personal-retention.service.js');
-    await applyPersonalRetention({ removedLicenceDays: 1, rejectedApplicationDays: 1, oldTripDays: 1 });
+    await applyPersonalRetention({ removedLicenceMonths: 1, rejectedApplicationMonths: 1, oldTripMonths: 1 });
     const result = await db.execute(raw`select caller_name, pickup_address_id from trips where id = ${id}`);
     expect(result[0]!.caller_name).toBeNull();
     expect(result[0]!.pickup_address_id).not.toBe(original);
@@ -157,7 +163,7 @@ describe('disabled personal retention engine rehearsal', () => {
     expect(shared[0]!.line1).not.toBe('[retained trip address removed]');
     const audit = await db.execute(raw`select count(*)::int as n from audit_events where entity_id = ${id}`);
     expect(audit[0]!.n).toBeGreaterThan(1);
-    await applyPersonalRetention({ removedLicenceDays: 1, rejectedApplicationDays: 1, oldTripDays: 1 });
+    await applyPersonalRetention({ removedLicenceMonths: 1, rejectedApplicationMonths: 1, oldTripMonths: 1 });
     const retained = await db.execute(raw`select count(*)::int as n from audit_events where entity_id = ${id} and action = 'retention.trip_personal_scrubbed'`);
     expect(retained[0]!.n).toBe(1);
   });
