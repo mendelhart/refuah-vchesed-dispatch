@@ -57,10 +57,11 @@ export async function claimJobs(workerId: string, limit: number): Promise<Claime
     payload: Record<string, unknown>;
     attempts: number;
     max_attempts: number;
+    run_at: Date;
   }>(raw`
     with claimed as (
       select id from jobs
-      where status = 'pending' and run_at <= now()
+      where status = 'pending' and run_at <= ${new Date().toISOString()}::timestamptz
       order by run_at, id
       for update skip locked
       limit ${limit}
@@ -72,9 +73,11 @@ export async function claimJobs(workerId: string, limit: number): Promise<Claime
            attempts = j.attempts + 1
       from claimed c
      where j.id = c.id
-    returning j.id, j.kind, j.payload, j.attempts, j.max_attempts
+    returning j.id, j.kind, j.payload, j.attempts, j.max_attempts, j.run_at
   `);
-  return (rows as unknown as Array<Record<string, unknown>>).map((r) => ({
+  return (rows as unknown as Array<Record<string, unknown>>).sort((a, b) =>
+    new Date(String(a.run_at)).getTime() - new Date(String(b.run_at)).getTime() || String(a.id).localeCompare(String(b.id)),
+  ).map((r) => ({
     id: String(r.id),
     kind: String(r.kind) as JobKind,
     payload: (r.payload ?? {}) as Record<string, unknown>,

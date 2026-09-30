@@ -839,6 +839,7 @@ export async function remindPendingOffers(tripId: string, round: number): Promis
       and(
         eq(tripOffers.tripId, tripId),
         eq(tripOffers.round, round),
+        raw`${tripOffers.expiresAt} > ${new Date().toISOString()}::timestamptz`,
         eq(tripOffers.status, 'pending'),
       ),
     );
@@ -1508,7 +1509,7 @@ export async function expireOffer(offerId: string): Promise<void> {
         and(
           eq(tripOffers.id, offerId),
           eq(tripOffers.status, 'pending'),
-          raw`${tripOffers.expiresAt} <= now()`,
+          raw`${tripOffers.expiresAt} <= ${new Date().toISOString()}::timestamptz`,
         ),
       )
       .returning({ id: tripOffers.id, tripId: tripOffers.tripId });

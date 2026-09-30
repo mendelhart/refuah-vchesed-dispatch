@@ -1,5 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { encryptedFullBackup } from '../domain/backup.service.js';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { db } from '../db/client.js';
+import { sql as raw } from 'drizzle-orm';
 import { createDecipheriv, scryptSync } from 'node:crypto';
 import { cleanupPersonalRetention } from '../domain/personal-retention.service.js';
 import { api, createTestUser, getApp, resetDb, sampleTrip, shutdown } from './harness.js';
@@ -32,6 +38,38 @@ describe('approved free fixes', () => {
     expect(() => { wrong.update(data.subarray(52)); wrong.final(); }).toThrow();
     const volunteer = await createTestUser({ role: 'volunteer' });
     expect((await api('POST', '/api/admin/backup/download', { cookie: volunteer.cookie, payload: { passphrase: 'test-only-passphrase-1234' } })).status).toBe(403);
+  });
+
+  it('restores an encrypted full download into a fresh temporary database including file bytes and audit', async () => {
+    const admin = await createTestUser({ role: 'admin' });
+    const marker = crypto.randomUUID();
+    await db.execute(raw`insert into stored_file_blobs (storage_key, content_type, body) values (${marker}, 'application/octet-stream', decode('0102030405', 'hex'))`);
+    await api('POST', '/api/trips', { cookie: admin.cookie, payload: sampleTrip({ isTest: true }) });
+    const encrypted = await encryptedFullBackup('restore-test-passphrase-1234');
+    const key = scryptSync('restore-test-passphrase-1234', encrypted.subarray(8, 24), 32);
+    const decipher = createDecipheriv('aes-256-gcm', key, encrypted.subarray(24, 36));
+    decipher.setAuthTag(encrypted.subarray(36, 52));
+    const plain = Buffer.concat([decipher.update(encrypted.subarray(52)), decipher.final()]);
+    const dir = mkdtempSync(join(tmpdir(), 'rvc-restore-'));
+    const dump = join(dir, 'test.dump');
+    const database = `rvc_restore_${crypto.randomUUID().replaceAll('-', '')}`;
+    const source = new URL(process.env.DATABASE_URL!);
+    const target = new URL(source);
+    target.pathname = `/${database}`;
+    const pgEnv = { ...process.env, PGPASSWORD: decodeURIComponent(source.password) };
+    const maintenance = new URL(source); maintenance.pathname = '/postgres';
+    let created = false;
+    try {
+      writeFileSync(dump, plain, { mode: 0o600 });
+      execFileSync('psql', [maintenance.toString(), '-v', 'ON_ERROR_STOP=1', '-c', `CREATE DATABASE ${database}`], { env: pgEnv });
+      created = true;
+      execFileSync('pg_restore', ['--exit-on-error', '--no-owner', '--no-privileges', '-d', target.toString(), dump], { env: pgEnv });
+      const query = `select (select count(*) from trips where is_test)::text || ':' || (select encode(body, 'hex') from stored_file_blobs where storage_key = '${marker}') || ':' || (select count(*) > 0 from audit_events)::text`;
+      expect(execFileSync('psql', [target.toString(), '-At', '-c', query], { env: pgEnv, encoding: 'utf8' }).trim()).toBe('1:0102030405:true');
+    } finally {
+      key.fill(0); plain.fill(0); rmSync(dir, { recursive: true, force: true });
+      if (created) execFileSync('psql', [maintenance.toString(), '-v', 'ON_ERROR_STOP=1', '-c', `DROP DATABASE ${database}`], { env: pgEnv });
+    }
   });
 
   it('test rides persist their flag and are excluded from Board stats and health warnings', async () => {
@@ -73,5 +111,51 @@ describe('approved free fixes', () => {
     const admin = await createTestUser({ role: 'admin', groups: [] });
     expect((await api('GET', '/api/admin/health', { cookie: volunteer.cookie })).status).toBe(403);
     expect((await api('GET', '/api/admin/health', { cookie: admin.cookie })).status).toBe(200);
+  });
+});
+
+describe('disabled personal retention engine rehearsal', () => {
+  it('scrubs rejected applications and schedules only unshared removed-user licence images', async () => {
+    const volunteer = await createTestUser({ role: 'volunteer' });
+    const active = await createTestUser({ role: 'volunteer' });
+    const reviewer = await createTestUser({ role: 'admin' });
+    const application = crypto.randomUUID();
+    const file = crypto.randomUUID();
+    await db.execute(raw`insert into volunteer_applications (id,reference,status,full_name,email,phone,reviewed_by_id,reviewed_at,review_notes,notes,consent_contact,consent_background_check) values (${application}, 'TEST-RETENTION', 'rejected', 'Old applicant', 'old@example.test', '+15145550002', ${reviewer.id}, now() - interval '100 days', 'test reason', 'private note', true, true)`);
+    await db.execute(raw`insert into stored_files (id,storage_key,content_type,byte_size,sha256) values (${file}, ${file}, 'image/png', 5, 'test')`);
+    await db.execute(raw`update users set deleted_at = now() - interval '100 days' where id = ${volunteer.id}`);
+    await db.execute(raw`insert into driver_licences (user_id,front_file_id) values (${volunteer.id}, ${file}), (${active.id}, ${file})`);
+    const { applyPersonalRetention } = await import('../domain/personal-retention.service.js');
+    await applyPersonalRetention({ removedLicenceDays: 1, rejectedApplicationDays: 1, oldTripDays: 1 });
+    const old = await db.execute(raw`select full_name,notes from volunteer_applications where id = ${application}`);
+    expect(old[0]).toMatchObject({ full_name: '[removed]', notes: null });
+    const shared = await db.execute(raw`select purge_after from stored_files where id = ${file}`);
+    expect(shared[0]!.purge_after).toBeNull();
+    const removed = await db.execute(raw`select front_file_id from driver_licences where user_id = ${volunteer.id}`);
+    expect(removed[0]!.front_file_id).toBeNull();
+    const kept = await db.execute(raw`select front_file_id from driver_licences where user_id = ${active.id}`);
+    expect(kept[0]!.front_file_id).toBe(file);
+  });
+
+  it('scrubs old trip detail without changing a shared address or its audit history', async () => {
+    const admin = await createTestUser({ role: 'admin' });
+    const created = await api('POST', '/api/trips', { cookie: admin.cookie, payload: sampleTrip() });
+    const id = (created.body.trip as { id: string }).id;
+    const initial = await db.execute(raw`select pickup_address_id from trips where id = ${id}`);
+    const original = initial[0]!.pickup_address_id;
+    await db.execute(raw`insert into contacts (name, phone, address_id) values ('Shared clinic', '+15145550001', ${original})`);
+    await db.execute(raw`update trips set status = 'completed', completed_at = now() - interval '100 days' where id = ${id}`);
+    const { applyPersonalRetention } = await import('../domain/personal-retention.service.js');
+    await applyPersonalRetention({ removedLicenceDays: 1, rejectedApplicationDays: 1, oldTripDays: 1 });
+    const result = await db.execute(raw`select caller_name, pickup_address_id from trips where id = ${id}`);
+    expect(result[0]!.caller_name).toBeNull();
+    expect(result[0]!.pickup_address_id).not.toBe(original);
+    const shared = await db.execute(raw`select line1 from addresses where id = ${original}`);
+    expect(shared[0]!.line1).not.toBe('[retained trip address removed]');
+    const audit = await db.execute(raw`select count(*)::int as n from audit_events where entity_id = ${id}`);
+    expect(audit[0]!.n).toBeGreaterThan(1);
+    await applyPersonalRetention({ removedLicenceDays: 1, rejectedApplicationDays: 1, oldTripDays: 1 });
+    const retained = await db.execute(raw`select count(*)::int as n from audit_events where entity_id = ${id} and action = 'retention.trip_personal_scrubbed'`);
+    expect(retained[0]!.n).toBe(1);
   });
 });

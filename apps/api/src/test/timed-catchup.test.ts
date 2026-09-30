@@ -44,6 +44,31 @@ describe('timed catch-up', () => {
     expect([...rows][0]?.n).toBe(0);
   });
 
+  it('fake-clock advances offer expiry, reminders and escalation without stale nudges', async () => {
+    const admin = await createTestUser({ role: 'admin' });
+    await createTestUser({ role: 'volunteer' });
+    const created = await api('POST', '/api/trips', { cookie: admin.cookie, payload: sampleTrip() });
+    const id = (created.body.trip as { id: string }).id;
+    await api('POST', `/api/trips/${id}/offer`, { cookie: admin.cookie, payload: { expiresInMinutes: 10 } });
+    const pending = await db.execute(raw`select id, expires_at from trip_offers where trip_id = ${id} and status = 'pending'`);
+    expect(pending.length).toBeGreaterThan(0);
+    const expiry = new Date(String(pending[0]!.expires_at));
+    const { remindPendingOffers } = await import('../domain/dispatch.service.js');
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date(expiry.getTime() - 60_000));
+      expect(await remindPendingOffers(id, 1)).toBeGreaterThan(0);
+      await handlers['trip.escalate']({ tripId: id, round: 1 });
+      const escalated = await db.execute(raw`select escalated_at from trips where id = ${id}`);
+      expect(new Date(String(escalated[0]!.escalated_at)).getTime()).toBe(Date.now());
+      vi.setSystemTime(new Date(expiry.getTime() + 1));
+      expect(await remindPendingOffers(id, 1)).toBe(0);
+      await new Worker().drain(20, true);
+      const left = await db.execute(raw`select count(*)::int as n from trip_offers where trip_id = ${id} and status = 'pending'`);
+      expect(left[0]!.n).toBe(0);
+    } finally { vi.useRealTimers(); }
+  });
+
   it('reminder handler remains safe when offers are already expired', async () => {
     await expect(handlers['trip.reminder']({ tripId: crypto.randomUUID(), round: 1 })).resolves.toBeUndefined();
   });

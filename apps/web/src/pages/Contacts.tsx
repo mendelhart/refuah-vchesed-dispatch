@@ -14,18 +14,18 @@ import { useConfirmation } from '@/components/useConfirmation';
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { ClipboardList, MapPin, Pencil, PhoneCall, Plus, Trash2 } from 'lucide-react';
+import { ClipboardList, Plus } from 'lucide-react';
 import { contactSchema } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
 import { qk } from '@/lib/query';
 import { Modal } from '@/components/Modal';
 import { AddressFields, emptyAddress, toAddressInput, type AddressDraft } from '@/components/AddressAutocomplete';
 import {
-  EmptyState, ErrorState, ListSkeleton, PageHeader, cardClass, inputClass, labelClass, primaryButtonClass,
+  EmptyState, ErrorState, ListSkeleton, PageHeader, inputClass, labelClass, primaryButtonClass,
   secondaryButtonClass,
 } from '@/components/states';
 import type { ContactRow, ContactsResponse, StartCallResponse } from '@/types/api';
-import { formatPhone } from '@/lib/format';
+import { ContactCard } from './ContactCard';
 
 export function ContactsPage(): React.JSX.Element {
   const confirmation = useConfirmation();
@@ -152,51 +152,8 @@ export function ContactsPage(): React.JSX.Element {
       ) : (
         <ul className="space-y-2">
           {visible.map((contact) => (
-            <li key={contact.id} className={`${cardClass} flex flex-wrap items-center justify-between gap-3 p-4`}>
-              <div className="min-w-0">
-                <p className="font-medium text-slate-900 dark:text-white">{contact.name}</p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {contact.role ? `${contact.role} · ` : ''}
-                  {formatPhone(contact.phone)}
-                </p>
-                {contact.address ? (
-                  <p className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                    <MapPin className="h-3 w-3" aria-hidden="true" />
-                    {contact.address.formatted}
-                  </p>
-                ) : null}
-                {contact.notes ? <p className="text-xs text-slate-500 dark:text-slate-400">{contact.notes}</p> : null}
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  className={secondaryButtonClass}
-                  disabled={call.isPending}
-                  onClick={() => call.mutate(contact.id)}
-                >
-                  <PhoneCall className="h-4 w-4" aria-hidden="true" />
-                  Call
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Edit ${contact.name}`}
-                  className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
-                  onClick={() => openEdit(contact)}
-                >
-                  <Pencil className="h-4 w-4" aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Remove ${contact.name}`}
-                  className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
-                  onClick={() => {
-                    confirmation.ask({ title: `Remove ${contact.name} from contacts?`, action: () => remove.mutate(contact.id) });
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </div>
-            </li>
+            <ContactCard key={contact.id} contact={contact} calling={call.isPending} onCall={(id) => call.mutate(id)} onEdit={openEdit}
+              onRemove={(row) => confirmation.ask({ title: `Remove ${row.name} from contacts?`, action: () => remove.mutate(row.id) })} />
           ))}
         </ul>
       )}

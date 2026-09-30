@@ -94,7 +94,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/my-availability', label: 'My availability', icon: CalendarRange, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'profile', volunteer: 'profile', hint: 'When you can be asked' },
   { to: '/my-profile', label: 'What I can help with', icon: ListChecks, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'profile', volunteer: 'profile', hint: 'Services, vehicle and what you can handle' },
   { to: '/my-id-card', label: 'My ID card', icon: IdCard, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'profile', volunteer: 'profile', hint: 'Your volunteer card and licence' },
-  { to: '/settings', label: 'Settings', icon: SettingsIcon, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'profile', hint: 'Name, phone, how we reach you, menu' },
+  { to: '/settings', label: 'Settings', icon: SettingsIcon, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'profile', dispatch: 'profile', hint: 'Name, phone, how we reach you, menu' },
 
   { to: '/directory', label: 'Directory', icon: Users, roles: ['volunteer'], volunteer: 'more', hint: 'The team roster' },
   { to: '/duty', label: 'Phone duty', icon: CalendarClock, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Who is on the phones when' },

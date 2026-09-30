@@ -42,3 +42,28 @@ test.describe('role restrictions', () => {
     await page.screenshot({ path: 'screenshots/approved-volunteer-home.png', fullPage: true });
   });
 });
+
+
+test.describe('photo approval on a phone', () => {
+  test.use({ storageState: STATE_FILES.admin });
+  test('volunteer requests a photo and admin approves it from the roster', async ({ page, browser }) => {
+    const volunteer = await browser.newContext({ storageState: STATE_FILES.volunteer });
+    const volunteerPage = await volunteer.newPage();
+    await volunteerPage.goto('/');
+    const requested = await volunteerPage.evaluate(async () => {
+      const response = await fetch('/api/me/photo', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ photo: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l1cAAAAASUVORK5CYII=' }) });
+      return response.status;
+    });
+    expect(requested).toBe(200);
+    await page.goto('/volunteers');
+    const requests = page.getByRole('region', { name: /Photo changes to approve/ });
+    await expect(requests).toBeVisible();
+    await page.screenshot({ path: 'screenshots/approved-photo-review.png', fullPage: true });
+    await requests.getByRole('button', { name: 'Approve', exact: true }).click();
+    await expect(requests).toHaveCount(0);
+    const status = await volunteerPage.evaluate(async () => (await fetch('/api/me/photo')).json());
+    expect(status.pending).toBeNull();
+    expect(status.photo).toContain('data:image/png');
+    await volunteer.close();
+  });
+});
