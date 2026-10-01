@@ -69,7 +69,7 @@ the Render logs only. Sentry stores error details; set its data scrubbing on
 before connecting it, because a stack trace can include a request's content.
 
 **2. Uptime check.** A free monitor (for example UptimeRobot or Better Stack)
-calling the API every 5 minutes and emailing when it fails:
+calling the API on a schedule and emailing when it fails:
 
 - URL: `https://<rvc-api host>/health` (database round trip, no personal data)
 - or `https://<rvc-api host>/health/deep?token=<HEALTH_CHECK_TOKEN>` for the
@@ -77,10 +77,15 @@ calling the API every 5 minutes and emailing when it fails:
   Keep the token out of shared screenshots.
 - Alert after 2 failures in a row, so one slow wake-up is not an alert.
 
-A side effect worth knowing: a monitor calling every few minutes keeps the
-free API awake and the free database active, so the worker runs on time and
-Aiven is less likely to power the database off for inactivity. It also means
-the instance uses more of Render's free monthly hours.
+**Watch the free hours.** Each call wakes the API, and it then stays awake
+for 15 minutes. A monitor every 5 minutes keeps it awake all day: about 744
+hours a month for the API alone, against 750 free hours shared by both Render
+services, so the web service would run out (see FIX_PLAN_PROGRESS.md, item 1,
+where keep-awake was deliberately left off for this reason). On the free plan,
+either check no more often than every hour, or limit checks to daytime hours.
+The upside of more frequent checks (the worker runs on time, and Aiven sees
+regular activity so is less likely to power the database off) has to be
+weighed against that.
 
-Neither costs money. Both are new outside services that receive the app's
+Neither costs money (as long as the free hours hold). Both are new outside services that receive the app's
 address (and, for Sentry, error details), which is why they are his decision.
