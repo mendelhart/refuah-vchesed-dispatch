@@ -80,7 +80,7 @@ export async function tripRoutes(app: FastifyInstance): Promise<void> {
     return { volunteers: await eligibleVolunteers(id) };
   });
 
-  app.post('/api/trips', { preHandler: requireDispatcher }, async (req, reply) => {
+  app.post('/api/trips', { preHandler: requireDispatcher, config: { idempotent: true } }, async (req, reply) => {
     const body = createTripSchema.parse(req.body);
     const trip = await createTrip(tripActor(req), {
       isTest: body.isTest,

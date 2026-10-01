@@ -13,6 +13,7 @@ import { AppError, Errors, isAppError } from './lib/errors.js';
 import { resolveSession } from './auth/session.js';
 import { captureException } from './lib/monitoring.js';
 import { registerRoutes } from './routes/index.js';
+import { registerIdempotency } from './lib/idempotency.js';
 
 /**
  * The HTTP surface.
@@ -169,6 +170,9 @@ export async function buildServer(): Promise<FastifyInstance> {
       .status(404)
       .send({ error: { code: 'not_found', message: `No route for ${req.method} ${req.url}` } });
   });
+
+  // Off unless IDEMPOTENCY_KEYS_ENABLED; see lib/idempotency.ts.
+  registerIdempotency(app);
 
   await registerRoutes(app);
 

@@ -132,6 +132,10 @@ const envSchema = z.object({
    */
   LOGIN_MAX_PER_IP_PER_5MIN: z.coerce.number().int().min(1).max(1000).default(10),
 
+  /** Honour the Idempotency-Key header on signed-in writes (lib/idempotency.ts).
+   *  Off by default: the header is ignored and nothing changes. */
+  IDEMPOTENCY_KEYS_ENABLED: bool(false),
+
   SENTRY_DSN: z.string().optional(),
   HEALTH_CHECK_TOKEN: z.string().min(16).optional(),
 

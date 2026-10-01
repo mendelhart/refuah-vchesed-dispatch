@@ -169,6 +169,13 @@
       "when": 1790743100000,
       "tag": "0023_test_rides",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790743200000,
+      "tag": "0024_idempotency_keys",
+      "breakpoints": true
     }
   ]
 }
