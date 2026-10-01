@@ -57,7 +57,7 @@ export async function buildServer(): Promise<FastifyInstance> {
     timeWindow: '1 minute',
     keyGenerator: (req) => req.user?.id ?? req.ip,
     /**
-     * Two exemptions, both for requests that are not what this limit is for.
+     * Three exemptions, all for requests that are not what this limit is for.
      *
      * Webhooks are authenticated by signature and must not be throttled away.
      *
@@ -67,9 +67,17 @@ export async function buildServer(): Promise<FastifyInstance> {
      * same budget as the dispatcher's actual work. Counting it meant a busy
      * morning could exhaust the limit and start 429ing ordinary requests,
      * including `/api/auth/me`, which the web app then read as a sign-out.
+     *
+     * Health checks are the third. The limiter keeps its counters in Postgres,
+     * so with the database down it failed every request with a 500 before
+     * /health could run and answer its documented 503 (found by
+     * scripts/outage-drill.sh). Only the plain liveness check (one
+     * `select 1`) is exempt; /health/deep runs several queries and stays
+     * limited. The handler itself is unchanged.
      */
     allowList: (req) =>
-      req.url.startsWith('/webhooks/') || req.url.startsWith('/api/events/stream'),
+      req.url.startsWith('/webhooks/') || req.url.startsWith('/api/events/stream') ||
+      req.routeOptions?.url === '/health',
     // Must be an AppError, not a bare object: the shared error handler reads
     // `statusCode` off what it is given, so returning a plain object turned
     // every throttled request into a 500 "internal error".

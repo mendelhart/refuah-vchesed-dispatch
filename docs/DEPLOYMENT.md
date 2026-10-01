@@ -95,7 +95,7 @@ simply disabled and every push delivery is recorded `skipped`.
 | `LICENCE_VERIFICATION_URL` / `LICENCE_VERIFICATION_API_KEY` | unset | the contracted verification service, if one exists |
 | `PUBLIC_SIGNUP_ENABLED` | `true` | `false` closes the public application form and its options endpoint with a 403 |
 | `SIGNUP_MAX_PER_IP_PER_HOUR` | `5` | the per-IP limit on the only unauthenticated write endpoint. Read per request, so it can be changed without a restart |
-| `SENTRY_DSN` | unset | when set, `initMonitoring()` tries to `import('@sentry/node')` at runtime. **That package is not a dependency of `@rvc/api`**, so with a DSN set and the package absent the API logs an error at boot and errors go to the logs only |
+| `SENTRY_DSN` | unset | when set, `initMonitoring()` loads `@sentry/node` (a dependency of `@rvc/api`) and reports unhandled errors, crashes and dead jobs. Unset: errors go to the logs only. See [OUTAGE_DRILL.md](OUTAGE_DRILL.md#alerts-who-gets-told) |
 | `RUN_WORKER_IN_PROCESS` | `true` | `false` means you must run `node dist/jobs/worker.js` separately, or nothing expires, escalates or sends |
 | `WORKER_POLL_MS` | `2000` | queue poll interval, 200–60000 |
 | `WORKER_CONCURRENCY` | `4` | jobs claimed per tick, 1–50. Keep below `DATABASE_POOL_MAX` |
