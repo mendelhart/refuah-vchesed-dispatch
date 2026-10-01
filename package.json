@@ -20,6 +20,7 @@
     "test:e2e": "./scripts/e2e.sh",
     "db:migrate": "npm run db:migrate --workspace=@rvc/api",
     "db:seed": "npm run db:seed --workspace=@rvc/api",
+    "db:seed:staging": "npm run db:seed:staging --workspace=@rvc/api",
     "migrate:base44": "npm run start --workspace=@rvc/migrate",
     "test:all": "npm run test --workspace=@rvc/api && npm test --workspace=@rvc/migrate"
   },
