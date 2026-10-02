@@ -28,7 +28,6 @@ export const TRIP_TYPE_DEPARTMENT: Record<string, Department> = {
   ride: 'rides',
   hospital_food: 'food',
   equipment_delivery: 'equipment',
-  package_delivery: 'rides',
 };
 
 /** Whole areas of the API that belong to one department. */
@@ -39,6 +38,7 @@ const ROUTE_PREFIX_DEPARTMENT: Array<[string, Department]> = [
   ['/api/impact', 'reports'],
   ['/api/reports', 'reports'],
   ['/api/food', 'food'],
+  ['/api/packages', 'equipment'],
 ];
 
 declare module 'fastify' {

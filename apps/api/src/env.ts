@@ -143,6 +143,10 @@ const envSchema = z.object({
   DEPARTMENT_SCOPING_ENABLED: bool(false),
   /** Food stock, vendors, preparation slots, distribution runs, shopping lists. */
   FOOD_OPS_ENABLED: bool(false),
+  /** Package deliveries (a kind of equipment-delivery trip with package details). */
+  PACKAGE_DELIVERY_ENABLED: bool(false),
+  /** Lift assist: a few chosen volunteers asked to help lift, one lead. */
+  LIFT_ASSIST_ENABLED: bool(false),
 
   SENTRY_DSN: z.string().optional(),
   HEALTH_CHECK_TOKEN: z.string().min(16).optional(),

@@ -14,6 +14,8 @@ export interface FeatureFlags {
   multiLegTrips: boolean;
   departmentScoping: boolean;
   foodOps: boolean;
+  packageDelivery: boolean;
+  liftAssist: boolean;
 }
 
 export function featureFlags(): FeatureFlags {
@@ -21,6 +23,8 @@ export function featureFlags(): FeatureFlags {
     multiLegTrips: env.MULTI_LEG_TRIPS_ENABLED,
     departmentScoping: env.DEPARTMENT_SCOPING_ENABLED,
     foodOps: env.FOOD_OPS_ENABLED,
+    packageDelivery: env.PACKAGE_DELIVERY_ENABLED,
+    liftAssist: env.LIFT_ASSIST_ENABLED,
   };
 }
 
