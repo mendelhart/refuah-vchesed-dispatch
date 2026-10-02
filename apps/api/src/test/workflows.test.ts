@@ -14,6 +14,21 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const read = (p: string) => readFileSync(path.join(root, p), 'utf8');
 const withoutComments = (s: string) => s.split('\n').filter((l) => !l.trim().startsWith('#')).join('\n');
 
+describe('Postgres 18 client wherever pg_dump runs', () => {
+  it('the API image ships pg_dump 18 (the in-app full backup dumps production PG18)', () => {
+    const docker = withoutComments(read('Dockerfile'));
+    expect(docker).toMatch(/apk add --no-cache postgresql18-client/);
+    expect(docker).not.toMatch(/apk add --no-cache postgresql-client\b/);
+  });
+
+  it('the CI api tests install pg_dump 18 before the backup tests run', () => {
+    const ci = withoutComments(read('.github/workflows/ci.yml'));
+    const job = ci.slice(ci.indexOf('api-tests:'), ci.indexOf('npm run test --workspace=@rvc/api'));
+    expect(job.length).toBeGreaterThan(100);
+    expect(job).toMatch(/apt-get install -y -qq postgresql-client-18/);
+  });
+});
+
 describe('backup workflow', () => {
   const yml = read('.github/workflows/backup.yml');
   const code = withoutComments(yml);

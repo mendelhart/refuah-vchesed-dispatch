@@ -92,7 +92,10 @@ RUN --mount=type=cache,target=/root/.npm \
 FROM base AS runtime
 
 # Admin full-backup download needs a PostgreSQL client, not a new service.
-RUN apk add --no-cache postgresql-client
+# pg_dump refuses a server newer than itself, and production is Aiven PG18,
+# so the client is pinned to 18 (Alpine 3.23 or later). If the base image is
+# older, this line fails the build instead of shipping a download that fails.
+RUN apk add --no-cache postgresql18-client && pg_dump --version | grep -q ' 18\.'
 
 ENV NODE_ENV=production \
     PORT=8080 \
