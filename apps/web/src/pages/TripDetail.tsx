@@ -18,6 +18,8 @@ import { api, errorMessage } from '@/lib/api';
 import { saveCallerFromTrip } from '@/lib/save-caller';
 import { invalidateTrips, qk } from '@/lib/query';
 import { useAuth } from '@/lib/auth';
+import { JourneyPanel } from '@/components/JourneyPanel';
+import { useFlag } from '@/lib/features';
 import { markInstallEligible } from '@/lib/install-prompt';
 import { useCompleteTrip } from '@/lib/trip-actions';
 import {
@@ -127,6 +129,7 @@ export function TripDetailPage(): React.JSX.Element {
   const [duplicatePriority, setDuplicatePriority] = useState<TripPriority>('routine');
   const [duplicateNotes, setDuplicateNotes] = useState('');
   const isDispatch = user?.role === 'dispatcher' || user?.role === 'admin';
+  const journeysOn = useFlag('multiLegTrips');
 
   const tripQuery = useQuery({
     queryKey: qk.trips.detail(id),
@@ -484,6 +487,8 @@ export function TripDetailPage(): React.JSX.Element {
           ) : null}
         </div>
       </div>
+
+      {journeysOn ? <JourneyPanel tripId={id} cardClass={cardClass} /> : null}
 
       {isDispatch && tripThreads.length > 0 ? (
         <section className={cardClass}>

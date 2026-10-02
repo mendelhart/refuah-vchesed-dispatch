@@ -36,6 +36,8 @@ import { Modal } from '@/components/Modal';
 import { EmptyState, ErrorState, InlineSpinner, ListSkeleton, PageHeader, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '@/components/states';
 import { cn } from '@/lib/utils';
 import { BoardContextStrip, type BoardContextResponse } from './BoardContextStrip';
+import { AwaitingReturnStrip } from '@/components/AwaitingReturnStrip';
+import { useFlag } from '@/lib/features';
 import { SEGMENTS, boardListParams, findRestPeriod, groupBoardTrips, type RestPeriod } from './board-model';
 
 interface BulkResultRow {
@@ -52,6 +54,7 @@ interface BulkResponse {
 }
 
 export function BoardPage(): React.JSX.Element {
+  const journeysOn = useFlag('multiLegTrips');
   const [params, setParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [segmentId, setSegmentId] = useState(SEGMENTS[0]!.id);
@@ -256,6 +259,7 @@ export function BoardPage(): React.JSX.Element {
 
       <OperationalStatus />
       <BoardContextStrip />
+      {journeysOn ? <AwaitingReturnStrip /> : null}
 
       <button
         type="button"

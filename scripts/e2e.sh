@@ -24,6 +24,14 @@ export LOG_LEVEL=${LOG_LEVEL:-warn}
 # five-minute window. The limiter is exercised deliberately in the API suite.
 export LOGIN_MAX_PER_IP_PER_5MIN=${LOGIN_MAX_PER_IP_PER_5MIN:-500}
 
+# E2E_FEATURES=on switches on every built-but-off feature, so their browser
+# tests (e2e/features/) run; they skip themselves when a feature is off.
+# Production keeps them all off until each is approved.
+if [ "${E2E_FEATURES:-off}" = "on" ]; then
+  export MULTI_LEG_TRIPS_ENABLED=true
+  export IDEMPOTENCY_KEYS_ENABLED=true
+fi
+
 api_pid=""
 web_pid=""
 cleanup() {

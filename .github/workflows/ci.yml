@@ -276,6 +276,10 @@ jobs:
 
       - name: run the browser suite
         run: ./scripts/e2e.sh
+      - name: run the browser suite again with every new feature switched on
+        env:
+          E2E_FEATURES: 'on'
+        run: ./scripts/e2e.sh e2e/features
 
       # A busy hour squeezed into 45 seconds: 5 signed-in accounts x 4 phones
       # refreshing about once a second, plus a new call every 3 seconds. Fails
