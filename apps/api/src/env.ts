@@ -152,6 +152,9 @@ const envSchema = z.object({
   LANGUAGES_ENABLED: z.string().default('en'),
   /** Reports: totals, trends, staffing, equipment, CSV. */
   REPORTS_ENABLED: bool(false),
+  /** Email builder: designs with blocks, preview, versions, test send to
+   *  yourself only (always through the fake email provider). */
+  EMAIL_BUILDER_ENABLED: bool(false),
 
   SENTRY_DSN: z.string().optional(),
   HEALTH_CHECK_TOKEN: z.string().min(16).optional(),

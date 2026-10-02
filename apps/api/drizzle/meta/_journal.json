@@ -204,6 +204,13 @@
       "when": 1790743600000,
       "tag": "0028_packages_and_lift_assist",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790743700000,
+      "tag": "0029_email_builder",
+      "breakpoints": true
     }
   ]
 }

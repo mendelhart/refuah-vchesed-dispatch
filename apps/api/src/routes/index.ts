@@ -25,6 +25,7 @@ import { foodRoutes } from './food.routes.js';
 import { deliveryRoutes } from './deliveries.routes.js';
 import { languageRoutes } from './languages.routes.js';
 import { reportRoutes } from './reports.routes.js';
+import { emailDesignRoutes } from './email-designs.routes.js';
 
 export async function registerRoutes(app: FastifyInstance): Promise<void> {
   app.get('/health', async (_req, reply) => {
@@ -53,6 +54,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   await app.register(deliveryRoutes);
   await app.register(languageRoutes);
   await app.register(reportRoutes);
+  await app.register(emailDesignRoutes);
   await app.register(userRoutes);
   await app.register(callRoutes);
   await app.register(adminRoutes);

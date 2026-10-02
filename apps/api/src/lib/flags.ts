@@ -17,6 +17,7 @@ export interface FeatureFlags {
   packageDelivery: boolean;
   liftAssist: boolean;
   reports: boolean;
+  emailBuilder: boolean;
   /** Languages that may be chosen; always starts with English. */
   languages: string[];
 }
@@ -37,6 +38,7 @@ export function featureFlags(): FeatureFlags {
     packageDelivery: env.PACKAGE_DELIVERY_ENABLED,
     liftAssist: env.LIFT_ASSIST_ENABLED,
     reports: env.REPORTS_ENABLED,
+    emailBuilder: env.EMAIL_BUILDER_ENABLED,
     languages: enabledLanguages(),
   };
 }
