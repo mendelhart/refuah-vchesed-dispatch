@@ -29,7 +29,7 @@ test.describe('email builder', () => {
     await page.getByRole('button', { name: 'Move Button 3 up' }).click();
     await expect(page.getByRole('listitem', { name: 'Button 2' })).toBeVisible();
     await page.getByRole('button', { name: 'Save', exact: true }).click();
-    await expect(page.getByText('Version 1')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('paragraph').filter({ hasText: /^Version 1$/ })).toBeVisible({ timeout: 20_000 });
 
     await page.getByRole('tab', { name: 'Preview' }).click();
     const frame = page.frameLocator('iframe[title="Email preview"]');
@@ -41,7 +41,7 @@ test.describe('email builder', () => {
     await page.getByRole('tab', { name: 'Edit' }).click();
     await page.getByLabel('Heading text').fill('Thank you, all of you');
     await page.getByRole('button', { name: 'Save a new version' }).click();
-    await expect(page.getByText(/Version 2/).first()).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('paragraph').filter({ hasText: /^Version 2$/ })).toBeVisible({ timeout: 20_000 });
     await page.getByRole('button', { name: 'Bring back version 1' }).click();
     await page.getByRole('button', { name: 'Yes, bring it back' }).click();
     await expect(page.getByLabel('Heading text')).toHaveValue('A big thank you', { timeout: 20_000 });
