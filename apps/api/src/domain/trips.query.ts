@@ -224,6 +224,8 @@ export interface ListTripsArgs {
   to?: Date;
   limit: number;
   cursor?: string;
+  /** Departments feature: only these trip types (null/undefined = all). */
+  tripTypes?: string[] | null;
 }
 
 export interface ListTripsResult {
@@ -240,6 +242,7 @@ export async function listTrips(
   const conditions = [isNull(trips.deletedAt)];
 
   if (args.status?.length) conditions.push(inArray(trips.status, args.status));
+  if (args.tripTypes) conditions.push(args.tripTypes.length ? inArray(trips.tripType, args.tripTypes) : raw`false`);
   if (args.groupSlug) conditions.push(eq(volunteerGroups.slug, args.groupSlug));
   if (args.from) conditions.push(gte(trips.pickupAt, args.from));
   if (args.to) conditions.push(lte(trips.pickupAt, args.to));
@@ -373,7 +376,7 @@ export async function getTrip(user: AuthenticatedUser, tripId: string): Promise<
   return toOfferedDto(row, offer);
 }
 
-export async function boardSummary(user: AuthenticatedUser): Promise<BoardSummary> {
+export async function boardSummary(user: AuthenticatedUser, tripTypes?: string[] | null): Promise<BoardSummary> {
   if (!canSeeDispatchDetail(user)) throw Errors.forbidden();
   const [row] = await db
     .select({
@@ -385,7 +388,10 @@ export async function boardSummary(user: AuthenticatedUser): Promise<BoardSummar
       unanswered: raw<number>`count(*) filter (where ${trips.status} = 'offered' and ${trips.escalatedAt} is not null)::int`,
     })
     .from(trips)
-    .where(and(eq(trips.isTest, false), isNull(trips.deletedAt), inArray(trips.status, [...OPEN_TRIP_STATUSES])));
+    .where(and(
+      eq(trips.isTest, false), isNull(trips.deletedAt), inArray(trips.status, [...OPEN_TRIP_STATUSES]),
+      tripTypes ? (tripTypes.length ? inArray(trips.tripType, tripTypes) : raw`false`) : undefined,
+    ));
   return (
     row ?? { needsAttention: 0, offered: 0, assigned: 0, inProgress: 0, overdue: 0, unanswered: 0 }
   );

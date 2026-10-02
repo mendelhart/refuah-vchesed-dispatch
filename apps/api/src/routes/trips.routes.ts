@@ -30,6 +30,7 @@ import {
 import { boardSummary, eligibleVolunteers, getTrip, listTrips } from '../domain/trips.query.js';
 import { normalizeOfferCode } from '../lib/offer-code.js';
 import { tripHistory } from '../domain/trip-history.js';
+import { allowedTripTypes } from '../lib/departments.js';
 
 function tripActor(req: FastifyRequest): TripActor {
   return { user: currentUser(req), audit: actorFrom(req) };
@@ -57,12 +58,13 @@ export async function tripRoutes(app: FastifyInstance): Promise<void> {
       to: query.to,
       limit: query.limit,
       cursor: query.cursor,
+      tripTypes: await allowedTripTypes(req),
     });
     return { items: result.items, nextCursor: result.nextCursor };
   });
 
   app.get('/api/trips/summary', { preHandler: requireDispatcher }, async (req) =>
-    boardSummary(currentUser(req)),
+    boardSummary(currentUser(req), await allowedTripTypes(req)),
   );
 
   app.get('/api/trips/:id', { preHandler: requireAuth }, async (req) => {

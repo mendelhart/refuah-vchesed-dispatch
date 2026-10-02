@@ -183,6 +183,13 @@
       "when": 1790743300000,
       "tag": "0025_journeys",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790743400000,
+      "tag": "0026_departments",
+      "breakpoints": true
     }
   ]
 }

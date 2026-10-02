@@ -12,11 +12,13 @@ import { Errors } from './errors.js';
  */
 export interface FeatureFlags {
   multiLegTrips: boolean;
+  departmentScoping: boolean;
 }
 
 export function featureFlags(): FeatureFlags {
   return {
     multiLegTrips: env.MULTI_LEG_TRIPS_ENABLED,
+    departmentScoping: env.DEPARTMENT_SCOPING_ENABLED,
   };
 }
 

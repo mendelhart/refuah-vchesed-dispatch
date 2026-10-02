@@ -14,6 +14,7 @@ import { resolveSession } from './auth/session.js';
 import { captureException } from './lib/monitoring.js';
 import { registerRoutes } from './routes/index.js';
 import { registerIdempotency } from './lib/idempotency.js';
+import { registerDepartmentScope } from './lib/departments.js';
 
 /**
  * The HTTP surface.
@@ -181,6 +182,8 @@ export async function buildServer(): Promise<FastifyInstance> {
 
   // Off unless IDEMPOTENCY_KEYS_ENABLED; see lib/idempotency.ts.
   registerIdempotency(app);
+  // Off unless DEPARTMENT_SCOPING_ENABLED; see lib/departments.ts.
+  registerDepartmentScope(app);
 
   await registerRoutes(app);
 

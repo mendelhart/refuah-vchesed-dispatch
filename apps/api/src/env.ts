@@ -139,6 +139,8 @@ const envSchema = z.object({
   // --- New features (all off by default; see lib/flags.ts) -----------------
   /** Round trips, extra stops and several passengers per ride. */
   MULTI_LEG_TRIPS_ENABLED: bool(false),
+  /** Coordinators who belong to departments work only within them. */
+  DEPARTMENT_SCOPING_ENABLED: bool(false),
 
   SENTRY_DSN: z.string().optional(),
   HEALTH_CHECK_TOKEN: z.string().min(16).optional(),
