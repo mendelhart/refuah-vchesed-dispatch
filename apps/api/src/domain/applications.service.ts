@@ -162,7 +162,7 @@ export async function submitApplication(input: ApplicationInput): Promise<Submit
       if (input.ownershipToken || input.ownershipReference) throw Errors.validation('That application link has expired. Ask the office for a new link.');
       return { reference: 'RVC-A-RECEIVED', id: recent.id, duplicate: true };
     }
-    await db
+    const changed = await db
       .update(volunteerApplications)
       .set({
         fullName,
@@ -188,7 +188,13 @@ export async function submitApplication(input: ApplicationInput): Promise<Submit
         status: 'submitted',
         updatedAt: new Date(),
       })
-      .where(eq(volunteerApplications.id, recent.id));
+      .where(and(eq(volunteerApplications.id, recent.id),
+        eq(volunteerApplications.ownershipTokenHash, recent.tokenHash!),
+        raw`${volunteerApplications.ownershipExpiresAt} > now()`,
+        raw`${volunteerApplications.status} in ('submitted','info_requested')`,
+        isNull(volunteerApplications.deletedAt)))
+      .returning({ id: volunteerApplications.id });
+    if (!changed.length) throw Errors.conflict('That application changed. Ask the office for a new link.');
 
     await recordAudit({
       actor: SYSTEM_ACTOR,
@@ -200,12 +206,12 @@ export async function submitApplication(input: ApplicationInput): Promise<Submit
     return { reference: recent.reference, id: recent.id, duplicate: true };
   }
 
+  if (input.ownershipReference || input.ownershipToken) throw Errors.validation('That application link has expired. Ask the office for a new link.');
   const refRows = (await db.execute(
     raw`select next_application_reference() as reference`,
   )) as unknown as Array<{ reference: string }>;
   const reference = refRows[0]!.reference;
 
-  if (input.ownershipReference || input.ownershipToken) throw Errors.validation('That application link has expired. Ask the office for a new link.');
   const ownershipToken = generateToken();
   const [row] = await db
     .insert(volunteerApplications)
