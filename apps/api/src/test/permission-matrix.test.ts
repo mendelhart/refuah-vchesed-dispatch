@@ -69,6 +69,7 @@ const SIGNED_IN = new Set([
   // assignment (covered by idor.test.ts and claim-authz.test.ts).
   'GET /api/trips',
   'GET /api/trips/:id',
+  'GET /api/trips/:id/journey',
   'POST /api/trips/:id/claim',
   'POST /api/trips/:id/en-route',
   'POST /api/trips/:id/start',

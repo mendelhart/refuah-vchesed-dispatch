@@ -136,6 +136,10 @@ const envSchema = z.object({
    *  Off by default: the header is ignored and nothing changes. */
   IDEMPOTENCY_KEYS_ENABLED: bool(false),
 
+  // --- New features (all off by default; see lib/flags.ts) -----------------
+  /** Round trips, extra stops and several passengers per ride. */
+  MULTI_LEG_TRIPS_ENABLED: bool(false),
+
   SENTRY_DSN: z.string().optional(),
   HEALTH_CHECK_TOKEN: z.string().min(16).optional(),
 

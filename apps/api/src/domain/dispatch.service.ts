@@ -1,3 +1,4 @@
+import { assertSeats, seatsNeeded } from './seats.js';
 import { and, eq, inArray, isNull, ne, or, sql as raw } from 'drizzle-orm';
 import {
   SETTING_KEYS,
@@ -629,6 +630,7 @@ export async function offerTrip(
         preferredVolunteerId,
         restrictToUserIds: opts.volunteerIds?.length ? opts.volunteerIds : null,
         excludeTripId: tripId,
+        seatsNeeded: await seatsNeeded(tripId, tx),
         limit: batchSize,
       },
       tx,
@@ -1154,6 +1156,7 @@ export async function assignTrip(
     if (volunteer.status !== 'active') {
       throw Errors.validation('That volunteer is not active.', { field: 'volunteerId' });
     }
+    await assertSeats(tx, tripId, volunteerId);
 
     const [updated] = await tx
       .update(trips)
@@ -1235,6 +1238,7 @@ export async function reassignTrip(
     if (!volunteer || volunteer.status !== 'active') {
       throw Errors.validation('That volunteer is not available for this group.');
     }
+    await assertSeats(tx, tripId, volunteerId);
 
     const previousVolunteerId = trip.assignedVolunteerId;
 

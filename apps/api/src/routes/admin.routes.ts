@@ -13,6 +13,7 @@ import { deliveryHealth } from '../services/notification.service.js';
 import { deadJobCount } from '../jobs/queue.js';
 import { recordAudit } from '../lib/audit.js';
 import { Errors } from '../lib/errors.js';
+import { featureFlags } from '../lib/flags.js';
 
 export async function adminRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/admin/health', { preHandler: requireAdmin }, async () => ({
@@ -138,7 +139,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/features', { preHandler: requireAuth }, async () => {
     const s = await loadSettings();
     const on = (key: string) => Number(s[key] ?? 1) !== 0;
-    return { announcements: on(SETTING_KEYS.featureAnnouncements) };
+    return { announcements: on(SETTING_KEYS.featureAnnouncements), flags: featureFlags() };
   });
 
   app.put('/api/settings/:key', { preHandler: requireAdmin }, async (req) => {
