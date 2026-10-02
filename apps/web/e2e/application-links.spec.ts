@@ -21,7 +21,7 @@ test.describe('application links', () => {
     } }));
   });
 
-  test('form link and submitted application deep link work on a phone', async ({ page }) => {
+  test('form link and submitted application deep link work', async ({ page }, testInfo) => {
     await page.goto('/admin/applications');
     const form = page.getByRole('link', { name: /Open volunteer application form/ });
     await expect(form).toHaveAttribute('href', '/volunteer/apply');
@@ -38,7 +38,11 @@ test.describe('application links', () => {
     await page.reload();
     await expect(page.getByRole('heading', { name: 'Link Test Applicant' })).toBeVisible();
     await page.screenshot({ path: 'screenshots/application-link-phone.png', fullPage: true });
-    await page.getByRole('button', { name: 'Back to the list' }).click();
+    if (testInfo.project.name === 'phone') {
+      await page.getByRole('button', { name: 'Back to the list' }).click();
+    } else {
+      await page.getByRole('tab', { name: /New/ }).click();
+    }
     await expect(page).toHaveURL(/\/admin\/applications$/);
     await expect(row).toBeVisible();
     const bounds = await row.boundingBox();
