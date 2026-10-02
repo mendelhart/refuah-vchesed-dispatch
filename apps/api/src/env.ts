@@ -141,6 +141,8 @@ const envSchema = z.object({
   MULTI_LEG_TRIPS_ENABLED: bool(false),
   /** Coordinators who belong to departments work only within them. */
   DEPARTMENT_SCOPING_ENABLED: bool(false),
+  /** Food stock, vendors, preparation slots, distribution runs, shopping lists. */
+  FOOD_OPS_ENABLED: bool(false),
 
   SENTRY_DSN: z.string().optional(),
   HEALTH_CHECK_TOKEN: z.string().min(16).optional(),

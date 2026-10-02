@@ -80,7 +80,9 @@ export async function resetDb(): Promise<void> {
       driver_licences, volunteer_applications, stored_files, stored_file_blobs, data_exports, announcements,
       duty_shifts, message_template_versions, message_templates,
       equipment_loans, equipment, equipment_categories, vehicles, contacts,
-      rate_limit_buckets, idempotency_keys, trip_passengers, trip_journey_legs, trip_journeys, department_members, organization_info, jobs, auth_tokens, sessions, user_groups, users,
+      rate_limit_buckets, idempotency_keys, trip_passengers, trip_journey_legs, trip_journeys, department_members,
+      food_shopping_list_sends, food_shopping_list_items, food_shopping_lists, food_run_volunteers,
+      food_distribution_runs, food_prep_signups, food_prep_slot_items, food_prep_slots, food_items, food_vendors, organization_info, jobs, auth_tokens, sessions, user_groups, users,
       volunteer_groups, trip_counters, sequence_counters, settings
     restart identity cascade
   `);

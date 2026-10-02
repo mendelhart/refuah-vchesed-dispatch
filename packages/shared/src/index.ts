@@ -2,3 +2,4 @@ export * from './domain.js';
 export * from './schemas.js';
 export * from './api-types.js';
 export * from './journeys.js';
+export * from './food.js';
