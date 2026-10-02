@@ -46,7 +46,9 @@ node apps/api/dist/index.js &
 api_pid=$!
 
 echo "→ starting the built web app on :4173"
-( cd apps/web && npx vite preview --port 4173 --strictPort --host 127.0.0.1 ) &
+# exec, so the recorded pid is the server itself and cleanup really stops it
+# (killing a plain subshell left vite running and holding port 4173).
+( cd apps/web && exec ../../node_modules/.bin/vite preview --port 4173 --strictPort --host 127.0.0.1 ) &
 web_pid=$!
 
 for i in $(seq 1 40); do
