@@ -1,18 +1,30 @@
-# Nightly database backup, $0 edition.
+# Nightly database backup for the Aiven Postgres 18 database.
 #
-# The live database is on Render's free plan: no backups, and it expires.
-# This takes a pg_dump every night, proves it restores (into a throwaway
-# Postgres inside the runner), encrypts it with a passphrase only the
-# organisation holds, and keeps it as a private workflow artifact for 30 days.
+# This repository is public. Anything a workflow uploads as an artifact, and
+# every line it logs, can be read by anyone. So this workflow:
+#   - never uses actions/upload-artifact,
+#   - encrypts the dump inside the runner before it goes anywhere,
+#   - sends the encrypted file only to private, S3-compatible storage that the
+#     organisation controls (Cloudflare R2 or Backblaze B2 have free tiers),
+#   - logs only counts and sizes, never connection details or rows.
 #
-# Secrets (Settings > Secrets and variables > Actions):
-#   BACKUP_DATABASE_URL  the live database's EXTERNAL connection string
-#   BACKUP_PASSPHRASE    encryption passphrase (kept in the owner's vault)
+# It does nothing until it is set up: with any secret missing it reports
+# "not configured" and finishes successfully, so it never fails every night.
 #
-# Restore: download the artifact, then
-#   gpg --batch --decrypt --passphrase '<passphrase>' rvc-*.dump.gpg > rvc.dump
+# Secrets (Settings > Secrets and variables > Actions), all required:
+#   BACKUP_DATABASE_URL     read-only connection string to the live database,
+#                           ending in ?sslmode=verify-full
+#   BACKUP_DB_CA_CERT       the Aiven project CA certificate (PEM text)
+#   BACKUP_PASSPHRASE       encryption passphrase, kept in the owner's vault
+#   BACKUP_S3_BUCKET        private bucket name
+#   BACKUP_S3_ENDPOINT      the provider's S3 endpoint URL
+#   BACKUP_S3_ACCESS_KEY_ID / BACKUP_S3_SECRET_ACCESS_KEY
+#                           a key that can only write to that bucket
+#
+# Restore: download the newest .gpg from the bucket, then
+#   gpg --batch --decrypt --passphrase-file <file> rvc-*.dump.gpg > rvc.dump
 #   pg_restore --no-owner --no-privileges -d "$NEW_DATABASE_URL" rvc.dump
-# See docs/BACKUP_AND_RESTORE.md, "Free-tier backups".
+# See docs/BACKUP_AND_RESTORE.md.
 name: Backup
 
 on:
@@ -33,61 +45,95 @@ jobs:
     timeout-minutes: 20
     services:
       scratch:
-        image: postgres:16
+        image: postgres:18
         env:
           POSTGRES_PASSWORD: scratch
         ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
-      - uses: actions/checkout@v4
+      - name: Is backup configured?
+        id: configured
+        env:
+          A: ${{ secrets.BACKUP_DATABASE_URL }}
+          B: ${{ secrets.BACKUP_DB_CA_CERT }}
+          C: ${{ secrets.BACKUP_PASSPHRASE }}
+          D: ${{ secrets.BACKUP_S3_BUCKET }}
+          E: ${{ secrets.BACKUP_S3_ENDPOINT }}
+          F: ${{ secrets.BACKUP_S3_ACCESS_KEY_ID }}
+          G: ${{ secrets.BACKUP_S3_SECRET_ACCESS_KEY }}
+        run: |
+          if [ -n "$A" ] && [ -n "$B" ] && [ -n "$C" ] && [ -n "$D" ] && [ -n "$E" ] && [ -n "$F" ] && [ -n "$G" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Backups are not configured (one or more BACKUP_* secrets are unset). Nothing was done."
+          fi
 
-      - name: Postgres 16 client
+      - if: steps.configured.outputs.ready == 'true'
+        uses: actions/checkout@v4
+
+      - name: Postgres 18 client
+        if: steps.configured.outputs.ready == 'true'
         run: |
           sudo install -d /usr/share/postgresql-common/pgdg
           sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
           echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
           sudo apt-get update -qq
-          sudo apt-get install -y -qq postgresql-client-16
-          echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+          sudo apt-get install -y -qq postgresql-client-18
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
 
-      - name: Check secrets are set
+      - name: Dump (read-only) with certificate verification
+        if: steps.configured.outputs.ready == 'true'
         env:
           DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
-          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
-        run: |
-          [ -n "$DATABASE_URL" ] || { echo "::error::BACKUP_DATABASE_URL secret is not set"; exit 1; }
-          [ -n "$PASSPHRASE" ] || { echo "::error::BACKUP_PASSPHRASE secret is not set"; exit 1; }
-
-      - name: Dump (read-only) and check it is readable
-        env:
-          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          CA_CERT: ${{ secrets.BACKUP_DB_CA_CERT }}
           BACKUP_DIR: ${{ runner.temp }}/backups
           BACKUP_MIN_BYTES: '5000'
-        run: scripts/backup.sh --local-only --label nightly
+        run: |
+          umask 077
+          printf '%s\n' "$CA_CERT" > "$RUNNER_TEMP/db-ca.pem"
+          export PGSSLROOTCERT="$RUNNER_TEMP/db-ca.pem"
+          scripts/backup.sh --local-only --label nightly
 
-      - name: Prove it restores
+      - name: Prove it restores into Postgres 18
+        if: steps.configured.outputs.ready == 'true'
         env:
           ADMIN_DATABASE_URL: postgres://postgres:scratch@localhost:5432/postgres
         run: |
           f=$(ls -1 "$RUNNER_TEMP"/backups/*.dump | tail -1)
           scripts/verify-backup.sh --file "$f" --min-trips 0 --min-users 1
 
-      - name: Encrypt
+      - name: Encrypt, then delete the plain dump
+        if: steps.configured.outputs.ready == 'true'
         env:
           PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
         run: |
+          umask 077
           mkdir -p "$RUNNER_TEMP/out"
+          printf '%s' "$PASSPHRASE" > "$RUNNER_TEMP/pass"
           for f in "$RUNNER_TEMP"/backups/*.dump; do
             gpg --batch --yes --symmetric --cipher-algo AES256 --pinentry-mode loopback \
-              --passphrase "$PASSPHRASE" -o "$RUNNER_TEMP/out/$(basename "$f").gpg" "$f"
+              --passphrase-file "$RUNNER_TEMP/pass" -o "$RUNNER_TEMP/out/$(basename "$f").gpg" "$f"
           done
-          rm -f "$RUNNER_TEMP"/backups/*.dump
-          ls -la "$RUNNER_TEMP/out"
+          shred -u "$RUNNER_TEMP/pass" "$RUNNER_TEMP"/backups/*.dump 2>/dev/null || rm -f "$RUNNER_TEMP/pass" "$RUNNER_TEMP"/backups/*.dump
+          rm -f "$RUNNER_TEMP/db-ca.pem"
+          ls -la "$RUNNER_TEMP/out" | awk 'NR>1 {print $5, $9}'
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: db-backup-${{ github.run_id }}
-          path: ${{ runner.temp }}/out/*.gpg
-          retention-days: 30
-          if-no-files-found: error
+      - name: Upload the encrypted file to private storage (not an artifact)
+        if: steps.configured.outputs.ready == 'true'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+          ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+        run: |
+          for f in "$RUNNER_TEMP"/out/*.gpg; do
+            aws s3 cp --only-show-errors --endpoint-url "$ENDPOINT" "$f" "s3://$BUCKET/nightly/$(basename "$f")"
+          done
+          echo "uploaded $(ls -1 "$RUNNER_TEMP"/out/*.gpg | wc -l) encrypted file(s)"
+
+      - name: Clean the runner
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/backups" "$RUNNER_TEMP/out" "$RUNNER_TEMP/pass" "$RUNNER_TEMP/db-ca.pem"
