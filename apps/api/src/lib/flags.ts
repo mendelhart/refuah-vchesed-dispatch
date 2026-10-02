@@ -18,6 +18,8 @@ export interface FeatureFlags {
   liftAssist: boolean;
   reports: boolean;
   emailBuilder: boolean;
+  /** On only when switched on AND a Google client ID is configured. */
+  googleSignIn: boolean;
   /** Languages that may be chosen; always starts with English. */
   languages: string[];
 }
@@ -39,6 +41,7 @@ export function featureFlags(): FeatureFlags {
     liftAssist: env.LIFT_ASSIST_ENABLED,
     reports: env.REPORTS_ENABLED,
     emailBuilder: env.EMAIL_BUILDER_ENABLED,
+    googleSignIn: env.GOOGLE_SIGNIN_ENABLED && Boolean(env.GOOGLE_CLIENT_ID),
     languages: enabledLanguages(),
   };
 }

@@ -155,6 +155,12 @@ const envSchema = z.object({
   /** Email builder: designs with blocks, preview, versions, test send to
    *  yourself only (always through the fake email provider). */
   EMAIL_BUILDER_ENABLED: bool(false),
+  /** Sign in with Google, for people an administrator approved. Needs
+   *  GOOGLE_CLIENT_ID too (a public identifier, not a secret). Password
+   *  sign-in is unchanged either way. */
+  GOOGLE_SIGNIN_ENABLED: bool(false),
+  GOOGLE_CLIENT_ID: z.preprocess((v) => (v === '' ? undefined : v),
+    z.string().regex(/^[0-9A-Za-z.-]+\.apps\.googleusercontent\.com$/, 'GOOGLE_CLIENT_ID looks wrong').optional()),
 
   SENTRY_DSN: z.string().optional(),
   HEALTH_CHECK_TOKEN: z.string().min(16).optional(),
