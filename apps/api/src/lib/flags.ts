@@ -16,6 +16,16 @@ export interface FeatureFlags {
   foodOps: boolean;
   packageDelivery: boolean;
   liftAssist: boolean;
+  /** Languages that may be chosen; always starts with English. */
+  languages: string[];
+}
+
+export const KNOWN_LANGUAGES = ['en', 'fr', 'he'] as const;
+
+/** LANGUAGES_ENABLED, cleaned: known codes only, English always first. */
+export function enabledLanguages(): string[] {
+  const asked = env.LANGUAGES_ENABLED.split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
+  return ['en', ...KNOWN_LANGUAGES.filter((l) => l !== 'en' && asked.includes(l))];
 }
 
 export function featureFlags(): FeatureFlags {
@@ -25,16 +35,19 @@ export function featureFlags(): FeatureFlags {
     foodOps: env.FOOD_OPS_ENABLED,
     packageDelivery: env.PACKAGE_DELIVERY_ENABLED,
     liftAssist: env.LIFT_ASSIST_ENABLED,
+    languages: enabledLanguages(),
   };
 }
 
-export function isOn(flag: keyof FeatureFlags): boolean {
+type BooleanFlag = { [K in keyof FeatureFlags]: FeatureFlags[K] extends boolean ? K : never }[keyof FeatureFlags];
+
+export function isOn(flag: BooleanFlag): boolean {
   return Boolean(featureFlags()[flag]);
 }
 
 /** Route guard: answers 404 while the feature is off. Put it AFTER the role
  *  guard, so a person without the role is refused (403) whatever the flag. */
-export function requireFlag(flag: keyof FeatureFlags) {
+export function requireFlag(flag: BooleanFlag) {
   return async function flagGuard(_req: FastifyRequest, _reply: FastifyReply): Promise<void> {
     if (!isOn(flag)) throw Errors.notFound('Page');
   };

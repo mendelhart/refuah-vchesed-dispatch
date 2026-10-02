@@ -147,6 +147,9 @@ const envSchema = z.object({
   PACKAGE_DELIVERY_ENABLED: bool(false),
   /** Lift assist: a few chosen volunteers asked to help lift, one lead. */
   LIFT_ASSIST_ENABLED: bool(false),
+  /** Languages people may choose, comma-separated (en, fr, he). English is
+   *  always included. Add a language only after its translation is reviewed. */
+  LANGUAGES_ENABLED: z.string().default('en'),
 
   SENTRY_DSN: z.string().optional(),
   HEALTH_CHECK_TOKEN: z.string().min(16).optional(),
