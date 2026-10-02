@@ -60,7 +60,7 @@ start-up, and once a quarter otherwise.
 
 ## Alerts: who gets told
 
-Two things, both free, both **off until Mendel turns them on**:
+Two things, both free, both **off until Mendel turns them on** (Sentry: set the DSN; uptime: add the `UPTIME_URL` secret):
 
 **1. Error reports (Sentry).** Already built in. Set `SENTRY_DSN` on rvc-api to
 a free Sentry project's DSN. Unhandled errors, crashes, worker failures and
@@ -68,14 +68,25 @@ jobs that run out of retries are reported there. With it unset, errors go to
 the Render logs only. Sentry stores error details; set its data scrubbing on
 before connecting it, because a stack trace can include a request's content.
 
-**2. Uptime check.** A free monitor (for example UptimeRobot or Better Stack)
-calling the API on a schedule and emailing when it fails:
+**2. Uptime check.** Built in, free, and in-house: `.github/workflows/uptime.yml`
+runs on GitHub's own scheduler, so no outside monitoring service gets the
+app's address.
 
-- URL: `https://<rvc-api host>/health` (database round trip, no personal data)
-- or `https://<rvc-api host>/health/deep?token=<HEALTH_CHECK_TOKEN>` for the
-  full checklist (worker ticking, stuck or dead jobs, standing rides created).
-  Keep the token out of shared screenshots.
-- Alert after 2 failures in a row, so one slow wake-up is not an alert.
+- It calls `/health` (a database round trip, no personal data) hourly,
+  from 07:05 to 22:05 Montreal time.
+- It waits up to two minutes for a cold start and tries once more before it
+  counts as down. A failed check fails the run, and GitHub emails the
+  repository owner. Settings > Notifications > Actions must be on.
+- To switch it on, add a repository secret `UPTIME_URL` with
+  `https://<rvc-api host>/health`. It is kept as a secret so the address never
+  shows in this public repository's logs. While it is unset the check
+  reports "not configured" and passes.
+- `/health/deep?token=<HEALTH_CHECK_TOKEN>` gives the full checklist (worker
+  ticking, stuck or dead jobs, standing rides created). It is not used by the
+  scheduled check, so the token stays out of it.
+- An outside monitor (UptimeRobot, Better Stack) remains an option if
+  emails from GitHub are not enough. That would mean giving another service
+  the address.
 
 **Watch the free hours.** Each call wakes the API, and it then stays awake
 for 15 minutes. A monitor every 5 minutes keeps it awake all day: about 744
