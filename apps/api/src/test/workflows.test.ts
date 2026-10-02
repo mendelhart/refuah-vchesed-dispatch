@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { createServer, type Server } from 'node:http';
+import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -53,5 +55,72 @@ describe('CI', () => {
     const code = withoutComments(read('.github/workflows/ci.yml'));
     expect(code.match(/image: postgres:18/g)?.length).toBe(2);
     expect(code).not.toMatch(/postgres:16/);
+  });
+});
+
+describe('uptime workflow', () => {
+  const yml = read('.github/workflows/uptime.yml');
+  const script = (() => {
+    const start = yml.indexOf('run: |');
+    return yml.slice(start + 'run: |'.length).split('\n').map((l) => l.replace(/^ {10}/, '')).join('\n');
+  })();
+
+  it('checks at most hourly, and only in the day', () => {
+    const cron = yml.match(/cron: '([^']+)'/)?.[1];
+    expect(cron).toBe('5 0-2,11-23 * * *');
+  });
+
+  it('keeps the address in a secret and needs no permissions', () => {
+    expect(yml).toMatch(/URL: \$\{\{ secrets\.UPTIME_URL \}\}/);
+    expect(yml).toMatch(/permissions: \{\}/);
+  });
+
+  async function run(url: string): Promise<{ status: number | null; out: string }> {
+    const quick = script.replace('sleep 60', 'sleep 0').replace('-m 120', '-m 5');
+    // Asynchronous on purpose: the test server lives in this same process.
+    return new Promise((resolve) => {
+      const child = spawn('bash', ['-c', `set -e\n${quick}`], { env: { ...process.env, URL: url } });
+      let out = '';
+      child.stdout.on('data', (d) => { out += String(d); });
+      child.stderr.on('data', (d) => { out += String(d); });
+      child.on('close', (status) => resolve({ status, out }));
+    });
+  }
+
+  async function serve(codes: number[]): Promise<{ url: string; server: Server }> {
+    let i = 0;
+    const server = createServer((_req, res) => { res.statusCode = codes[Math.min(i++, codes.length - 1)]!; res.end(); });
+    await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
+    const port = (server.address() as { port: number }).port;
+    return { url: `http://127.0.0.1:${port}/health`, server };
+  }
+
+  it('passes on 200, and on a 200 after one slow failure', async () => {
+    for (const codes of [[200], [502, 200]]) {
+      const { url, server } = await serve(codes);
+      const r = await run(url);
+      server.close();
+      expect(r.status, r.out).toBe(0);
+    }
+  });
+
+  it('fails with a plain message on 503 (database) and on other errors', async () => {
+    const db = await serve([503]);
+    const r1 = await run(db.url);
+    db.server.close();
+    expect(r1.status).toBe(1);
+    expect(r1.out).toMatch(/cannot reach its database/);
+
+    const down = await serve([500]);
+    const r2 = await run(down.url);
+    down.server.close();
+    expect(r2.status).toBe(1);
+    expect(r2.out).toMatch(/did not answer \/health with 200/);
+  });
+
+  it('passes quietly when not configured', async () => {
+    const r = await run('');
+    expect(r.status).toBe(0);
+    expect(r.out).toMatch(/not set/);
   });
 });
