@@ -33,6 +33,12 @@ const STEPS = ['Who you are', 'What you can help with', 'When you are around', '
 
 export function VolunteerSignupPage(): React.JSX.Element {
   const mountedAt = useRef(Date.now());
+  const [ownership] = useState(() => {
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const value = { ownershipReference: params.get('ref') ?? undefined, ownershipToken: params.get('token') ?? undefined };
+    if (value.ownershipToken) window.history.replaceState(null, '', window.location.pathname);
+    return value;
+  });
   const errorRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -114,6 +120,7 @@ export function VolunteerSignupPage(): React.JSX.Element {
     const seats = Number.parseInt(form.vehicleSeats, 10);
 
     submit.mutate({
+      ...ownership,
       fullName: form.fullName.trim(),
       email: form.email.trim(),
       phone: form.phone.trim(),

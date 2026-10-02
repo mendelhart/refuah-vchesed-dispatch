@@ -139,15 +139,46 @@ describe('volunteer applications', () => {
   });
 
   it('updates rather than duplicates when the same person submits twice', async () => {
-    await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    const first = await api('POST', '/api/public/volunteer-applications', { payload: application() });
     const second = await api('POST', '/api/public/volunteer-applications', {
-      payload: application({ serviceArea: 'Outremont only' }),
+      payload: { ...application({ serviceArea: 'Outremont only' }), ownershipToken: first.body.ownershipToken, ownershipReference: first.body.reference },
     });
     expect(second.status).toBe(201);
 
     const rows = await db.select().from(volunteerApplications);
     expect(rows.length).toBe(1);
     expect(rows[0]!.serviceArea).toBe('Outremont only');
+  });
+
+  it('never overwrites or reveals an open application on a phone/email match without ownership', async () => {
+    const first = await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    for (const change of [{ email: 'stranger@example.test' }, { phone: '514-555-9876' }]) {
+      const res = await api('POST', '/api/public/volunteer-applications', {
+        payload: application({ ...change, fullName: 'Not The Applicant', notes: 'Unverified overwrite' }),
+      });
+      expect(res.status).toBe(201);
+      expect(res.body.reference).not.toBe(first.body.reference);
+      expect(res.body.ownershipToken).toBeUndefined();
+    }
+    const [row] = await db.select().from(volunteerApplications);
+    expect(row!.fullName).toBe('Yehuda Brenner');
+    expect(row!.notes).not.toBe('Unverified overwrite');
+  });
+
+  it('licence uploads require the secret and unexpired ownership, and honor closed signup', async () => {
+    const submitted = await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    const url = `/api/public/volunteer-applications/${submitted.body.reference}/licence`;
+    const payload = { licenceNumber: 'SYNTHETIC9999', province: 'QC' };
+    expect((await api('POST', url, { payload })).status).toBe(404);
+    expect((await api('POST', url, { payload, headers: { 'x-application-token': 'x'.repeat(43) } })).status).toBe(404);
+    const { env } = await import('../env.js');
+    const original = env.PUBLIC_SIGNUP_ENABLED;
+    env.PUBLIC_SIGNUP_ENABLED = false;
+    try { expect((await api('POST', url, { payload, headers: { 'x-application-token': submitted.body.ownershipToken as string } })).status).toBe(403); }
+    finally { env.PUBLIC_SIGNUP_ENABLED = original; }
+    await db.update(volunteerApplications).set({ ownershipExpiresAt: new Date(0) });
+    expect((await api('POST', url, { payload, headers: { 'x-application-token': submitted.body.ownershipToken as string } })).status).toBe(404);
+    expect(await db.select().from(driverLicences)).toHaveLength(0);
   });
 
   it('does not reveal that a phone number already belongs to a volunteer', async () => {
@@ -188,7 +219,8 @@ describe('volunteer applications', () => {
   });
 
   it('approves an application into a real volunteer, once', async () => {
-    await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    const initial = await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    void initial;
     const [row] = await db.select().from(volunteerApplications);
 
     const approved = await api('POST', `/api/applications/${row!.id}/approve`, {
@@ -225,7 +257,8 @@ describe('volunteer applications', () => {
   });
 
   it('sends the approved volunteer an invitation they can actually use', async () => {
-    await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    const initial = await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    void initial;
     const [row] = await db.select().from(volunteerApplications);
     capturedExtra.reset();
 
@@ -250,7 +283,8 @@ describe('volunteer applications', () => {
 
   it('refuses approval when the phone number already belongs to a volunteer', async () => {
     await createTestUser({ role: 'volunteer', phone: '+15145554321' });
-    await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    const initial = await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    void initial;
     const [row] = await db.select().from(volunteerApplications);
 
     const res = await api('POST', `/api/applications/${row!.id}/approve`, {
@@ -267,7 +301,8 @@ describe('volunteer applications', () => {
   });
 
   it('rejects an application without creating anything', async () => {
-    await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    const initial = await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    void initial;
     const [row] = await db.select().from(volunteerApplications);
 
     const res = await api('POST', `/api/applications/${row!.id}/reject`, {
@@ -284,7 +319,8 @@ describe('volunteer applications', () => {
   });
 
   it('asks for more information and lets the applicant resubmit', async () => {
-    await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    const initial = await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    void initial;
     const [row] = await db.select().from(volunteerApplications);
 
     const asked = await api('POST', `/api/applications/${row!.id}/request-info`, {
@@ -296,9 +332,19 @@ describe('volunteer applications', () => {
     const [after] = await db.select().from(volunteerApplications).where(eq(volunteerApplications.id, row!.id));
     expect(after!.status).toBe('info_requested');
     expect(after!.infoRequestMessage).toMatch(/evenings/);
+    expect(after!.ownershipTokenHash).not.toBe(initial.body.ownershipToken);
+    const detail = await api('GET', `/api/applications/${row!.id}`, { cookie: admin.cookie });
+    expect(JSON.stringify(detail.body)).not.toMatch(/ownershipTokenHash|ownershipExpiresAt/);
+    const list = await api('GET', '/api/applications?status=all', { cookie: admin.cookie });
+    expect(JSON.stringify(list.body)).not.toMatch(/ownershipTokenHash|ownershipExpiresAt/);
 
+    const resume = capturedExtra.email.at(-1)!.text.match(/https?:\/\/[^\s]+/)![0];
+    const token = new URLSearchParams(new URL(resume).hash.slice(1)).get('token');
+    expect(token).not.toBe(initial.body.ownershipToken);
+    const oldLink = await api('POST', '/api/public/volunteer-applications', { payload: { ...application(), ownershipReference: row!.reference, ownershipToken: initial.body.ownershipToken } });
+    expect(oldLink.status).toBe(422);
     const resubmitted = await api('POST', '/api/public/volunteer-applications', {
-      payload: application({ availabilityNote: 'Tuesday and Thursday evenings' }),
+      payload: { ...application({ availabilityNote: 'Tuesday and Thursday evenings' }), ownershipReference: row!.reference, ownershipToken: token },
     });
     expect(resubmitted.status).toBe(201);
 
@@ -308,7 +354,8 @@ describe('volunteer applications', () => {
   });
 
   it('refuses to let a dispatcher approve — approval is the trust boundary', async () => {
-    await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    const initial = await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    void initial;
     const [row] = await db.select().from(volunteerApplications);
     const res = await api('POST', `/api/applications/${row!.id}/approve`, {
       cookie: dispatcher.cookie,
@@ -318,7 +365,8 @@ describe('volunteer applications', () => {
   });
 
   it('scrubs the abuse-prevention fields once the person is approved', async () => {
-    await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    const initial = await api('POST', '/api/public/volunteer-applications', { payload: application() });
+    void initial;
     const [row] = await db.select().from(volunteerApplications);
     expect(row!.submittedIp).not.toBeNull();
 
@@ -337,6 +385,7 @@ describe('volunteer applications', () => {
     const png =
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
     const upload = await api('POST', `/api/public/volunteer-applications/${reference}/licence`, {
+      headers: { 'x-application-token': submitted.body.ownershipToken as string },
       payload: { licenceNumber: 'B1234-567890-12', province: 'QC', expiresOn: '2030-04-01', frontImage: png },
     });
     expect(upload.status).toBe(200);
