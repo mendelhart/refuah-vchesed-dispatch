@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import type { Role } from '@rvc/shared';
 import { cn } from '@/lib/utils';
+import { navLabel, useI18n } from '@/i18n';
 
 export interface BottomNavItem {
   to: string;
@@ -66,6 +67,7 @@ export function bottomNavItems(
 }
 
 export function BottomNavigation({ items }: { items: BottomNavItem[] }): React.JSX.Element {
+  const { t } = useI18n();
   return (
     <nav
       aria-label="Primary"
@@ -99,7 +101,7 @@ export function BottomNavigation({ items }: { items: BottomNavItem[] }): React.J
                 ) : null}
               </span>
               {/* rem, so it grows with the reader's text size; truncates rather than pushing the bar off-screen at 200% */}
-              <span className="block max-w-full truncate text-[0.6875rem] font-medium leading-tight">{item.label}</span>
+              <span className="block max-w-full truncate text-[0.6875rem] font-medium leading-tight">{item.to === '/board' ? t('nav.boardShort') : item.to === '/me' ? t('nav.profileShort') : navLabel(t, item.to, item.label)}</span>
             </NavLink>
           );
         })}

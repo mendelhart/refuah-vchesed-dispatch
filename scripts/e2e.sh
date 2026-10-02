@@ -33,6 +33,7 @@ if [ "${E2E_FEATURES:-off}" = "on" ]; then
   export FOOD_OPS_ENABLED=true
   export PACKAGE_DELIVERY_ENABLED=true
   export LIFT_ASSIST_ENABLED=true
+  export LANGUAGES_ENABLED=en,fr,he
   export IDEMPOTENCY_KEYS_ENABLED=true
 fi
 

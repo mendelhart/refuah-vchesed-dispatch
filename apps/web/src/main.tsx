@@ -8,6 +8,7 @@ import { createQueryClient } from './lib/query';
 import { AuthProvider } from './lib/auth';
 import { ThemeProvider } from './lib/theme';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { LanguageRoot } from './i18n/LanguageRoot';
 import { reloadForNewVersion } from './lib/chunk-reload';
 import './index.css';
 
@@ -46,8 +47,10 @@ ReactDOM.createRoot(root).render(
         <ThemeProvider>
           <BrowserRouter>
             <AuthProvider>
-              <App />
-              <Toaster richColors position="top-center" closeButton />
+              <LanguageRoot>
+                <App />
+                <Toaster richColors position="top-center" closeButton />
+              </LanguageRoot>
             </AuthProvider>
           </BrowserRouter>
         </ThemeProvider>

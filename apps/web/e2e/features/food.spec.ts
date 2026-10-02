@@ -16,7 +16,8 @@ async function post(page: Page, path: string, body: unknown): Promise<{ status: 
 }
 
 const noViolations = async (page: Page) => {
-  const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+  // Toasts fade in and out; their settled colours are checked in departments.spec.ts.
+  const axe = await new AxeBuilder({ page }).exclude('[data-sonner-toaster]').withTags(['wcag2a', 'wcag2aa']).analyze();
   expect(axe.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(' ')} ${v.nodes[0]?.failureSummary ?? ''}`)).toEqual([]);
 };
 

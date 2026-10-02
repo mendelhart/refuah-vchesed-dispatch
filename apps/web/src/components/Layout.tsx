@@ -53,6 +53,7 @@ import type { BoardSummaryResponse, TripListResponse } from '@/types/api';
 import { exitViewAs, getViewAs } from '@/lib/viewAs';
 import { NotificationsBell } from './NotificationsBell';
 import { roleLabel } from '@rvc/shared';
+import { navLabel, useI18n } from '@/i18n';
 
 /** Where a screen lives: the main menu, or one tap further under More / My profile / Admin. */
 export type NavSection = 'main' | 'more' | 'profile' | 'admin';
@@ -203,6 +204,7 @@ function navLinkClass({ isActive }: { isActive: boolean }): string {
 }
 
 export function Layout({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const { t } = useI18n();
   const { user, logout } = useAuth();
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
@@ -307,7 +309,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
                     }
                   >
                     <Icon className="h-5 w-5" />
-                    <span>{item.label}</span>
+                    <span>{navLabel(t, item.to, item.label)}</span>
                   </NavLink>
                 );
               })}
@@ -327,7 +329,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
       <div className="flex">
         {/* FIX: `hidden lg:flex` — the original was `hidden lg:fixed` with no
             `lg:block`, so the sidebar was invisible at every width. */}
-        <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-slate-200 bg-white pt-[72px] shadow-sm lg:flex dark:border-slate-700 dark:bg-slate-900">
+        <aside className="fixed inset-y-0 start-0 z-40 hidden w-64 flex-col border-e border-slate-200 bg-white pt-[72px] shadow-sm lg:flex dark:border-slate-700 dark:bg-slate-900">
           <div className="border-b border-slate-200 p-5 dark:border-slate-700">
             <p className="text-sm font-semibold text-slate-900 dark:text-white">Dispatch</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">Montreal</p>
@@ -338,7 +340,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
               return (
                 <NavLink key={item.to} to={item.to} end={item.end ?? false} className={navLinkClass}>
                   <Icon className="h-5 w-5 flex-shrink-0" />
-                  <span className="truncate">{item.label}</span>
+                  <span className="truncate">{navLabel(t, item.to, item.label)}</span>
                 </NavLink>
               );
             })}
@@ -358,7 +360,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
           </div>
         </aside>
 
-        <main className="w-full min-w-0 flex-1 lg:ml-64">
+        <main className="w-full min-w-0 flex-1 lg:ms-64">
           <div
             className="mx-auto max-w-6xl p-4 md:p-6 lg:p-8"
             // Room for the bottom bar on phones, plus the device inset.
@@ -376,7 +378,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
         <Link
           to="/board?new=1"
           aria-label="Create a new trip"
-          className="fixed right-4 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#EA0029] text-white shadow-lg hover:bg-[#C80023] lg:hidden"
+          className="fixed end-4 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#EA0029] text-white shadow-lg hover:bg-[#C80023] lg:hidden"
           style={{ bottom: 'calc(72px + env(safe-area-inset-bottom))' }}
         >
           <Plus className="h-7 w-7" aria-hidden="true" />

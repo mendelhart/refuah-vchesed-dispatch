@@ -5,6 +5,8 @@ import { errorMessage, api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { inputClass, labelClass, primaryButtonClass } from '@/components/states';
 import { PasswordInput } from '@/components/PasswordInput';
+import { useI18n } from '@/i18n';
+import { LanguagePicker } from '@/i18n/LanguagePicker';
 
 interface LocationState {
   from?: string;
@@ -12,6 +14,7 @@ interface LocationState {
 
 export function LoginPage(): React.JSX.Element {
   const { user, login } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState('');
@@ -27,7 +30,7 @@ export function LoginPage(): React.JSX.Element {
     setBusy(true);
     try {
       await login(email, password);
-      toast.success('Signed in.');
+      toast.success(t('login.signedIn'));
       navigate(from, { replace: true });
     } catch (error) {
       toast.error(errorMessage(error));
@@ -38,13 +41,13 @@ export function LoginPage(): React.JSX.Element {
 
   const handleReset = async (): Promise<void> => {
     if (!email) {
-      toast.error('Enter your email address first, then tap this again.');
+      toast.error(t('login.enterEmailFirst'));
       return;
     }
     try {
       await api.post('/api/auth/request-password-reset', { email });
       setResetSent(true);
-      toast.success('If that address is registered, a reset link is on its way.');
+      toast.success(t('login.resetSent'));
     } catch (error) {
       toast.error(errorMessage(error));
     }
@@ -60,16 +63,17 @@ export function LoginPage(): React.JSX.Element {
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">
             <span className="sr-only">Refuah V&apos;Chesed </span>Dispatch
           </h1>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Volunteer medical transport, Montreal</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{t('login.subtitle')}</p>
         </div>
 
+        <div className="mb-4"><LanguagePicker /></div>
         <form
           onSubmit={handleSubmit}
           className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900"
         >
           <div>
             <label htmlFor="email" className={labelClass}>
-              Email or mobile number
+              {t('login.identifier')}
             </label>
             <input
               id="email"
@@ -85,7 +89,7 @@ export function LoginPage(): React.JSX.Element {
           </div>
           <div>
             <label htmlFor="password" className={labelClass}>
-              Password
+              {t('login.password')}
             </label>
             <PasswordInput
               id="password"
@@ -97,22 +101,22 @@ export function LoginPage(): React.JSX.Element {
             />
           </div>
           <button type="submit" className={`${primaryButtonClass} w-full`} disabled={busy}>
-            {busy ? 'Signing in…' : 'Sign in'}
+            {busy ? t('login.submitting') : t('login.submit')}
           </button>
           <button
             type="button"
             onClick={handleReset}
             className="w-full text-center text-sm text-slate-600 underline-offset-2 hover:underline dark:text-slate-400"
           >
-            {resetSent ? 'Reset link requested' : 'I forgot my password'}
+            {resetSent ? t('login.resetRequested') : t('login.forgot')}
           </button>
         </form>
 
         <p className="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
-          New volunteer with an invitation? <Link className="underline" to="/accept-invite">Set up your account</Link>.
+          {t('login.newVolunteer')} <Link className="underline" to="/accept-invite">{t('login.setUp')}</Link>.
         </p>
         <p className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
-          <Link className="underline" to="/privacy">Privacy notice</Link>
+          <Link className="underline" to="/privacy">{t('login.privacy')}</Link>
         </p>
       </div>
     </div>

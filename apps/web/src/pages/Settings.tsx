@@ -21,6 +21,8 @@ import {
 import type { MeStatusResponse, MuteResponse, SessionResponse } from '@/types/api';
 import { roleLabel } from '@rvc/shared';
 import { MyPhotoSettings } from '@/components/MyPhotoSettings';
+import { useI18n } from '@/i18n';
+import { LanguagePicker } from '@/i18n/LanguagePicker';
 
 /**
  * How a volunteer wants to hear from us: App, SMS, WhatsApp or a phone call.
@@ -35,6 +37,17 @@ const MUTE_OPTIONS = [
   { hours: 72, label: '3 days' },
   { hours: 24 * 30, label: 'Until I turn it back on' },
 ];
+
+/** Language (item 7): shown only when more than English is switched on. */
+function LanguageSection(): React.JSX.Element | null {
+  const { available } = useI18n();
+  if (available.length < 2) return null;
+  return (
+    <section className={`${cardClass} p-4`}>
+      <LanguagePicker saveToAccount />
+    </section>
+  );
+}
 
 export function SettingsPage(): React.JSX.Element {
   const { user, refresh } = useAuth();
@@ -123,6 +136,7 @@ export function SettingsPage(): React.JSX.Element {
   return (
     <div className="space-y-6">
       <PageHeader title="Settings" subtitle="Your details and how we reach you" />
+      <LanguageSection />
 
       <MyPhotoSettings isAdmin={user?.role === 'admin'} />
 
