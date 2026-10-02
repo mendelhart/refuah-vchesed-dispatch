@@ -131,7 +131,7 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
   # ---------------------------------------------------------------------------
-  # api-tests — against a real Postgres 16, with the real migrations applied.
+  # api-tests — against a real Postgres 18 (production runs Aiven PG18), with the real migrations applied.
   #
   # A stubbed database would not exercise the parts that carry the correctness
   # of this system: the compare-and-set claim, the partial unique indexes, the
@@ -146,7 +146,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18
         env:
           POSTGRES_USER: rvc
           POSTGRES_PASSWORD: rvc
@@ -231,7 +231,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18
         env:
           POSTGRES_USER: rvc
           POSTGRES_PASSWORD: rvc

@@ -18,7 +18,7 @@ Three rules, no exceptions:
 
 ## Start one (about five minutes)
 
-You need Docker, or Postgres 16+ on your machine.
+You need Docker, or Postgres 16 or newer (production runs 18) on your machine.
 
 ```sh
 # 0. Local settings (no real credentials in here, ever). Fill in
