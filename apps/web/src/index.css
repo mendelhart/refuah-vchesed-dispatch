@@ -105,3 +105,10 @@
     outline-color: #f87171;
   }
 }
+
+/* Toast messages: the library's rich colours put mid-green, red and blue
+   text on pale backgrounds below 4.5:1. Darker text, same backgrounds. */
+[data-sonner-toast][data-rich-colors='true'][data-type='success'] { color: #14532d !important; }
+[data-sonner-toast][data-rich-colors='true'][data-type='error'] { color: #7f1d1d !important; }
+[data-sonner-toast][data-rich-colors='true'][data-type='info'] { color: #1e3a8a !important; }
+[data-sonner-toast][data-rich-colors='true'][data-type='warning'] { color: #713f12 !important; }
