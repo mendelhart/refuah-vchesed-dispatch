@@ -1,5 +1,5 @@
 import { assertSeats, seatsNeeded } from './seats.js';
-import { and, eq, inArray, isNull, ne, or, sql as raw } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, ne, or, sql as raw } from 'drizzle-orm';
 import {
   SETTING_KEYS,
   TRIP_STATE_MACHINE,
@@ -957,9 +957,11 @@ export async function claimTrip(actor: TripActor, args: ClaimArgs): Promise<Clai
           and(
             eq(tripOffers.tripId, args.tripId),
             eq(tripOffers.volunteerId, actor.user.id),
-            eq(tripOffers.status, 'pending'),
           ),
         )
+        // Keep the caller's latest offer even if another claim just closed it.
+        // Its status below tells a late loser 'already taken', not 'not yours'.
+        .orderBy(desc(tripOffers.round))
         .limit(1);
       offerRow = found;
       if (!offerRow) return { ok: false, reason: 'not_your_offer' };
