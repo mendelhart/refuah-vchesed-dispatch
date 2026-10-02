@@ -91,7 +91,7 @@ export function CallsPage(): React.JSX.Element {
                     <span
                       className={`mt-0.5 grid h-9 w-9 flex-shrink-0 place-items-center rounded-full ${
                         call.outcomeLabel
-                          ? 'bg-red-50 text-[#EA0029] dark:bg-red-950/40'
+                          ? 'bg-red-50 text-[#C80023] dark:text-red-400 dark:bg-red-950/40'
                           : 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400'
                       }`}
                     >
@@ -104,7 +104,7 @@ export function CallsPage(): React.JSX.Element {
                         {call.outcomeLabel ? ` · ${call.outcomeLabel}` : ''}
                         {call.failureReason ? ` · ${call.failureReason}` : ''}
                       </p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         {formatDateTime(call.startedAt)} · by {call.initiatedByName}
                         {call.tripReference ? (
                           <>

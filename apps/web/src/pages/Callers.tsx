@@ -306,7 +306,7 @@ export function CallersPage({ initialCallerId = null }: { initialCallerId?: stri
       />
 
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" aria-hidden="true" />
         <input
           type="search"
           className={`${inputClass} pl-10`}
@@ -456,7 +456,7 @@ export function CallersPage({ initialCallerId = null }: { initialCallerId?: stri
 
               {defaultPickup ? (
                 <div className="rounded-xl border-2 border-[#EA0029] bg-red-50 p-4 dark:bg-red-950/30">
-                  <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#EA0029]">
+                  <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#C80023] dark:text-red-400">
                     <Star className="h-4 w-4" aria-hidden="true" />
                     Usual pickup
                   </p>
@@ -501,7 +501,7 @@ export function CallersPage({ initialCallerId = null }: { initialCallerId?: stri
                               {titleCase(row.label)}
                             </span>
                             {row.isDefaultPickup ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-[#EA0029] dark:bg-red-500/15 dark:text-red-300">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-[#C80023] dark:bg-red-500/15 dark:text-red-300">
                                 <Star className="h-3 w-3" aria-hidden="true" />
                                 Use as pickup
                               </span>
@@ -521,7 +521,7 @@ export function CallersPage({ initialCallerId = null }: { initialCallerId?: stri
                         <button
                           type="button"
                           aria-label={`Remove ${row.address.line1}`}
-                          className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+                          className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
                           onClick={() => {
                             confirmation.ask({ title: `Remove ${row.address.line1} from this caller?`, action: () => removeAddress.mutate(row.id) });
                           }}

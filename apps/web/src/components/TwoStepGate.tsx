@@ -22,7 +22,7 @@ function Frame({ children }: { children: React.ReactNode }): React.JSX.Element {
     <main className="flex min-h-screen items-start justify-center bg-slate-50 px-4 py-10 dark:bg-slate-950">
       <div className="w-full max-w-md space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <div className="flex items-center gap-3">
-          <ShieldCheck className="h-7 w-7 text-[#EA0029]" aria-hidden="true" />
+          <ShieldCheck className="h-7 w-7 text-[#C80023] dark:text-red-400" aria-hidden="true" />
           <h1 className="text-xl font-bold text-slate-900 dark:text-white">Two-step sign-in</h1>
         </div>
         {children}
@@ -98,7 +98,7 @@ export function TwoStepGate({ mode }: { mode: 'setup' | 'verify' }): React.JSX.E
           </button>
         </form>
         <div className="flex items-center justify-between">
-          <button type="button" className="text-sm text-[#EA0029] underline" onClick={() => { setUseRecovery((v) => !v); setCode(''); }}>
+          <button type="button" className="text-sm text-[#C80023] dark:text-red-400 underline" onClick={() => { setUseRecovery((v) => !v); setCode(''); }}>
             {useRecovery ? 'Use the app code instead' : 'Lost your phone? Use a recovery code'}
           </button>
           {signOut}

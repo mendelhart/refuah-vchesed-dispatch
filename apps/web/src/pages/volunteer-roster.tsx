@@ -308,7 +308,7 @@ export function FortnightView({ rows }: { rows: VolunteerRow[] }): React.JSX.Ele
           </p>
         ) : null}
         {failed > 0 ? (
-          <p className="mt-2 text-sm font-medium text-[#EA0029]">
+          <p className="mt-2 text-sm font-medium text-[#C80023] dark:text-red-400">
             {failed} {failed === 1 ? "person's" : "people's"} hours did not load, so they are missing from the days
             below.
           </p>

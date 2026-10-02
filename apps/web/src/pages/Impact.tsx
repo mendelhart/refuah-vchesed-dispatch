@@ -58,7 +58,7 @@ export function ImpactPage(): React.JSX.Element {
                   <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{tile.value}</p>
                   {tile.sub ? <p className="text-xs text-slate-500 dark:text-slate-400">{tile.sub}</p> : null}
                 </div>
-                <Icon className="h-6 w-6 flex-shrink-0 text-[#EA0029]" aria-hidden="true" />
+                <Icon className="h-6 w-6 flex-shrink-0 text-[#C80023] dark:text-red-400" aria-hidden="true" />
               </div>
             </div>
           );

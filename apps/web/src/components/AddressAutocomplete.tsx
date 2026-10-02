@@ -145,7 +145,7 @@ export function AddressFields({ id, label, value, onChange, notesPlaceholder, re
           Street address {required ? <span aria-hidden="true">*</span> : null}
         </label>
         <div className="relative">
-          <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+          <MapPin className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" aria-hidden="true" />
           <input
             id={`${id}-line1`}
             className={cn(inputClass, 'pl-10')}
@@ -191,7 +191,7 @@ export function AddressFields({ id, label, value, onChange, notesPlaceholder, re
                   onClick={() => applyPlace(place)}
                   className="flex w-full items-start gap-2 border-b border-slate-100 bg-red-50/40 px-4 py-3 text-left hover:bg-slate-100 dark:border-slate-700 dark:bg-red-950/20 dark:hover:bg-slate-700"
                 >
-                  <Building2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#EA0029]" aria-hidden="true" />
+                  <Building2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#C80023] dark:text-red-400" aria-hidden="true" />
                   <span className="min-w-0">
                     <span className="block text-sm font-medium text-slate-900 dark:text-white">{place.name}</span>
                     <span className="block text-xs text-slate-500 dark:text-slate-400">{place.address.formatted}</span>
@@ -208,7 +208,7 @@ export function AddressFields({ id, label, value, onChange, notesPlaceholder, re
                   onClick={() => applySuggestion(suggestion)}
                   className="flex w-full items-start gap-2 border-b border-slate-100 px-4 py-3 text-left last:border-0 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-700"
                 >
-                  <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
+                  <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-500 dark:text-slate-400" aria-hidden="true" />
                   <span className="min-w-0">
                     <span className="block text-sm font-medium text-slate-900 dark:text-white">{suggestion.line1 || suggestion.formatted}</span>
                     <span className="block text-xs text-slate-500 dark:text-slate-400">

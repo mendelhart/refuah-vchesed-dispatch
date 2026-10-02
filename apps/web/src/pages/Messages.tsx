@@ -424,7 +424,7 @@ export function MessagesPage(): React.JSX.Element {
                           </p>
                           {message.failureReason ? (
                             <p
-                              className={`mt-1 flex items-center gap-1 text-xs font-medium text-[#EA0029] ${
+                              className={`mt-1 flex items-center gap-1 text-xs font-medium text-[#C80023] dark:text-red-400 ${
                                 outbound ? 'justify-end' : 'justify-start'
                               }`}
                             >

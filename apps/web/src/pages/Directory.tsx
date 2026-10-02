@@ -69,7 +69,7 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
       <AddPersonModal open={adding} onClose={() => setAdding(false)} title="Add volunteer" />
 
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" aria-hidden="true" />
         <input
           type="search"
           className={`${inputClass} pl-10`}
@@ -88,7 +88,7 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
             onClick={() => setRoleFilter(chip.id)}
             className={
               roleFilter === chip.id
-                ? 'min-h-[44px] flex-shrink-0 whitespace-nowrap rounded-lg border border-[#EA0029] bg-[#EA0029]/10 px-3 text-sm font-medium text-[#EA0029]'
+                ? 'min-h-[44px] flex-shrink-0 whitespace-nowrap rounded-lg border border-[#EA0029] bg-[#EA0029]/10 px-3 text-sm font-medium text-[#C80023] dark:text-red-400'
                 : 'min-h-[44px] flex-shrink-0 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200'
             }
           >
@@ -112,7 +112,7 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
           {roster.map((person) => (
             <li key={person.id} className={`${cardClass} p-4`}>
               <div className="flex items-start gap-3">
-                <span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full bg-red-50 text-sm font-semibold text-[#EA0029] dark:bg-red-950/40">
+                <span className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full bg-red-50 text-sm font-semibold text-[#C80023] dark:text-red-400 dark:bg-red-950/40">
                   {person.fullName
                     .split(' ')
                     .slice(0, 2)
@@ -126,7 +126,7 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
                     {person.groupSlugs.length > 0 ? ` · ${person.groupSlugs.map(titleCase).join(', ')}` : ''}
                   </p>
                   {person.phone ? (
-                    <a className="mt-1 flex items-center gap-2 text-sm text-[#EA0029]" href={telHref(person.phone)}>
+                    <a className="mt-1 flex items-center gap-2 text-sm text-[#C80023] dark:text-red-400" href={telHref(person.phone)}>
                       <Phone className="h-3 w-3" aria-hidden="true" />
                       {formatPhone(person.phone)}
                     </a>
@@ -142,7 +142,7 @@ export function DirectoryPage({ title = 'Directory' }: { title?: string } = {}):
                   <Link
                     to={`/volunteers?open=${person.id}`}
                     aria-label={`Edit ${person.fullName}`}
-                    className="ml-auto grid h-11 w-11 flex-shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+                    className="ml-auto grid h-11 w-11 flex-shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
                   >
                     <Pencil className="h-4 w-4" aria-hidden="true" />
                   </Link>

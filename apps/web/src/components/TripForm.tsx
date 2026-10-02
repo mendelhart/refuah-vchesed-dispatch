@@ -247,7 +247,7 @@ export function TripForm({
 
   const callerRequired = form.tripType !== 'hospital_food';
   const fieldError = (name: string): React.JSX.Element | null =>
-    errors[name] ? <p className="mt-1 text-xs text-[#EA0029]">{errors[name]}</p> : null;
+    errors[name] ? <p className="mt-1 text-xs text-[#C80023] dark:text-red-400">{errors[name]}</p> : null;
 
   const savedAddresses = callerProfile.data?.addresses ?? [];
   const accessNotes = callerProfile.data?.caller.accessNotes ?? null;
@@ -347,7 +347,7 @@ export function TripForm({
               </label>
               <div className="relative">
                 <Search
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                   aria-hidden="true"
                 />
                 <input

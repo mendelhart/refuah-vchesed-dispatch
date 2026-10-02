@@ -274,7 +274,7 @@ export function SettingsPage(): React.JSX.Element {
                     aria-pressed={hiddenItem}
                     className={`flex min-h-[44px] w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
                       hiddenItem
-                        ? 'border-slate-200 text-slate-400 dark:border-slate-700 dark:text-slate-500'
+                        ? 'border-slate-200 text-slate-500 dark:border-slate-700 dark:text-slate-400'
                         : 'border-slate-300 text-slate-700 dark:border-slate-600 dark:text-slate-200'
                     }`}
                   >

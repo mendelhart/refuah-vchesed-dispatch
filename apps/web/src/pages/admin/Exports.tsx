@@ -235,7 +235,7 @@ export function ExportsPage(): React.JSX.Element {
                       {titleCase(row.status)}
                     </span>
                     {row.error ? (
-                      <p className="mt-1 max-w-xs break-words text-xs font-medium text-[#EA0029]">{row.error}</p>
+                      <p className="mt-1 max-w-xs break-words text-xs font-medium text-[#C80023] dark:text-red-400">{row.error}</p>
                     ) : null}
                   </td>
                   <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{row.rowCount ?? '—'}</td>

@@ -83,7 +83,7 @@ export function BottomNavigation({ items }: { items: BottomNavItem[] }): React.J
               className={({ isActive }) =>
                 cn(
                   'flex min-h-[56px] flex-1 flex-col items-center justify-center py-2 transition-colors',
-                  isActive ? 'text-[#EA0029] dark:text-red-400' : 'text-slate-600 dark:text-slate-400',
+                  isActive ? 'text-[#C80023] dark:text-red-400' : 'text-slate-600 dark:text-slate-400',
                 )
               }
             >

@@ -46,7 +46,7 @@ function DispatcherHome(): React.JSX.Element {
         {tiles.map((tile) => (
           <div key={tile.label} className={`${cardClass} p-4`}>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{tile.label}</p>
-            <p className={`mt-1 text-3xl font-bold ${tile.accent ? 'text-[#EA0029]' : 'text-slate-900 dark:text-white'}`}>
+            <p className={`mt-1 text-3xl font-bold ${tile.accent ? 'text-[#C80023]' : 'text-slate-900 dark:text-white'}`}>
               {tile.value}
             </p>
           </div>
@@ -65,7 +65,7 @@ function DispatcherHome(): React.JSX.Element {
               : 'Loading…'}
           </p>
         </div>
-        <Link to="/impact" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-[#EA0029] hover:underline">
+        <Link to="/impact" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-[#C80023] dark:text-red-400 hover:underline">
           Organization impact
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>

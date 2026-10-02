@@ -50,7 +50,7 @@ export function AcceptFromLinkPage(): React.JSX.Element {
     const conflict = accept.error instanceof ApiError && accept.error.isConflict;
     return (
       <div className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-900">
-        <XCircle className="mx-auto h-10 w-10 text-[#EA0029]" aria-hidden="true" />
+        <XCircle className="mx-auto h-10 w-10 text-[#C80023] dark:text-red-400" aria-hidden="true" />
         <h1 className="mt-3 text-lg font-semibold text-slate-900 dark:text-white">
           {conflict ? 'Another volunteer accepted this first' : 'We could not accept this ride'}
         </h1>

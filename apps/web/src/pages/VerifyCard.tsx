@@ -37,7 +37,7 @@ export function VerifyCardPage(): React.JSX.Element {
           <p className="text-slate-600 dark:text-slate-400">Checking…</p>
         ) : isError || !data?.valid ? (
           <>
-            <ShieldX className="mx-auto h-12 w-12 text-slate-400" aria-hidden />
+            <ShieldX className="mx-auto h-12 w-12 text-slate-500 dark:text-slate-400" aria-hidden />
             <h1 className="mt-4 text-xl font-semibold text-slate-900 dark:text-white">
               This card is not current
             </h1>
@@ -65,14 +65,14 @@ export function VerifyCardPage(): React.JSX.Element {
               is a current volunteer with {data.organization}
             </p>
             {data.volunteerNumber ? (
-              <p className="mt-4 font-mono text-sm text-slate-500 dark:text-slate-500">
+              <p className="mt-4 font-mono text-sm text-slate-500 dark:text-slate-400">
                 {data.volunteerNumber}
               </p>
             ) : null}
             {data.photo ? (
-              <p className="mt-4 text-xs text-slate-500">Check that this photo matches the person in front of you.</p>
+              <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">Check that this photo matches the person in front of you.</p>
             ) : (
-              <p className="mt-4 text-xs text-slate-500">No photo on file. Please check another photo ID.</p>
+              <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">No photo on file. Please check another photo ID.</p>
             )}
           </>
         )}

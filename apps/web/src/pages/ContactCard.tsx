@@ -32,7 +32,7 @@ export function ContactCard({contact,calling,onCall,onEdit,onRemove}:{contact:Co
                 <button
                   type="button"
                   aria-label={`Edit ${contact.name}`}
-                  className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+                  className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
                   onClick={() => onEdit(contact)}
                 >
                   <Pencil className="h-4 w-4" aria-hidden="true" />
@@ -40,7 +40,7 @@ export function ContactCard({contact,calling,onCall,onEdit,onRemove}:{contact:Co
                 <button
                   type="button"
                   aria-label={`Remove ${contact.name}`}
-                  className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
+                  className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:border-slate-600 dark:hover:bg-slate-800"
                   onClick={() => onRemove(contact)}
                 >
                   <Trash2 className="h-4 w-4" aria-hidden="true" />

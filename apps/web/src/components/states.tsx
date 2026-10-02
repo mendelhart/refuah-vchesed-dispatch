@@ -66,7 +66,7 @@ export function ErrorState({
 }): React.JSX.Element {
   return (
     <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-900/50 dark:bg-red-950/30">
-      <AlertTriangle className="mx-auto h-8 w-8 text-[#EA0029]" aria-hidden="true" />
+      <AlertTriangle className="mx-auto h-8 w-8 text-[#C80023] dark:text-red-400" aria-hidden="true" />
       <p className="mt-3 font-semibold text-slate-900 dark:text-white">We could not load {what}.</p>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{errorMessage(error)}</p>
       <button

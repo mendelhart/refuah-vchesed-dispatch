@@ -88,7 +88,7 @@ export function PrivacyPage(): React.JSX.Element {
         </Section>
 
         <p className="mt-8 text-sm">
-          <Link to="/" className="font-medium text-[#EA0029] underline-offset-2 hover:underline">Back to the app</Link>
+          <Link to="/" className="font-medium text-[#C80023] dark:text-red-400 underline-offset-2 hover:underline">Back to the app</Link>
         </p>
       </article>
     </main>

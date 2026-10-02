@@ -34,14 +34,14 @@ export function HubPage({ section }: { section: Exclude<NavSection, 'main'> }): 
                 to={item.to}
                 className={`${cardClass} flex min-h-[56px] items-center gap-3 p-4 hover:bg-slate-50 dark:hover:bg-slate-800`}
               >
-                <Icon className="h-5 w-5 flex-shrink-0 text-[#EA0029]" />
+                <Icon className="h-5 w-5 flex-shrink-0 text-[#C80023] dark:text-red-400" />
                 <span className="min-w-0 flex-1">
                   <span className="block font-medium text-slate-900 dark:text-white">{item.label}</span>
                   {item.hint ? (
                     <span className="block text-sm text-slate-500 dark:text-slate-400">{item.hint}</span>
                   ) : null}
                 </span>
-                <ChevronRight className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                <ChevronRight className="h-5 w-5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
               </Link>
             </li>
           );

@@ -129,7 +129,7 @@ export function ContactsPage(): React.JSX.Element {
             type="button"
             className={
               filter === item.value
-                ? 'inline-flex min-h-[44px] items-center rounded-lg border border-[#EA0029] bg-[#EA0029]/10 px-3 text-sm font-medium text-[#EA0029]'
+                ? 'inline-flex min-h-[44px] items-center rounded-lg border border-[#EA0029] bg-[#EA0029]/10 px-3 text-sm font-medium text-[#C80023] dark:text-red-400'
                 : 'inline-flex min-h-[44px] items-center rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200'
             }
             onClick={() => setFilter(item.value)}

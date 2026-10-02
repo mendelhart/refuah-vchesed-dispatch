@@ -205,7 +205,7 @@ export function ApplicationsPage(): React.JSX.Element {
                         <p className="truncate text-sm text-slate-600 dark:text-slate-400">
                           {row.city ?? 'No city given'} · {formatPhone(row.phone)}
                         </p>
-                        <p className="font-mono text-xs text-slate-400 dark:text-slate-500">{row.reference}</p>
+                        <p className="font-mono text-xs text-slate-500 dark:text-slate-400">{row.reference}</p>
                       </div>
                       <span className={statusChip(row.status)}>{titleCase(row.status)}</span>
                     </div>
@@ -307,7 +307,7 @@ function ReviewPanel({ id, onClose }: { id: string; onClose: () => void }): Reac
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">{app.fullName}</h2>
-            <p className="font-mono text-xs text-slate-400 dark:text-slate-500">{app.reference}</p>
+            <p className="font-mono text-xs text-slate-500 dark:text-slate-400">{app.reference}</p>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               Applied {formatDateTime(app.createdAt)}
               {app.reviewedAt ? ` · reviewed ${formatDateTime(app.reviewedAt)}` : ''}
@@ -323,16 +323,16 @@ function ReviewPanel({ id, onClose }: { id: string; onClose: () => void }): Reac
         <h3 className="mb-3 font-semibold text-slate-900 dark:text-white">How to reach them</h3>
         <dl className="space-y-2 text-sm">
           <div className="flex flex-wrap items-center gap-2">
-            <Phone className="h-4 w-4 text-slate-400" aria-hidden="true" />
+            <Phone className="h-4 w-4 text-slate-500 dark:text-slate-400" aria-hidden="true" />
             <dt className="sr-only">Phone</dt>
             <dd>
-              <a className="min-h-[44px] font-medium text-[#EA0029] underline" href={telHref(app.phone)}>
+              <a className="min-h-[44px] font-medium text-[#C80023] dark:text-red-400 underline" href={telHref(app.phone)}>
                 {formatPhone(app.phone)}
               </a>
             </dd>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Mail className="h-4 w-4 text-slate-400" aria-hidden="true" />
+            <Mail className="h-4 w-4 text-slate-500 dark:text-slate-400" aria-hidden="true" />
             <dt className="sr-only">Email</dt>
             <dd>
               <a className="break-all text-slate-700 underline dark:text-slate-200" href={`mailto:${app.email}`}>
@@ -341,7 +341,7 @@ function ReviewPanel({ id, onClose }: { id: string; onClose: () => void }): Reac
             </dd>
           </div>
           <div className="flex flex-wrap items-start gap-2">
-            <MapPin className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
+            <MapPin className="h-4 w-4 flex-shrink-0 text-slate-500 dark:text-slate-400" aria-hidden="true" />
             <dt className="sr-only">Address</dt>
             <dd className="text-slate-700 dark:text-slate-200">
               {[app.addressLine, app.city, app.postalCode].filter(Boolean).join(', ') || 'No address given'}
@@ -362,7 +362,7 @@ function ReviewPanel({ id, onClose }: { id: string; onClose: () => void }): Reac
         <FieldChips label="Groups" values={app.requestedGroups} empty="No group chosen" />
         <FieldChips label="Can handle" values={app.capabilities} empty="No special capabilities stated" />
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-          <Car className="h-4 w-4 text-slate-400" aria-hidden="true" />
+          <Car className="h-4 w-4 text-slate-500 dark:text-slate-400" aria-hidden="true" />
           {app.hasVehicle
             ? `Has a vehicle${app.vehicleType ? ` · ${app.vehicleType}` : ''}${
                 app.vehicleSeats ? ` · ${app.vehicleSeats} seats` : ''
@@ -395,7 +395,7 @@ function ReviewPanel({ id, onClose }: { id: string; onClose: () => void }): Reac
           </p>
         ) : null}
         <p className="mt-3 flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-          <ShieldCheck className="h-4 w-4 text-slate-400" aria-hidden="true" />
+          <ShieldCheck className="h-4 w-4 text-slate-500 dark:text-slate-400" aria-hidden="true" />
           {app.consentBackgroundCheck
             ? 'Agreed to a background check.'
             : 'Did not agree to a background check.'}
@@ -808,7 +808,7 @@ function ApproveModal({
           {groups.isPending ? (
             <InlineSpinner label="Loading groups" />
           ) : groups.isError ? (
-            <p className="text-sm text-[#EA0029]">{errorMessage(groups.error)}</p>
+            <p className="text-sm text-[#C80023] dark:text-red-400">{errorMessage(groups.error)}</p>
           ) : (
             <ul className="space-y-1">
               {groups.data.groups.map((group) => (
@@ -816,7 +816,7 @@ function ApproveModal({
                   <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
                     <input
                       type="checkbox"
-                      className="h-5 w-5 rounded border-slate-300 text-[#EA0029] focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
+                      className="h-5 w-5 rounded border-slate-300 text-[#C80023] dark:text-red-400 focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
                       checked={groupSlugs.includes(group.slug)}
                       onChange={() => setGroupSlugs((current) => toggle(current, group.slug))}
                     />
@@ -833,7 +833,7 @@ function ApproveModal({
           {services.isPending ? (
             <InlineSpinner label="Loading services" />
           ) : services.isError ? (
-            <p className="text-sm text-[#EA0029]">{errorMessage(services.error)}</p>
+            <p className="text-sm text-[#C80023] dark:text-red-400">{errorMessage(services.error)}</p>
           ) : (
             <ul className="space-y-1">
               {services.data.services.map((service) => (
@@ -841,7 +841,7 @@ function ApproveModal({
                   <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
                     <input
                       type="checkbox"
-                      className="h-5 w-5 rounded border-slate-300 text-[#EA0029] focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
+                      className="h-5 w-5 rounded border-slate-300 text-[#C80023] dark:text-red-400 focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
                       checked={serviceSlugs.includes(service.slug)}
                       onChange={() => setServiceSlugs((current) => toggle(current, service.slug))}
                     />

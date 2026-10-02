@@ -110,7 +110,7 @@ function AllContacts({ onOpenCaller }: { onOpenCaller: (id: string) => void }): 
   return (
     <div className="space-y-3">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" aria-hidden="true" />
         <input
           type="search"
           className={`${inputClass} pl-10`}
@@ -136,7 +136,7 @@ function AllContacts({ onOpenCaller }: { onOpenCaller: (id: string) => void }): 
             const Icon = KIND_ICON[row.kind];
             const body = (
               <>
-                <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-red-50 text-[#EA0029] dark:bg-red-950/40">
+                <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-full bg-red-50 text-[#C80023] dark:text-red-400 dark:bg-red-950/40">
                   <Icon className="h-4 w-4" aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -158,7 +158,7 @@ function AllContacts({ onOpenCaller }: { onOpenCaller: (id: string) => void }): 
                     aria-label={`Open ${row.name}'s file`}
                   >
                     {body}
-                    <ChevronRight className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
+                    <ChevronRight className="h-4 w-4 flex-shrink-0 text-slate-500 dark:text-slate-400" aria-hidden="true" />
                   </button>
                 ) : (
                   <div className="flex min-h-[44px] min-w-0 flex-1 items-center gap-3">{body}</div>
@@ -166,7 +166,7 @@ function AllContacts({ onOpenCaller }: { onOpenCaller: (id: string) => void }): 
                 {row.phone ? (
                   <a
                     href={telHref(row.phone)}
-                    className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full text-[#EA0029] hover:bg-red-50 dark:hover:bg-red-950/40"
+                    className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full text-[#C80023] dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
                     aria-label={`Call ${row.name}`}
                   >
                     <Phone className="h-5 w-5" aria-hidden="true" />
