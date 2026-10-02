@@ -54,7 +54,9 @@ export async function buildServer(): Promise<FastifyInstance> {
     global: true,
     store: DatabaseRateLimitStore,
     skipOnError: false,
-    max: 300,
+    // Browser suites reuse one account hundreds of times in seconds. Never
+    // let their override weaken the production limiter.
+    max: isProd ? 300 : (env.E2E_API_MAX_PER_MINUTE ?? 300),
     timeWindow: '1 minute',
     keyGenerator: (req) => req.user?.id ?? req.ip,
     /**

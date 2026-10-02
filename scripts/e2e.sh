@@ -23,6 +23,9 @@ export LOG_LEVEL=${LOG_LEVEL:-warn}
 # The suite signs in as three roles from one IP, and reruns add up against the
 # five-minute window. The limiter is exercised deliberately in the API suite.
 export LOGIN_MAX_PER_IP_PER_5MIN=${LOGIN_MAX_PER_IP_PER_5MIN:-500}
+# The accelerated suite shares a few accounts across hundreds of page loads.
+# This override is ignored by the API in production. API tests keep 300/min.
+export E2E_API_MAX_PER_MINUTE=${E2E_API_MAX_PER_MINUTE:-5000}
 
 # E2E_FEATURES=on switches on every built-but-off feature, so their browser
 # tests (e2e/features/) run; they skip themselves when a feature is off.
