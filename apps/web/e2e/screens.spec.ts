@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { STATE_FILES } from './helpers';
 
 /**
@@ -70,8 +70,10 @@ test.describe('phone screenshots', () => {
     await page.goto('/');
     const id = await page.evaluate(async () => {
       const r = await fetch('/api/users?search=Yaakov&limit=5', { headers: { Accept: 'application/json' } });
+      if (!r.ok) throw new Error(`Volunteer lookup failed: HTTP ${r.status}`);
       return ((await r.json()).users?.[0]?.id as string | undefined) ?? '';
     });
+    expect(id, 'seeded volunteer must be found before opening the card').not.toBe('');
     await page.goto(`/volunteers?open=${id}`);
     await page.getByRole('button', { name: 'Edit details' }).waitFor({ timeout: 15_000 });
     await page.screenshot({ path: 'screenshots/dispatcher-volunteer-card.png' });
