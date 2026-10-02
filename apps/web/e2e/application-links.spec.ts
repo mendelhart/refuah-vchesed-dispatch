@@ -41,6 +41,9 @@ test.describe('application links', () => {
     await page.getByRole('button', { name: 'Back to the list' }).click();
     await expect(page).toHaveURL(/\/admin\/applications$/);
     await expect(row).toBeVisible();
+    const bounds = await row.boundingBox();
+    expect(bounds?.width).toBeGreaterThan(300);
+    expect(bounds?.height).toBeGreaterThan(80);
     await page.screenshot({ path: 'screenshots/application-list-links-phone.png', fullPage: true });
   });
 

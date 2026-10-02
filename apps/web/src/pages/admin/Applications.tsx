@@ -200,7 +200,7 @@ export function ApplicationsPage(): React.JSX.Element {
                   <Link
                     to={`/admin/applications/${encodeURIComponent(row.id)}`}
                     aria-current={row.id === selectedId ? 'page' : undefined}
-                    className={`${cardClass} w-full p-4 text-left ${
+                    className={`${cardClass} block w-full p-4 text-left ${
                       row.id === selectedId ? 'ring-2 ring-[#EA0029]' : ''
                     }`}
                   >
