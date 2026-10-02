@@ -40,7 +40,7 @@ import {
   UserPlus,
   Users,
   X,
-  Wrench, CookingPot, HandHelping } from 'lucide-react';
+  Wrench, CookingPot, HandHelping, BarChart3 } from 'lucide-react';
 import type { Role } from '@rvc/shared';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
@@ -114,6 +114,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/admin/notifications', label: 'Notifications', icon: Bell, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Every message sent, and whether it arrived' },
   { to: '/admin/templates', label: 'Message templates', icon: MessageSquareText, roles: ['admin'], dispatch: 'admin', hint: 'Wording of the texts' },
   { to: '/impact', label: 'Organization impact', icon: HeartHandshake, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Rides, volunteers and people helped, all together', department: 'reports' },
+  { to: '/reports', label: 'Reports', icon: BarChart3, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Totals, trends, staffing and equipment, with downloads', flag: 'reports', department: 'reports' },
   { to: '/admin/departments', label: 'Departments', icon: Users, roles: ['admin'], dispatch: 'admin', hint: 'Which coordinators work on rides, food, equipment or reports', flag: 'departmentScoping' },
   { to: '/admin/backup', label: 'Full backup', icon: Download, roles: ['admin'], dispatch: 'admin', hint: 'Encrypted full database download' },
   { to: '/admin/exports', label: 'Exports', icon: Download, roles: ['admin'], dispatch: 'admin', hint: 'Download data' },

@@ -10,6 +10,7 @@ export interface FeatureFlags {
   foodOps?: boolean;
   packageDelivery?: boolean;
   liftAssist?: boolean;
+  reports?: boolean;
 }
 
 export interface Features {

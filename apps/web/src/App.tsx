@@ -78,6 +78,7 @@ const NotificationsAdminPage = React.lazy(() =>
 );
 const FoodPage = React.lazy(() => import('@/pages/Food').then((m) => ({ default: m.FoodPage })));
 const LiftAssistPage = React.lazy(() => import('@/pages/LiftAssist').then((m) => ({ default: m.LiftAssistPage })));
+const ReportsPage = React.lazy(() => import('@/pages/Reports').then((m) => ({ default: m.ReportsPage })));
 const KitchenPage = React.lazy(() => import('@/pages/Kitchen').then((m) => ({ default: m.KitchenPage })));
 const DepartmentsPage = React.lazy(() =>
   import('@/pages/admin/Departments').then((m) => ({ default: m.DepartmentsPage })),
@@ -352,6 +353,7 @@ export function App(): React.JSX.Element {
         <Route path="/food" element={<Shell><RequireRole roles={DISPATCH}><FoodPage /></RequireRole></Shell>} />
         <Route path="/kitchen" element={<Shell><KitchenPage /></Shell>} />
         <Route path="/lift-assist" element={<Shell><LiftAssistPage /></Shell>} />
+        <Route path="/reports" element={<Shell><RequireRole roles={DISPATCH}><ReportsPage /></RequireRole></Shell>} />
         <Route
           path="/admin/departments"
           element={
