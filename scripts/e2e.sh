@@ -30,6 +30,7 @@ export LOGIN_MAX_PER_IP_PER_5MIN=${LOGIN_MAX_PER_IP_PER_5MIN:-500}
 if [ "${E2E_FEATURES:-off}" = "on" ]; then
   export MULTI_LEG_TRIPS_ENABLED=true
   export DEPARTMENT_SCOPING_ENABLED=true
+  export FOOD_OPS_ENABLED=true
   export IDEMPOTENCY_KEYS_ENABLED=true
 fi
 

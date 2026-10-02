@@ -7,6 +7,7 @@ import { qk } from '@/lib/query';
 export interface FeatureFlags {
   multiLegTrips?: boolean;
   departmentScoping?: boolean;
+  foodOps?: boolean;
 }
 
 export interface Features {
