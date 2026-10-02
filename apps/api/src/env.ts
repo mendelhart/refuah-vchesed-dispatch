@@ -19,6 +19,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(8080),
   HOST: z.string().default('0.0.0.0'),
+  /** Accelerated isolated browser tests only; ignored in production. */
+  E2E_API_MAX_PER_MINUTE: z.coerce.number().int().min(300).max(10000).optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 
   DATABASE_URL: z.string().min(1),
@@ -131,6 +133,30 @@ const envSchema = z.object({
    * scripts/e2e.sh raises it; the limiter itself is tested in auth.test.ts.
    */
   LOGIN_MAX_PER_IP_PER_5MIN: z.coerce.number().int().min(1).max(1000).default(10),
+
+  /** Honour the Idempotency-Key header on signed-in writes (lib/idempotency.ts).
+   *  Off by default: the header is ignored and nothing changes. */
+  IDEMPOTENCY_KEYS_ENABLED: bool(false),
+
+  // --- New features (all off by default; see lib/flags.ts) -----------------
+  /** Round trips, extra stops and several passengers per ride. */
+  MULTI_LEG_TRIPS_ENABLED: bool(false),
+  /** Coordinators who belong to departments work only within them. */
+  DEPARTMENT_SCOPING_ENABLED: bool(false),
+  /** Food stock, vendors, preparation slots, distribution runs, shopping lists. */
+  FOOD_OPS_ENABLED: bool(false),
+  /** Package deliveries (a kind of equipment-delivery trip with package details). */
+  PACKAGE_DELIVERY_ENABLED: bool(false),
+  /** Lift assist: a few chosen volunteers asked to help lift, one lead. */
+  LIFT_ASSIST_ENABLED: bool(false),
+  /** Languages people may choose, comma-separated (en, fr, he). English is
+   *  always included. Add a language only after its translation is reviewed. */
+  LANGUAGES_ENABLED: z.string().default('en'),
+  /** Reports: totals, trends, staffing, equipment, CSV. */
+  REPORTS_ENABLED: bool(false),
+  /** Email builder: designs with blocks, preview, versions, test send to
+   *  yourself only (always through the fake email provider). */
+  EMAIL_BUILDER_ENABLED: bool(false),
 
   SENTRY_DSN: z.string().optional(),
   HEALTH_CHECK_TOKEN: z.string().min(16).optional(),

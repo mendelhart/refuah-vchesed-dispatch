@@ -131,7 +131,7 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
 
   # ---------------------------------------------------------------------------
-  # api-tests — against a real Postgres 16, with the real migrations applied.
+  # api-tests — against a real Postgres 18 (production runs Aiven PG18), with the real migrations applied.
   #
   # A stubbed database would not exercise the parts that carry the correctness
   # of this system: the compare-and-set claim, the partial unique indexes, the
@@ -146,7 +146,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18
         env:
           POSTGRES_USER: rvc
           POSTGRES_PASSWORD: rvc
@@ -185,6 +185,17 @@ jobs:
 
       - name: build @rvc/shared
         run: npm run build --workspace=@rvc/shared
+
+      # The full-backup tests run pg_dump against the Postgres 18 service; the
+      # runner's own client is older and pg_dump refuses a newer server.
+      - name: Postgres 18 client
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-18
+          echo "/usr/lib/postgresql/18/bin" >> "$GITHUB_PATH"
 
       # Migrations run first and on their own step, so a broken migration fails
       # with its own error rather than as a confusing wall of test failures.
@@ -231,7 +242,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        image: postgres:18
         env:
           POSTGRES_USER: rvc
           POSTGRES_PASSWORD: rvc
@@ -276,6 +287,10 @@ jobs:
 
       - name: run the browser suite
         run: ./scripts/e2e.sh
+      - name: run the browser suite again with every new feature switched on
+        env:
+          E2E_FEATURES: 'on'
+        run: ./scripts/e2e.sh e2e/features
 
       # A busy hour squeezed into 45 seconds: 5 signed-in accounts x 4 phones
       # refreshing about once a second, plus a new call every 3 seconds. Fails

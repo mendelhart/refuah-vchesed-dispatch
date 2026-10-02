@@ -1,0 +1,61 @@
+# Uptime check: is the API answering /health?
+#
+# Free and in-house: it runs on GitHub's own scheduler, so no outside
+# monitoring service gets the app's address. When the check fails, the run
+# fails and GitHub emails the repository owner (Settings > Notifications >
+# Actions must be on).
+#
+# How often, and why not more: every check wakes the free Render API, which
+# then stays up for about 15 minutes. Checking hourly from 07:00 to 22:00
+# Montreal time is 16 checks a day, at most about 4 awake hours a day, or
+# about 124 of Render's 750 free monthly hours (shared by both services).
+# Checking every few minutes would use them all (see docs/OUTAGE_DRILL.md).
+# GitHub may start scheduled runs a few minutes late; that does not matter
+# here.
+#
+# Setup: add a repository secret UPTIME_URL with the API's health address,
+# e.g. https://<rvc-api host>/health. Kept as a secret so the address never
+# appears in this public repository's logs. Unset: the check reports "not
+# configured" and passes.
+name: Uptime
+
+on:
+  schedule:
+    # 11:05-23:05 and 00:05-02:05 UTC = 07:05-22:05 Montreal in summer
+    # (06:05-21:05 in winter).
+    - cron: '5 0-2,11-23 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: GET /health (allowing for a cold start)
+        env:
+          URL: ${{ secrets.UPTIME_URL }}
+        run: |
+          if [ -z "$URL" ]; then
+            echo "::notice::UPTIME_URL is not set; nothing checked."
+            exit 0
+          fi
+          # A sleeping free instance takes about a minute to wake: allow two
+          # minutes, then one retry after a pause before calling it down.
+          for attempt in 1 2; do
+            code="$(curl -s -o /dev/null -m 120 -w '%{http_code}' "$URL" || true)"
+            echo "attempt $attempt: HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            [ "$attempt" = "1" ] && sleep 60
+          done
+          if [ "$code" = "503" ]; then
+            echo "::error::The API is up but cannot reach its database (HTTP 503)."
+          else
+            echo "::error::The API did not answer /health with 200 (last: HTTP $code)."
+          fi
+          exit 1

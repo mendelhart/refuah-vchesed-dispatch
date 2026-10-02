@@ -20,7 +20,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { DoorOpen, Search, SquareParking, Star, UserRound, X } from 'lucide-react';
 import {
-  ASSIGNMENT_MODES, MOBILITY_NEEDS, TRIP_TYPES, createTripSchema, updateTripSchema,
+  ASSIGNMENT_MODES, MOBILITY_NEEDS, TRIP_TYPES, createJourneySchema, createTripSchema, updateTripSchema,
   type AssignmentMode, type MobilityNeed, type TripDto, type TripPriority, type TripType,
 } from '@rvc/shared';
 import { api, errorMessage } from '@/lib/api';
@@ -34,6 +34,12 @@ import { Modal } from './Modal';
 import type { CallerProfileResponse, CallerSearchResponse, CallerSearchRow, SavedAddressRow } from './trip-form-directory';
 import { DateTimeFields } from './DateTimeFields';
 import { blankForm, buildTripPayload, fieldErrors, fromTrip, type FormState } from './trip-form-model';
+import { JourneyFields } from './JourneyFields';
+import { PackageFields } from './PackageFields';
+import { blankPackage, buildPackagePayload, type PackageDraft } from './package-model';
+import { blankJourney, buildJourneyPayload, journeyIsUsed, rideCount, type JourneyDraft } from './journey-model';
+import { useFlag } from '@/lib/features';
+import { createPackageSchema } from '@rvc/shared';
 import { InlineSpinner, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from './states';
 import type { GroupsResponse, TripResponse } from '@/types/api';
 
@@ -148,16 +154,34 @@ export function TripForm({
   });
 
   const payload = useMemo(() => buildTripPayload(form, trip), [form, trip]);
+  // Round trips, stops and passengers: new trips only, and only when switched on.
+  const journeysOn = useFlag('multiLegTrips', open);
+  const [journey, setJourney] = useState<JourneyDraft>(blankJourney);
+  const packagesOn = useFlag('packageDelivery', open);
+  const [pkg, setPkg] = useState<PackageDraft>(blankPackage);
+  const asPackage = !trip && packagesOn && form.tripType === 'equipment_delivery' && pkg.isPackage;
+  const asJourney = !asPackage && !trip && journeysOn && journeyIsUsed(journey);
+  useEffect(() => { if (!open) { setJourney(blankJourney()); setPkg(blankPackage()); } }, [open]);
 
   const save = useMutation({
     mutationFn: async (): Promise<TripResponse> => {
       if (trip) {
         return api.patch<TripResponse>(`/api/trips/${trip.id}`, { ...payload, version: trip.version });
       }
+      if (asPackage) {
+        const res = await api.post<{ trip: TripResponse['trip'] }>('/api/packages', buildPackagePayload(payload, pkg));
+        return { trip: res.trip } as TripResponse;
+      }
+      if (asJourney) {
+        const res = await api.post<{ journey: { legs: Array<{ tripId: string }> } }>('/api/journeys', buildJourneyPayload(payload, journey));
+        const first = res.journey.legs[0]?.tripId;
+        return api.get<TripResponse>(`/api/trips/${first ?? ''}`);
+      }
       return api.post<TripResponse>('/api/trips', payload);
     },
     onSuccess: (data) => {
       invalidateTrips(queryClient, 'id' in data.trip ? data.trip.id : undefined);
+      if (asJourney) void queryClient.invalidateQueries({ queryKey: ['journeys'] });
       const saved = data.trip;
       if (!trip && isFullTrip(saved) && !saved.callerId && (saved.callerName || saved.callerPhone)) {
         toast.success('Trip created.', {
@@ -172,7 +196,7 @@ export function TripForm({
           },
         });
       } else {
-        toast.success(trip ? 'Trip updated.' : 'Trip created.');
+        toast.success(trip ? 'Trip updated.' : asJourney && rideCount(journey) > 1 ? `${rideCount(journey)} rides created.` : 'Trip created.');
       }
       if (!trip && isFullTrip(saved)) onCreated?.(saved);
       onClose();
@@ -185,7 +209,9 @@ export function TripForm({
   const handleSubmit = (event: React.FormEvent): void => {
     event.preventDefault();
     const schema = trip ? updateTripSchema : createTripSchema;
-    const result = schema.safeParse(payload);
+    const result = asPackage
+      ? createPackageSchema.safeParse(buildPackagePayload(payload, pkg))
+      : asJourney ? createJourneySchema.safeParse(buildJourneyPayload(payload, journey)) : schema.safeParse(payload);
     if (!result.success) {
       const found = fieldErrors(result.error);
       setErrors(found);
@@ -247,7 +273,7 @@ export function TripForm({
 
   const callerRequired = form.tripType !== 'hospital_food';
   const fieldError = (name: string): React.JSX.Element | null =>
-    errors[name] ? <p className="mt-1 text-xs text-[#EA0029]">{errors[name]}</p> : null;
+    errors[name] ? <p className="mt-1 text-xs text-[#C80023] dark:text-red-400">{errors[name]}</p> : null;
 
   const savedAddresses = callerProfile.data?.addresses ?? [];
   const accessNotes = callerProfile.data?.caller.accessNotes ?? null;
@@ -347,7 +373,7 @@ export function TripForm({
               </label>
               <div className="relative">
                 <Search
-                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                  className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                   aria-hidden="true"
                 />
                 <input
@@ -690,9 +716,17 @@ export function TripForm({
           </div>
         </details>
 
+        {!trip && packagesOn && form.tripType === 'equipment_delivery' ? (
+          <PackageFields value={pkg} onChange={setPkg} errors={errors} />
+        ) : null}
+
+        {!trip && journeysOn && !asPackage ? (
+          <JourneyFields value={journey} onChange={setJourney} errors={errors} />
+        ) : null}
+
         <div className="flex flex-wrap gap-2 pt-2">
           <button type="submit" className={`${primaryButtonClass} flex-1`} disabled={save.isPending}>
-            {save.isPending ? 'Saving…' : trip ? 'Save changes' : 'Create trip'}
+            {save.isPending ? 'Saving…' : trip ? 'Save changes' : asJourney && rideCount(journey) > 1 ? `Create ${rideCount(journey)} rides` : 'Create trip'}
           </button>
           <button type="button" className={secondaryButtonClass} onClick={onClose}>
             Cancel

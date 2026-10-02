@@ -279,13 +279,13 @@ export function AnnouncementsPage(): React.JSX.Element {
           {groups.isPending ? (
             <InlineSpinner label="Loading groups" />
           ) : groups.isError ? (
-            <p className="text-sm text-[#EA0029]">{errorMessage(groups.error)}</p>
+            <p className="text-sm text-[#C80023] dark:text-red-400">{errorMessage(groups.error)}</p>
           ) : (
             <ul className="flex flex-wrap gap-2">
               {groups.data.groups.map((group) => (
                 <li key={group.slug}>
                   <label
-                    className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full border px-4 text-sm ${
+                    className={`flex min-h-[44px] max-w-full cursor-pointer items-center gap-2 rounded-3xl border px-4 py-1 text-left text-sm ${
                       groupSlugs.includes(group.slug)
                         ? 'border-[#EA0029] bg-[#EA0029] text-white'
                         : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
@@ -313,13 +313,13 @@ export function AnnouncementsPage(): React.JSX.Element {
           {services.isPending ? (
             <InlineSpinner label="Loading services" />
           ) : services.isError ? (
-            <p className="text-sm text-[#EA0029]">{errorMessage(services.error)}</p>
+            <p className="text-sm text-[#C80023] dark:text-red-400">{errorMessage(services.error)}</p>
           ) : (
             <ul className="flex flex-wrap gap-2">
               {services.data.services.map((service) => (
                 <li key={service.slug}>
                   <label
-                    className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full border px-4 text-sm ${
+                    className={`flex min-h-[44px] max-w-full cursor-pointer items-center gap-2 rounded-3xl border px-4 py-1 text-left text-sm ${
                       serviceSlugs.includes(service.slug)
                         ? 'border-[#EA0029] bg-[#EA0029] text-white'
                         : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
@@ -347,7 +347,7 @@ export function AnnouncementsPage(): React.JSX.Element {
             {ROLES.map((role) => (
               <li key={role}>
                 <label
-                  className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full border px-4 text-sm ${
+                  className={`flex min-h-[44px] max-w-full cursor-pointer items-center gap-2 rounded-3xl border px-4 py-1 text-left text-sm ${
                     roles.includes(role)
                       ? 'border-[#EA0029] bg-[#EA0029] text-white'
                       : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
@@ -385,7 +385,7 @@ export function AnnouncementsPage(): React.JSX.Element {
           <label className="flex min-h-[44px] items-center gap-3 self-end text-sm text-slate-700 dark:text-slate-200">
             <input
               type="checkbox"
-              className="h-5 w-5 rounded border-slate-300 text-[#EA0029] focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
+              className="h-5 w-5 rounded border-slate-300 text-[#C80023] dark:text-red-400 focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
               checked={includeSnoozed}
               onChange={(event) => setIncludeSnoozed(event.target.checked)}
             />
@@ -402,7 +402,7 @@ export function AnnouncementsPage(): React.JSX.Element {
           ) : (
             <>
               <p className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
-                <Users className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                <Users className="h-5 w-5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
                 {preview.data.count} {preview.data.count === 1 ? 'person' : 'people'}
                 {preview.isFetching ? <InlineSpinner label="Updating" /> : null}
               </p>
@@ -417,7 +417,7 @@ export function AnnouncementsPage(): React.JSX.Element {
                 </p>
               )}
               {overLimit ? (
-                <p className="mt-2 flex items-start gap-2 text-sm font-medium text-[#EA0029]">
+                <p className="mt-2 flex items-start gap-2 text-sm font-medium text-[#C80023] dark:text-red-400">
                   <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
                   That is above the {preview.data.max} person limit. Narrow the audience, or raise the limit
                   deliberately in settings.
@@ -510,7 +510,7 @@ export function AnnouncementsPage(): React.JSX.Element {
                 type="button"
                 aria-pressed={channels.length === 0}
                 onClick={() => setChannels([])}
-                className={`flex min-h-[44px] items-center rounded-full border px-4 text-sm ${
+                className={`flex min-h-[44px] max-w-full items-center rounded-3xl border px-4 py-1 text-left text-sm ${
                   channels.length === 0
                     ? 'border-[#EA0029] bg-[#EA0029] text-white'
                     : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
@@ -524,7 +524,7 @@ export function AnnouncementsPage(): React.JSX.Element {
               return (
                 <li key={id}>
                   <label
-                    className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full border px-4 text-sm ${
+                    className={`flex min-h-[44px] max-w-full cursor-pointer items-center gap-2 rounded-3xl border px-4 py-1 text-left text-sm ${
                       channels.includes(id)
                         ? 'border-[#EA0029] bg-[#EA0029] text-white'
                         : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
@@ -683,7 +683,7 @@ function ConfirmSendModal({
         {conflictMessage ? (
           <div className="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-950/30">
             <p className="flex items-start gap-2 text-sm font-medium text-slate-900 dark:text-white">
-              <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#EA0029]" aria-hidden="true" />
+              <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-[#C80023] dark:text-red-400" aria-hidden="true" />
               {conflictMessage}
             </p>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">

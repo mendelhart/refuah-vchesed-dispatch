@@ -144,6 +144,8 @@ export async function miscRoutes(app: FastifyInstance): Promise<void> {
   app.patch('/api/vehicles/:id', { preHandler: requireDispatcher }, async (req) => {
     const { id } = idParam.parse(req.params);
     const body = vehicleSchema.partial().parse(req.body);
+    // An empty change used to reach the database and come back as a 500.
+    if (Object.keys(body).length === 0) throw Errors.validation('Nothing to change');
     const [row] = await db.update(vehicles).set(body).where(and(eq(vehicles.id, id), isNull(vehicles.deletedAt))).returning();
     if (!row) throw Errors.notFound('Vehicle');
     await recordAudit({ actor: actorFrom(req), action: 'vehicle.updated', entityType: 'vehicle', entityId: id, next: body });

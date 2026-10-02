@@ -487,7 +487,7 @@ export function MyIdCardPage(): React.JSX.Element {
       >
         <div className="bg-[#EA0029] px-5 py-4 text-white">
           <p className="text-lg font-bold leading-tight">{card.organization.name}</p>
-          <p className="text-xs uppercase tracking-widest text-white/90">Volunteer identification</p>
+          <p className="text-xs uppercase tracking-widest text-white">Volunteer identification</p>
         </div>
 
         <div className="space-y-5 px-5 py-6">
@@ -500,14 +500,14 @@ export function MyIdCardPage(): React.JSX.Element {
               />
             ) : null}
             <div className="min-w-0">
-              <p className="text-xs uppercase tracking-wide text-slate-500">Name</p>
+              <p className="text-xs uppercase tracking-wide text-slate-600">Name</p>
               <p className="text-3xl font-bold leading-tight text-slate-900">{card.fullName}</p>
               <p className="mt-1 text-sm text-slate-600">{titleCase(card.role)}</p>
             </div>
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Volunteer number</p>
+            <p className="text-xs uppercase tracking-wide text-slate-600">Volunteer number</p>
             <p className="font-mono text-4xl font-bold leading-tight tracking-tight text-slate-900">
               {card.volunteerNumber}
             </p>
@@ -515,7 +515,7 @@ export function MyIdCardPage(): React.JSX.Element {
 
           {card.groups.length > 0 ? (
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Groups</p>
+              <p className="text-xs uppercase tracking-wide text-slate-600">Groups</p>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {card.groups.map((group) => (
                   <span key={group} className="rounded-full bg-slate-100 px-2.5 py-1 text-sm font-medium text-slate-700">
@@ -528,7 +528,7 @@ export function MyIdCardPage(): React.JSX.Element {
 
           {card.services.length > 0 ? (
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Helps with</p>
+              <p className="text-xs uppercase tracking-wide text-slate-600">Helps with</p>
               <p className="text-sm text-slate-700">{card.services.join(' · ')}</p>
             </div>
           ) : null}

@@ -51,9 +51,9 @@ export function PhotoRequests(): React.JSX.Element | null {
                 {r.currentPhoto ? (
                   <img src={r.currentPhoto} alt={`Current photo of ${r.fullName}`} className="h-14 w-14 rounded-full object-cover" />
                 ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-[10px] text-slate-500 dark:bg-slate-800">None</div>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-[10px] text-slate-500 dark:text-slate-400 dark:bg-slate-800">None</div>
                 )}
-                <span aria-hidden="true" className="text-slate-400">→</span>
+                <span aria-hidden="true" className="text-slate-500 dark:text-slate-400">→</span>
                 {r.action === 'set' && r.newPhoto ? (
                   <img src={r.newPhoto} alt={`New photo from ${r.fullName}`} className="h-14 w-14 rounded-full object-cover ring-2 ring-amber-400" />
                 ) : (
@@ -62,7 +62,7 @@ export function PhotoRequests(): React.JSX.Element | null {
               </div>
               <div className="min-w-[10rem] flex-1">
                 <p className="font-medium text-slate-900 dark:text-white">{r.fullName}</p>
-                <p className="text-xs text-slate-500">{r.action === 'set' ? 'New photo' : 'Wants the photo removed'} · {formatDateTime(r.requestedAt)}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{r.action === 'set' ? 'New photo' : 'Wants the photo removed'} · {formatDateTime(r.requestedAt)}</p>
               </div>
               <div className="flex gap-2">
                 <button type="button" className={primaryButtonClass} disabled={decide.isPending}

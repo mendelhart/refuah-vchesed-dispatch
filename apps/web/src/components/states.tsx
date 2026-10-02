@@ -66,7 +66,7 @@ export function ErrorState({
 }): React.JSX.Element {
   return (
     <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center dark:border-red-900/50 dark:bg-red-950/30">
-      <AlertTriangle className="mx-auto h-8 w-8 text-[#EA0029]" aria-hidden="true" />
+      <AlertTriangle className="mx-auto h-8 w-8 text-[#C80023] dark:text-red-400" aria-hidden="true" />
       <p className="mt-3 font-semibold text-slate-900 dark:text-white">We could not load {what}.</p>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{errorMessage(error)}</p>
       <button
@@ -117,7 +117,7 @@ export const cardClass =
 export const panelClass =
   'rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900';
 export const inputClass =
-  'min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#EA0029] focus:outline-none focus:ring-1 focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500';
+  'min-h-[44px] w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#EA0029] focus:outline-none focus:ring-1 focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500';
 export const labelClass = 'mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200';
 export const primaryButtonClass =
   'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-[#EA0029] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#C80023] disabled:cursor-not-allowed disabled:opacity-60';

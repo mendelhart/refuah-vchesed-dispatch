@@ -186,7 +186,7 @@ export function VolunteerSignupPage(): React.JSX.Element {
                   role="alert"
                   className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-slate-900 dark:border-red-900/50 dark:bg-red-950/30 dark:text-slate-100"
                 >
-                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#EA0029]" aria-hidden="true" />
+                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#C80023] dark:text-red-400" aria-hidden="true" />
                   <p>{problem}</p>
                 </div>
               ) : null}

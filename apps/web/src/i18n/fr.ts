@@ -1,0 +1,61 @@
+import type { MessageKey } from './en';
+
+/**
+ * French — DRAFT. Machine-assisted; must be reviewed by a fluent French
+ * speaker before French is switched on (LANGUAGES_ENABLED). Reviewed by: —
+ */
+export const fr: Record<MessageKey, string> = {
+  'lang.name': 'Français',
+  'lang.label': 'Langue',
+  'lang.hint': 'L’application s’affiche dans cette langue. Les messages envoyés suivront plus tard.',
+  'lang.saved': 'Langue enregistrée.',
+
+  'login.subtitle': 'Transport médical bénévole, Montréal',
+  'login.identifier': 'Courriel ou numéro de cellulaire',
+  'login.password': 'Mot de passe',
+  'login.submit': 'Se connecter',
+  'login.submitting': 'Connexion…',
+  'login.signedIn': 'Connecté.',
+  'login.forgot': 'J’ai oublié mon mot de passe',
+  'login.resetRequested': 'Lien de réinitialisation demandé',
+  'login.enterEmailFirst': 'Entrez d’abord votre courriel, puis touchez de nouveau ici.',
+  'login.resetSent': 'Si cette adresse est inscrite, un lien de réinitialisation est en route.',
+  'login.newVolunteer': 'Nouveau bénévole avec une invitation?',
+  'login.setUp': 'Créez votre compte',
+  'login.privacy': 'Avis de confidentialité',
+
+  'nav./': 'Accueil',
+  'nav./board': 'Tableau de répartition',
+  'nav./messages': 'Messages',
+  'nav./volunteers': 'Bénévoles',
+  'nav./contacts': 'Contacts',
+  'nav./calls': 'Journal d’appels',
+  'nav./recurring': 'Trajets réguliers',
+  'nav./equipment': 'Équipement',
+  'nav./my-trips': 'Mes trajets',
+  'nav./me': 'Mon profil',
+  'nav./my-availability': 'Mes disponibilités',
+  'nav./my-profile': 'Comment je peux aider',
+  'nav./my-id-card': 'Ma carte',
+  'nav./settings': 'Paramètres',
+  'nav./directory': 'Répertoire',
+  'nav./food': 'Alimentation',
+  'nav./kitchen': 'Aider à la cuisine',
+  'nav./lift-assist': 'Aide pour soulever',
+  'nav./duty': 'Garde téléphonique',
+  'nav./more': 'Plus',
+  'nav./admin': 'Administration',
+  'nav.profileShort': 'Profil',
+  'nav.boardShort': 'Tableau',
+
+  'hub.more.title': 'Plus',
+  'hub.more.subtitle': 'Tout le reste, à portée de main',
+  'hub.admin.title': 'Administration',
+  'hub.admin.subtitle': 'Comptes, messages, dossiers et paramètres',
+  'hub.profile.title': 'Mon profil',
+  'hub.profile.subtitle': 'Vos heures, comment vous aidez, votre carte et vos paramètres',
+
+  'state.loading': 'Chargement',
+  'state.retry': 'Réessayer',
+  'state.offline': 'Vous êtes hors ligne. Ce que vous voyez n’est peut-être pas à jour.',
+};

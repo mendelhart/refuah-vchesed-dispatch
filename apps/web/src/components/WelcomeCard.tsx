@@ -53,7 +53,7 @@ export function WelcomeCard({ userId, completedRides }: { userId: string; comple
           <button
             type="button"
             onClick={close}
-            className="-m-2 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="-m-2 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             aria-label="Close getting started"
           >
             <X className="h-5 w-5" />
@@ -68,12 +68,12 @@ export function WelcomeCard({ userId, completedRides }: { userId: string; comple
                   to={step.to}
                   className="flex min-h-[56px] items-center gap-3 rounded-lg bg-slate-50 p-3 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800"
                 >
-                  <Icon className="h-5 w-5 flex-shrink-0 text-[#EA0029]" aria-hidden="true" />
+                  <Icon className="h-5 w-5 flex-shrink-0 text-[#C80023] dark:text-red-400" aria-hidden="true" />
                   <span className="min-w-0 flex-1">
                     <span className="block font-medium text-slate-900 dark:text-white">{step.title}</span>
                     <span className="block text-sm text-slate-500 dark:text-slate-400">{step.hint}</span>
                   </span>
-                  <ChevronRight className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                  <ChevronRight className="h-5 w-5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
                 </Link>
               </li>
             );

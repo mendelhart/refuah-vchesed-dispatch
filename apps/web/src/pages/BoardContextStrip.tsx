@@ -64,7 +64,7 @@ export function BoardContextStrip(): React.JSX.Element | null {
       <div className="flex flex-wrap items-stretch gap-2">
         {hebrew ? (
           <span className={chipClass}>
-            <CalendarDays className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
+            <CalendarDays className="h-4 w-4 flex-shrink-0 text-slate-500 dark:text-slate-400" aria-hidden="true" />
             <span>
               <span className="font-medium text-slate-900 dark:text-white">
                 {new Date(`${hebrew.date}T12:00:00`).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
@@ -93,7 +93,7 @@ export function BoardContextStrip(): React.JSX.Element | null {
         ) : null}
 
         <span className={chipClass}>
-          <Phone className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
+          <Phone className="h-4 w-4 flex-shrink-0 text-slate-500 dark:text-slate-400" aria-hidden="true" />
           {data.onDutyNow ? (
             <span>
               <span className="font-medium text-slate-900 dark:text-white">{data.onDutyNow.fullName}</span>
@@ -106,7 +106,7 @@ export function BoardContextStrip(): React.JSX.Element | null {
           )}
         </span>
         {data.onDutyNow?.phone ? (
-          <a className={`${chipClass} font-medium text-[#EA0029]`} href={telHref(data.onDutyNow.phone)}>
+          <a className={`${chipClass} font-medium text-[#C80023] dark:text-red-400`} href={telHref(data.onDutyNow.phone)}>
             <Phone className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
             {formatPhone(data.onDutyNow.phone)}
           </a>
@@ -114,21 +114,21 @@ export function BoardContextStrip(): React.JSX.Element | null {
 
         {data.unreadConversations > 0 ? (
         <Link className={chipClass} to="/messages">
-          <MessageSquare className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
+          <MessageSquare className="h-4 w-4 flex-shrink-0 text-slate-500 dark:text-slate-400" aria-hidden="true" />
           <span className="font-medium text-slate-900 dark:text-white">{data.unreadConversations}</span>
           unread
         </Link>
         ) : null}
         {waitingApplications > 0 ? (
         <Link className={chipClass} to="/admin/applications">
-          <ClipboardList className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
+          <ClipboardList className="h-4 w-4 flex-shrink-0 text-slate-500 dark:text-slate-400" aria-hidden="true" />
           <span className="font-medium text-slate-900 dark:text-white">{waitingApplications}</span>
           waiting
         </Link>
         ) : null}
         {data.overdueEquipment > 0 ? (
         <Link className={chipClass} to="/equipment">
-          <Package className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
+          <Package className="h-4 w-4 flex-shrink-0 text-slate-500 dark:text-slate-400" aria-hidden="true" />
           <span className="font-medium text-slate-900 dark:text-white">{data.overdueEquipment}</span>
           overdue
         </Link>

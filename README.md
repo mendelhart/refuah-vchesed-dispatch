@@ -53,7 +53,7 @@ Monorepo, npm workspaces. Node 22 is required (`.nvmrc`).
 
 ```bash
 node --version      # must be 22.x — `nvm use` reads .nvmrc
-docker --version    # for Postgres; a local Postgres 16 works too
+docker --version    # for Postgres; a local Postgres 18 works too (16 still works)
 ```
 
 ### 2. Install
@@ -69,7 +69,7 @@ npm ci
 ```bash
 docker run -d --name rvc-pg \
   -e POSTGRES_USER=rvc -e POSTGRES_PASSWORD=rvc_local_dev_only -e POSTGRES_DB=rvc_dev \
-  -p 5432:5432 postgres:16-alpine
+  -p 5432:5432 postgres:18-alpine
 ```
 
 ### 4. Set the two variables the API insists on
@@ -305,7 +305,7 @@ status the client cannot offer.
 ## Contributing
 
 `main` is protected. A pull request merges when the `ci` status check is green,
-which requires typecheck, lint, the API tests against a real Postgres 16, and a
+which requires typecheck, lint, the API tests against a real Postgres 18, and a
 successful container build. See
 [docs/DEPLOYMENT.md#branch-protection](docs/DEPLOYMENT.md#branch-protection) for
 the exact required-checks configuration.

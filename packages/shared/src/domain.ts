@@ -292,6 +292,9 @@ export const NOTIFICATION_EVENTS = [
   'announcement.broadcast',
   'duty.shift_reminder',
   'sms.reply_received',
+  'food.shopping_list',
+  'lift_assist.invite',
+  'lift_assist.confirmed',
 ] as const;
 
 /**

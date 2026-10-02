@@ -11,6 +11,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=../../.env src/db/migrate.ts",
     "db:seed": "tsx --env-file-if-exists=../../.env src/db/seed.ts",
+    "db:seed:staging": "tsx --env-file-if-exists=../../.env src/db/seed-staging.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "worker": "node dist/jobs/worker.js",

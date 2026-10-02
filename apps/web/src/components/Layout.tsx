@@ -40,20 +40,20 @@ import {
   UserPlus,
   Users,
   X,
-  Wrench,
-} from 'lucide-react';
+  Wrench, CookingPot, HandHelping, BarChart3, Mail } from 'lucide-react';
 import type { Role } from '@rvc/shared';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
 import { qk } from '@/lib/query';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { FEATURE_ROUTES, useFeatures, type Features } from '@/lib/features';
+import { FEATURE_ROUTES, useFeatures, type FeatureFlags, type Features } from '@/lib/features';
 import { BottomNavigation, bottomNavItems } from './BottomNavigation';
 import type { BoardSummaryResponse, TripListResponse } from '@/types/api';
 import { exitViewAs, getViewAs } from '@/lib/viewAs';
 import { NotificationsBell } from './NotificationsBell';
 import { roleLabel } from '@rvc/shared';
+import { navLabel, useI18n } from '@/i18n';
 
 /** Where a screen lives: the main menu, or one tap further under More / My profile / Admin. */
 export type NavSection = 'main' | 'more' | 'profile' | 'admin';
@@ -69,6 +69,11 @@ interface NavItem {
   volunteer?: NavSection;
   /** One-line description on the hub pages. */
   hint?: string;
+  /** Shown only when this new feature is switched on. */
+  flag?: keyof FeatureFlags;
+  /** For coordinators limited to departments: hidden outside this one.
+   *  (The server refuses those requests anyway; this keeps the menu honest.) */
+  department?: string;
 }
 
 /**
@@ -86,8 +91,8 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/contacts', label: 'Contacts', icon: BookUser, roles: ['dispatcher', 'admin'] },
   // Top level for coordinators (user asked for it to be more prominent); volunteers never see it.
   { to: '/calls', label: 'Call log', icon: Phone, roles: ['dispatcher', 'admin'], hint: 'Calls placed through the app' },
-  { to: '/recurring', label: 'Standing rides', icon: Repeat, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Rides that repeat every week' },
-  { to: '/equipment', label: 'Equipment', icon: Package, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'more', dispatch: 'more', hint: 'Loans of wheelchairs and other equipment' },
+  { to: '/recurring', label: 'Standing rides', icon: Repeat, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Rides that repeat every week', department: 'rides' },
+  { to: '/equipment', label: 'Equipment', icon: Package, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'more', dispatch: 'more', hint: 'Loans of wheelchairs and other equipment', department: 'equipment' },
 
   { to: '/my-trips', label: 'My rides', icon: Car, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'profile' },
   { to: '/me', label: 'My profile', icon: IdCard, roles: ['volunteer', 'dispatcher', 'admin'] },
@@ -97,6 +102,9 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/settings', label: 'Settings', icon: SettingsIcon, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'profile', dispatch: 'profile', hint: 'Name, phone, how we reach you, menu' },
 
   { to: '/directory', label: 'Directory', icon: Users, roles: ['volunteer'], volunteer: 'more', hint: 'The team roster' },
+  { to: '/food', label: 'Food', icon: CookingPot, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Kitchen, stock, distribution runs and shopping lists', flag: 'foodOps', department: 'food' },
+  { to: '/kitchen', label: 'Help in the kitchen', icon: CookingPot, roles: ['volunteer'], volunteer: 'more', hint: 'Sign up to cook or pack', flag: 'foodOps' },
+  { to: '/lift-assist', label: 'Lift assist', icon: HandHelping, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'more', dispatch: 'more', hint: 'A few helpers for heavy lifting, one lead', flag: 'liftAssist' },
   { to: '/duty', label: 'Phone duty', icon: CalendarClock, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Who is on the phones when' },
     { to: '/vehicles', label: 'Vehicles', icon: Car, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Organisation vehicles' },
   { to: '/admin/applications', label: 'Applications', icon: UserPlus, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'New volunteer sign-ups to review' },
@@ -104,8 +112,11 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/admin/people', label: 'People', icon: Users, roles: ['admin'], dispatch: 'admin', hint: 'Accounts, roles, invites, how each person is reached' },
   { to: '/admin/announcements', label: 'Broadcast', icon: Megaphone, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Message everyone or a group, with a picture' },
   { to: '/admin/notifications', label: 'Notifications', icon: Bell, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Every message sent, and whether it arrived' },
+  { to: '/email-builder', label: 'Email builder', icon: Mail, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Design an email, preview it, send yourself a test', flag: 'emailBuilder' },
   { to: '/admin/templates', label: 'Message templates', icon: MessageSquareText, roles: ['admin'], dispatch: 'admin', hint: 'Wording of the texts' },
-  { to: '/impact', label: 'Organization impact', icon: HeartHandshake, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Rides, volunteers and people helped, all together' },
+  { to: '/impact', label: 'Organization impact', icon: HeartHandshake, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Rides, volunteers and people helped, all together', department: 'reports' },
+  { to: '/reports', label: 'Reports', icon: BarChart3, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Totals, trends, staffing and equipment, with downloads', flag: 'reports', department: 'reports' },
+  { to: '/admin/departments', label: 'Departments', icon: Users, roles: ['admin'], dispatch: 'admin', hint: 'Which coordinators work on rides, food, equipment or reports', flag: 'departmentScoping' },
   { to: '/admin/backup', label: 'Full backup', icon: Download, roles: ['admin'], dispatch: 'admin', hint: 'Encrypted full database download' },
   { to: '/admin/exports', label: 'Exports', icon: Download, roles: ['admin'], dispatch: 'admin', hint: 'Download data' },
   { to: '/admin/audit', label: 'Audit log', icon: FileText, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Who changed what' },
@@ -135,6 +146,8 @@ export function sectionItems(
     if (!item.roles.includes(role) || sectionOf(item, role) !== section) return false;
     const flag = FEATURE_ROUTES[item.to];
     if (flag && !features[flag]) return false;
+    if (item.flag && !features.flags?.[item.flag]) return false;
+    if (item.department && role === 'dispatcher' && features.departments && !features.departments.includes(item.department)) return false;
     return section !== 'main' || !isNavItemHidden(role, navHidden, item.to);
   });
 }
@@ -193,6 +206,7 @@ function navLinkClass({ isActive }: { isActive: boolean }): string {
 }
 
 export function Layout({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const { t } = useI18n();
   const { user, logout } = useAuth();
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
@@ -254,7 +268,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
             {/* The organisation's own wordmark (refuahvchesed.org), white on the brand red. */}
             <img src="/brand/logo-white.svg" alt="" className="h-8 w-auto flex-shrink-0 sm:h-9" />
             <span className="sr-only">Refuah V&apos;Chesed</span>
-            <span className="truncate border-l border-white/40 pl-3 text-sm font-medium text-white/90">Dispatch</span>
+            <span className="truncate border-l border-white/40 pl-3 text-sm font-medium text-white">Dispatch</span>
           </Link>
           <div className="flex items-center gap-1">
             <button
@@ -292,19 +306,19 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
                     className={({ isActive }) =>
                       cn(
                         'flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-3',
-                        isActive ? 'bg-white font-semibold text-[#EA0029]' : 'text-red-50 hover:bg-red-800',
+                        isActive ? 'bg-white font-semibold text-[#C80023] dark:text-red-400' : 'text-white hover:bg-red-800',
                       )
                     }
                   >
                     <Icon className="h-5 w-5" />
-                    <span>{item.label}</span>
+                    <span>{navLabel(t, item.to, item.label)}</span>
                   </NavLink>
                 );
               })}
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-3 text-red-50 hover:bg-red-800"
+                className="flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-3 text-white hover:bg-red-800"
               >
                 <LogOut className="h-5 w-5" />
                 <span>Sign out</span>
@@ -317,7 +331,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
       <div className="flex">
         {/* FIX: `hidden lg:flex` — the original was `hidden lg:fixed` with no
             `lg:block`, so the sidebar was invisible at every width. */}
-        <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-slate-200 bg-white pt-[72px] shadow-sm lg:flex dark:border-slate-700 dark:bg-slate-900">
+        <aside className="fixed inset-y-0 start-0 z-40 hidden w-64 flex-col border-e border-slate-200 bg-white pt-[72px] shadow-sm lg:flex dark:border-slate-700 dark:bg-slate-900">
           <div className="border-b border-slate-200 p-5 dark:border-slate-700">
             <p className="text-sm font-semibold text-slate-900 dark:text-white">Dispatch</p>
             <p className="text-xs text-slate-500 dark:text-slate-400">Montreal</p>
@@ -328,7 +342,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
               return (
                 <NavLink key={item.to} to={item.to} end={item.end ?? false} className={navLinkClass}>
                   <Icon className="h-5 w-5 flex-shrink-0" />
-                  <span className="truncate">{item.label}</span>
+                  <span className="truncate">{navLabel(t, item.to, item.label)}</span>
                 </NavLink>
               );
             })}
@@ -336,7 +350,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
           <div className="border-t border-slate-200 p-4 dark:border-slate-700">
             <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{user?.fullName}</p>
             <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user?.email}</p>
-            <p className="mt-1 text-xs font-medium capitalize text-[#EA0029]">{roleLabel(role)}</p>
+            <p className="mt-1 text-xs font-medium capitalize text-[#C80023] dark:text-red-400">{roleLabel(role)}</p>
             <button
               type="button"
               onClick={handleLogout}
@@ -348,7 +362,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
           </div>
         </aside>
 
-        <main className="w-full flex-1 lg:ml-64">
+        <main className="w-full min-w-0 flex-1 lg:ms-64">
           <div
             className="mx-auto max-w-6xl p-4 md:p-6 lg:p-8"
             // Room for the bottom bar on phones, plus the device inset.
@@ -366,7 +380,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
         <Link
           to="/board?new=1"
           aria-label="Create a new trip"
-          className="fixed right-4 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#EA0029] text-white shadow-lg hover:bg-[#C80023] lg:hidden"
+          className="fixed end-4 z-40 grid h-14 w-14 place-items-center rounded-full bg-[#EA0029] text-white shadow-lg hover:bg-[#C80023] lg:hidden"
           style={{ bottom: 'calc(72px + env(safe-area-inset-bottom))' }}
         >
           <Plus className="h-7 w-7" aria-hidden="true" />

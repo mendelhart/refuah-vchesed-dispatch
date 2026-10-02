@@ -76,6 +76,15 @@ const AuditPage = React.lazy(() =>
 const NotificationsAdminPage = React.lazy(() =>
   import('@/pages/admin/Notifications').then((m) => ({ default: m.NotificationsAdminPage })),
 );
+const FoodPage = React.lazy(() => import('@/pages/Food').then((m) => ({ default: m.FoodPage })));
+const LiftAssistPage = React.lazy(() => import('@/pages/LiftAssist').then((m) => ({ default: m.LiftAssistPage })));
+const ReportsPage = React.lazy(() => import('@/pages/Reports').then((m) => ({ default: m.ReportsPage })));
+const EmailDesignsPage = React.lazy(() => import('@/pages/EmailBuilder').then((m) => ({ default: m.EmailDesignsPage })));
+const EmailDesignPage = React.lazy(() => import('@/pages/EmailBuilder').then((m) => ({ default: m.EmailDesignPage })));
+const KitchenPage = React.lazy(() => import('@/pages/Kitchen').then((m) => ({ default: m.KitchenPage })));
+const DepartmentsPage = React.lazy(() =>
+  import('@/pages/admin/Departments').then((m) => ({ default: m.DepartmentsPage })),
+);
 const AdminSettingsPage = React.lazy(() =>
   import('@/pages/admin/AdminSettings').then((m) => ({ default: m.AdminSettingsPage })),
 );
@@ -339,6 +348,22 @@ export function App(): React.JSX.Element {
             <Shell>
               <RequireRole roles={DISPATCH}>
                 <NotificationsAdminPage />
+              </RequireRole>
+            </Shell>
+          }
+        />
+        <Route path="/food" element={<Shell><RequireRole roles={DISPATCH}><FoodPage /></RequireRole></Shell>} />
+        <Route path="/kitchen" element={<Shell><KitchenPage /></Shell>} />
+        <Route path="/lift-assist" element={<Shell><LiftAssistPage /></Shell>} />
+        <Route path="/reports" element={<Shell><RequireRole roles={DISPATCH}><ReportsPage /></RequireRole></Shell>} />
+        <Route path="/email-builder" element={<Shell><RequireRole roles={DISPATCH}><EmailDesignsPage /></RequireRole></Shell>} />
+        <Route path="/email-builder/:id" element={<Shell><RequireRole roles={DISPATCH}><EmailDesignPage /></RequireRole></Shell>} />
+        <Route
+          path="/admin/departments"
+          element={
+            <Shell>
+              <RequireRole roles={ADMIN}>
+                <DepartmentsPage />
               </RequireRole>
             </Shell>
           }

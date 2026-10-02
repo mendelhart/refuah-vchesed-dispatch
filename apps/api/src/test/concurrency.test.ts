@@ -75,6 +75,27 @@ describe('concurrent acceptance', () => {
     expect(JSON.stringify(loser.body)).toMatch(/accepted this trip first|no longer available/i);
   });
 
+  it('a volunteer arriving after another claim committed is told the trip was taken', async () => {
+    const { tripId, volunteers } = await offeredTrip(2);
+    const winner = await api('POST', `/api/trips/${tripId}/claim`, {
+      cookie: volunteers[0]!.cookie, payload: {},
+    });
+    expect(winner.status).toBe(200);
+    const loser = await api('POST', `/api/trips/${tripId}/claim`, {
+      cookie: volunteers[1]!.cookie, payload: {},
+    });
+    expect(loser.status).toBe(409);
+    expect(JSON.stringify(loser.body)).toMatch(/accepted this trip first|no longer available/i);
+    const outsider = await createTestUser({ role: 'volunteer' });
+    const uninvited = await api('POST', `/api/trips/${tripId}/claim`, {
+      cookie: outsider.cookie, payload: {},
+    });
+    expect(uninvited.status).toBe(409);
+    expect(JSON.stringify(uninvited.body)).toContain('not_your_offer');
+    const assignments = await db.select().from(tripAssignments).where(eq(tripAssignments.tripId, tripId));
+    expect(assignments).toHaveLength(1);
+  });
+
   it('eight volunteers accepting at once: exactly one succeeds', async () => {
     const { tripId, volunteers } = await offeredTrip(8);
 

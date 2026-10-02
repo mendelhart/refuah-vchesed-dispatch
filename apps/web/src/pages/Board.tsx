@@ -36,6 +36,8 @@ import { Modal } from '@/components/Modal';
 import { EmptyState, ErrorState, InlineSpinner, ListSkeleton, PageHeader, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from '@/components/states';
 import { cn } from '@/lib/utils';
 import { BoardContextStrip, type BoardContextResponse } from './BoardContextStrip';
+import { AwaitingReturnStrip } from '@/components/AwaitingReturnStrip';
+import { useFlag } from '@/lib/features';
 import { SEGMENTS, boardListParams, findRestPeriod, groupBoardTrips, type RestPeriod } from './board-model';
 
 interface BulkResultRow {
@@ -52,6 +54,7 @@ interface BulkResponse {
 }
 
 export function BoardPage(): React.JSX.Element {
+  const journeysOn = useFlag('multiLegTrips');
   const [params, setParams] = useSearchParams();
   const queryClient = useQueryClient();
   const [segmentId, setSegmentId] = useState(SEGMENTS[0]!.id);
@@ -256,6 +259,7 @@ export function BoardPage(): React.JSX.Element {
 
       <OperationalStatus />
       <BoardContextStrip />
+      {journeysOn ? <AwaitingReturnStrip /> : null}
 
       <button
         type="button"
@@ -268,9 +272,9 @@ export function BoardPage(): React.JSX.Element {
             'Loading counts…'
           ) : (
             <>
-              <span className="font-semibold text-[#EA0029]">{stats?.needsAttention ?? 0}</span> need a driver
+              <span className="font-semibold text-[#C80023] dark:text-red-400">{stats?.needsAttention ?? 0}</span> need a driver
               {' · '}
-              <span className={cn('font-semibold', (stats?.overdue ?? 0) > 0 && 'text-[#EA0029]')}>{stats?.overdue ?? 0}</span> overdue
+              <span className={cn('font-semibold', (stats?.overdue ?? 0) > 0 && 'text-[#C80023] dark:text-red-400')}>{stats?.overdue ?? 0}</span> overdue
               {' · '}
               <span className="font-semibold">{stats?.unanswered ?? 0}</span> unanswered
             </>
@@ -280,11 +284,11 @@ export function BoardPage(): React.JSX.Element {
       </button>
       <div className={cn('grid-cols-2 gap-3 sm:grid-cols-3 lg:grid lg:grid-cols-6', statsOpen ? 'grid' : 'hidden')}>
         {[
-          { label: 'Needs attention', value: stats?.needsAttention, accent: 'text-[#EA0029]' },
+          { label: 'Needs attention', value: stats?.needsAttention, accent: 'text-[#C80023] dark:text-red-400' },
           { label: 'Offered', value: stats?.offered },
           { label: 'Assigned', value: stats?.assigned },
           { label: 'In progress', value: stats?.inProgress },
-          { label: 'Overdue', value: stats?.overdue, accent: 'text-[#EA0029]' },
+          { label: 'Overdue', value: stats?.overdue, accent: 'text-[#C80023] dark:text-red-400' },
           { label: 'Unanswered', value: stats?.unanswered, accent: 'text-amber-600 dark:text-amber-400' },
         ].map((tile) => (
           <div
@@ -299,7 +303,7 @@ export function BoardPage(): React.JSX.Element {
         ))}
       </div>
       {summary.isError ? (
-        <p className="text-sm text-[#EA0029]">
+        <p className="text-sm text-[#C80023] dark:text-red-400">
           The summary counts did not load.{' '}
           <button type="button" className="underline" onClick={() => void summary.refetch()}>
             Try again
@@ -331,7 +335,7 @@ export function BoardPage(): React.JSX.Element {
 
       <div className="flex items-center gap-2">
       <div className="relative flex-1">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" aria-hidden="true" />
         <input
           type="search"
           className={`${inputClass} pl-10`}
@@ -374,7 +378,7 @@ export function BoardPage(): React.JSX.Element {
         <div className="space-y-8">
           {grouped.needsAttention.length > 0 ? (
             <section aria-labelledby="group-attention">
-              <h2 id="group-attention" className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-[#EA0029]">
+              <h2 id="group-attention" className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-[#C80023] dark:text-red-400">
                 <AlertOctagon className="h-4 w-4" aria-hidden="true" />
                 Needs attention now ({grouped.needsAttention.length})
               </h2>
@@ -462,7 +466,7 @@ export function BoardPage(): React.JSX.Element {
                     'flex items-start gap-2 rounded-lg border p-3 text-sm',
                     row.ok
                       ? 'border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-200'
-                      : 'border-red-200 bg-red-50 text-[#EA0029] dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300',
+                      : 'border-red-200 bg-red-50 text-[#C80023] dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300',
                   )}
                 >
                   {row.ok ? (
@@ -506,7 +510,7 @@ export function BoardPage(): React.JSX.Element {
               {volunteers.isPending ? (
                 <InlineSpinner label="Loading volunteers" />
               ) : volunteers.isError ? (
-                <p className="text-sm text-[#EA0029]">
+                <p className="text-sm text-[#C80023] dark:text-red-400">
                   We could not load the volunteer list.{' '}
                   <button type="button" className="underline" onClick={() => void volunteers.refetch()}>
                     Try again

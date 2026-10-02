@@ -86,3 +86,29 @@
     @apply bg-background text-foreground;
   }
 }
+@layer base {
+  /* Long words, codes and addresses wrap instead of pushing the page
+     sideways, at any text size (checked by e2e/a11y-audit.spec.ts). */
+  main, [role='dialog'] {
+    overflow-wrap: anywhere;
+  }
+}
+
+@layer base {
+  /* One clear focus ring for keyboard users on every control, in both themes
+     (3:1 or better against white and the dark background). */
+  :focus-visible {
+    outline: 3px solid #c80023;
+    outline-offset: 2px;
+  }
+  .dark :focus-visible {
+    outline-color: #f87171;
+  }
+}
+
+/* Toast messages: the library's rich colours put mid-green, red and blue
+   text on pale backgrounds below 4.5:1. Darker text, same backgrounds. */
+[data-sonner-toast][data-rich-colors='true'][data-type='success'] { color: #14532d !important; }
+[data-sonner-toast][data-rich-colors='true'][data-type='error'] { color: #7f1d1d !important; }
+[data-sonner-toast][data-rich-colors='true'][data-type='info'] { color: #1e3a8a !important; }
+[data-sonner-toast][data-rich-colors='true'][data-type='warning'] { color: #713f12 !important; }

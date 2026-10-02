@@ -1,4 +1,5 @@
-import { and, eq, inArray, isNull, ne, or, sql as raw } from 'drizzle-orm';
+import { assertSeats, seatsNeeded } from './seats.js';
+import { and, desc, eq, inArray, isNull, ne, or, sql as raw } from 'drizzle-orm';
 import {
   SETTING_KEYS,
   TRIP_STATE_MACHINE,
@@ -629,6 +630,7 @@ export async function offerTrip(
         preferredVolunteerId,
         restrictToUserIds: opts.volunteerIds?.length ? opts.volunteerIds : null,
         excludeTripId: tripId,
+        seatsNeeded: await seatsNeeded(tripId, tx),
         limit: batchSize,
       },
       tx,
@@ -955,9 +957,11 @@ export async function claimTrip(actor: TripActor, args: ClaimArgs): Promise<Clai
           and(
             eq(tripOffers.tripId, args.tripId),
             eq(tripOffers.volunteerId, actor.user.id),
-            eq(tripOffers.status, 'pending'),
           ),
         )
+        // Keep the caller's latest offer even if another claim just closed it.
+        // Its status below tells a late loser 'already taken', not 'not yours'.
+        .orderBy(desc(tripOffers.round))
         .limit(1);
       offerRow = found;
       if (!offerRow) return { ok: false, reason: 'not_your_offer' };
@@ -1154,6 +1158,7 @@ export async function assignTrip(
     if (volunteer.status !== 'active') {
       throw Errors.validation('That volunteer is not active.', { field: 'volunteerId' });
     }
+    await assertSeats(tx, tripId, volunteerId);
 
     const [updated] = await tx
       .update(trips)
@@ -1235,6 +1240,7 @@ export async function reassignTrip(
     if (!volunteer || volunteer.status !== 'active') {
       throw Errors.validation('That volunteer is not available for this group.');
     }
+    await assertSeats(tx, tripId, volunteerId);
 
     const previousVolunteerId = trip.assignedVolunteerId;
 

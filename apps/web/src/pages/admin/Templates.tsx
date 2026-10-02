@@ -181,7 +181,7 @@ export function TemplatesPage(): React.JSX.Element {
             <ul className="space-y-4">
               {grouped.map(([key, rows]) => (
                 <li key={key}>
-                  <h2 className="font-mono text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <h2 className="break-all font-mono text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     {key}
                   </h2>
                   <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
@@ -334,7 +334,7 @@ function TemplateEditor({ id, onClose }: { id: string; onClose: () => void }): R
           <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
             <input
               type="checkbox"
-              className="h-5 w-5 rounded border-slate-300 text-[#EA0029] focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
+              className="h-5 w-5 rounded border-slate-300 text-[#C80023] dark:text-red-400 focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
               checked={current.active}
               disabled={save.isPending}
               onChange={(event) => save.mutate({ active: event.target.checked })}

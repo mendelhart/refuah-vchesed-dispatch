@@ -13,6 +13,8 @@ import { AppError, Errors, isAppError } from './lib/errors.js';
 import { resolveSession } from './auth/session.js';
 import { captureException } from './lib/monitoring.js';
 import { registerRoutes } from './routes/index.js';
+import { registerIdempotency } from './lib/idempotency.js';
+import { registerDepartmentScope } from './lib/departments.js';
 
 /**
  * The HTTP surface.
@@ -52,11 +54,13 @@ export async function buildServer(): Promise<FastifyInstance> {
     global: true,
     store: DatabaseRateLimitStore,
     skipOnError: false,
-    max: 300,
+    // Browser suites reuse one account hundreds of times in seconds. Never
+    // let their override weaken the production limiter.
+    max: isProd ? 300 : (env.E2E_API_MAX_PER_MINUTE ?? 300),
     timeWindow: '1 minute',
     keyGenerator: (req) => req.user?.id ?? req.ip,
     /**
-     * Two exemptions, both for requests that are not what this limit is for.
+     * Three exemptions, all for requests that are not what this limit is for.
      *
      * Webhooks are authenticated by signature and must not be throttled away.
      *
@@ -66,9 +70,17 @@ export async function buildServer(): Promise<FastifyInstance> {
      * same budget as the dispatcher's actual work. Counting it meant a busy
      * morning could exhaust the limit and start 429ing ordinary requests,
      * including `/api/auth/me`, which the web app then read as a sign-out.
+     *
+     * Health checks are the third. The limiter keeps its counters in Postgres,
+     * so with the database down it failed every request with a 500 before
+     * /health could run and answer its documented 503 (found by
+     * scripts/outage-drill.sh). Only the plain liveness check (one
+     * `select 1`) is exempt; /health/deep runs several queries and stays
+     * limited. The handler itself is unchanged.
      */
     allowList: (req) =>
-      req.url.startsWith('/webhooks/') || req.url.startsWith('/api/events/stream'),
+      req.url.startsWith('/webhooks/') || req.url.startsWith('/api/events/stream') ||
+      req.routeOptions?.url === '/health',
     // Must be an AppError, not a bare object: the shared error handler reads
     // `statusCode` off what it is given, so returning a plain object turned
     // every throttled request into a 500 "internal error".
@@ -169,6 +181,11 @@ export async function buildServer(): Promise<FastifyInstance> {
       .status(404)
       .send({ error: { code: 'not_found', message: `No route for ${req.method} ${req.url}` } });
   });
+
+  // Off unless IDEMPOTENCY_KEYS_ENABLED; see lib/idempotency.ts.
+  registerIdempotency(app);
+  // Off unless DEPARTMENT_SCOPING_ENABLED; see lib/departments.ts.
+  registerDepartmentScope(app);
 
   await registerRoutes(app);
 

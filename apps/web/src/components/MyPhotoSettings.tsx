@@ -53,9 +53,9 @@ export function MyPhotoSettings({ isAdmin }: { isAdmin: boolean }): React.JSX.El
             {data?.photo ? (
               <img src={data.photo} alt="Your current ID card photo" className="h-24 w-24 rounded-full object-cover" />
             ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-slate-100 text-xs text-slate-500 dark:bg-slate-800">No photo</div>
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-slate-100 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">No photo</div>
             )}
-            <figcaption className="mt-1 text-xs text-slate-500">On your card now</figcaption>
+            <figcaption className="mt-1 text-xs text-slate-500 dark:text-slate-400">On your card now</figcaption>
           </figure>
           {pending ? (
             <figure className="text-center">
@@ -66,7 +66,7 @@ export function MyPhotoSettings({ isAdmin }: { isAdmin: boolean }): React.JSX.El
               )}
               <figcaption className="mt-1 text-xs text-amber-700 dark:text-amber-300">
                 Waiting for approval
-                <span className="block text-slate-500">{formatDateTime(pending.requestedAt)}</span>
+                <span className="block text-slate-500 dark:text-slate-400">{formatDateTime(pending.requestedAt)}</span>
               </figcaption>
             </figure>
           ) : null}

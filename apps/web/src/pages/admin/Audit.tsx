@@ -84,7 +84,7 @@ export function AuditPage(): React.JSX.Element {
                     )}
                   </p>
                 </div>
-                <span className="whitespace-nowrap text-xs text-slate-400 dark:text-slate-500">
+                <span className="whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
                   {formatDateTime(event.occurredAt)}
                 </span>
               </div>

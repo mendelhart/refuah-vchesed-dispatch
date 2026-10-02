@@ -80,6 +80,8 @@ export interface TargetingInput {
   restrictToUserIds?: string[] | null;
   /** The trip being offered, excluded from its own conflict check. */
   excludeTripId?: string | null;
+  /** Seats the listed passengers need (journeys feature). 0 or absent: no check. */
+  seatsNeeded?: number;
   limit?: number;
 }
 
@@ -93,6 +95,7 @@ interface Row {
   in_group: boolean;
   has_service: boolean;
   has_capability: boolean;
+  has_seats: boolean;
   is_available: boolean;
   is_free: boolean;
   not_muted: boolean;
@@ -150,6 +153,13 @@ export async function evaluateCandidates(
         ${needs.length} = 0
         or ${needsLiteral}::text[] <@ u.capabilities
       )                                                       as has_capability,
+      -- A driver with no seat count on file is not excluded: unknown is not
+      -- "too small".
+      (
+        ${input.seatsNeeded ?? 0} = 0
+        or u.vehicle_seats is null
+        or u.vehicle_seats >= ${input.seatsNeeded ?? 0}
+      )                                                       as has_seats,
       (
         -- No rules on file means "no stated restriction", which is availability,
         -- not unavailability. Any other reading silences the whole roster the
@@ -215,6 +225,7 @@ export async function evaluateCandidates(
       if (!r.in_group) reasons.push('not in this group');
       if (!r.has_service) reasons.push('has not opted in to this service');
       if (!r.has_capability) reasons.push(`cannot cover: ${needs.join(', ')}`);
+      if (!r.has_seats) reasons.push(`car has too few seats (needs ${input.seatsNeeded})`);
       if (!relaxAvailability && !r.is_available) reasons.push('not available at this time');
       if (!r.is_free) reasons.push('already on another trip at this time');
       if (!relaxAvailability && !r.not_muted) reasons.push('notifications snoozed');

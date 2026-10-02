@@ -469,7 +469,7 @@ function LicenceCard(): React.JSX.Element {
               <LicenceStatusPanel licence={existing} expiringSoon={expiringSoon} />
             ) : (
               <div className="flex items-start gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-                <ShieldQuestion className="mt-0.5 h-5 w-5 flex-shrink-0 text-slate-400" aria-hidden="true" />
+                <ShieldQuestion className="mt-0.5 h-5 w-5 flex-shrink-0 text-slate-500 dark:text-slate-400" aria-hidden="true" />
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   Nothing on file yet. Add your licence below so an administrator can put it on your record.
                 </p>

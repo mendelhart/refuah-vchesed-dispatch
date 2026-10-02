@@ -18,6 +18,9 @@ import { api, errorMessage } from '@/lib/api';
 import { saveCallerFromTrip } from '@/lib/save-caller';
 import { invalidateTrips, qk } from '@/lib/query';
 import { useAuth } from '@/lib/auth';
+import { JourneyPanel } from '@/components/JourneyPanel';
+import { PackagePanel } from '@/components/PackagePanel';
+import { useFlag } from '@/lib/features';
 import { markInstallEligible } from '@/lib/install-prompt';
 import { useCompleteTrip } from '@/lib/trip-actions';
 import {
@@ -127,6 +130,8 @@ export function TripDetailPage(): React.JSX.Element {
   const [duplicatePriority, setDuplicatePriority] = useState<TripPriority>('routine');
   const [duplicateNotes, setDuplicateNotes] = useState('');
   const isDispatch = user?.role === 'dispatcher' || user?.role === 'admin';
+  const journeysOn = useFlag('multiLegTrips');
+  const packagesOn = useFlag('packageDelivery');
 
   const tripQuery = useQuery({
     queryKey: qk.trips.detail(id),
@@ -255,7 +260,7 @@ export function TripDetailPage(): React.JSX.Element {
                 <p className="flex flex-wrap items-center gap-2">
                   <Repeat className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
                   This ride came from a standing ride.
-                  <Link to="/recurring" className="font-medium text-[#EA0029] underline-offset-2 hover:underline">
+                  <Link to="/recurring" className="font-medium text-[#C80023] dark:text-red-400 underline-offset-2 hover:underline">
                     See the schedule
                   </Link>
                 </p>
@@ -266,7 +271,7 @@ export function TripDetailPage(): React.JSX.Element {
                   Copied from an earlier ride.
                   <Link
                     to={`/trips/${full.duplicatedFromTripId}`}
-                    className="font-medium text-[#EA0029] underline-offset-2 hover:underline"
+                    className="font-medium text-[#C80023] dark:text-red-400 underline-offset-2 hover:underline"
                   >
                     Open the original
                   </Link>
@@ -337,7 +342,7 @@ export function TripDetailPage(): React.JSX.Element {
                   <Phone className="h-4 w-4" aria-hidden="true" />
                   {trip.callerName ?? '—'}
                   {trip.callerPhone ? (
-                    <a className="text-[#EA0029] underline-offset-2 hover:underline" href={telHref(trip.callerPhone)}>
+                    <a className="text-[#C80023] dark:text-red-400 underline-offset-2 hover:underline" href={telHref(trip.callerPhone)}>
                       {formatPhone(trip.callerPhone)}
                     </a>
                   ) : null}
@@ -369,7 +374,7 @@ export function TripDetailPage(): React.JSX.Element {
                   <dd className="mt-1 flex flex-wrap items-center gap-2 text-slate-800 dark:text-slate-100">
                     <PhoneCall className="h-4 w-4" aria-hidden="true" />
                     <a
-                      className="font-medium text-[#EA0029] underline-offset-2 hover:underline"
+                      className="font-medium text-[#C80023] dark:text-red-400 underline-offset-2 hover:underline"
                       href={telHref(trip.callbackNumber)}
                     >
                       {formatPhone(trip.callbackNumber)}
@@ -386,7 +391,7 @@ export function TripDetailPage(): React.JSX.Element {
                     <>
                       {trip.assignedVolunteer.fullName}
                       {trip.assignedVolunteer.phone ? (
-                        <a className="text-[#EA0029] underline-offset-2 hover:underline" href={telHref(trip.assignedVolunteer.phone)}>
+                        <a className="text-[#C80023] dark:text-red-400 underline-offset-2 hover:underline" href={telHref(trip.assignedVolunteer.phone)}>
                           {formatPhone(trip.assignedVolunteer.phone)}
                         </a>
                       ) : null}
@@ -485,6 +490,9 @@ export function TripDetailPage(): React.JSX.Element {
         </div>
       </div>
 
+      {journeysOn ? <JourneyPanel tripId={id} cardClass={cardClass} /> : null}
+      {packagesOn ? <PackagePanel tripId={id} cardClass={cardClass} canMarkDelivered /> : null}
+
       {isDispatch && tripThreads.length > 0 ? (
         <section className={cardClass}>
           <div className="p-5 md:p-6">
@@ -493,7 +501,7 @@ export function TripDetailPage(): React.JSX.Element {
               {tripThreads.map((thread) => (
                 <li key={thread.id} className="rounded-lg border border-slate-200 p-3 dark:border-slate-700">
                   <p className="flex flex-wrap items-center gap-2 text-sm font-medium text-slate-900 dark:text-white">
-                    <MessageSquare className="h-4 w-4 flex-shrink-0 text-slate-400" aria-hidden="true" />
+                    <MessageSquare className="h-4 w-4 flex-shrink-0 text-slate-500 dark:text-slate-400" aria-hidden="true" />
                     {thread.displayName ?? thread.phone}
                     {thread.unreadCount > 0 ? (
                       <span className="rounded-full bg-[#EA0029] px-2 py-0.5 text-xs font-semibold text-white">
@@ -509,7 +517,7 @@ export function TripDetailPage(): React.JSX.Element {
                   ) : null}
                   <Link
                     to="/messages"
-                    className="mt-2 inline-flex min-h-[44px] items-center text-sm font-medium text-[#EA0029] underline-offset-2 hover:underline"
+                    className="mt-2 inline-flex min-h-[44px] items-center text-sm font-medium text-[#C80023] dark:text-red-400 underline-offset-2 hover:underline"
                   >
                     Open in messages
                   </Link>
@@ -542,7 +550,7 @@ export function TripDetailPage(): React.JSX.Element {
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-slate-900 dark:text-white">{entry.title}</p>
                         {entry.detail ? <p className="text-sm text-slate-600 dark:text-slate-400">{entry.detail}</p> : null}
-                        <p className="text-xs text-slate-400 dark:text-slate-500">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           {formatDateTime(entry.at)}
                           {entry.actor ? ` · ${entry.actor}` : ''}
                         </p>
@@ -624,7 +632,7 @@ export function TripDetailPage(): React.JSX.Element {
         </form>
       </Modal>
 
-      <p className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+      <p className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
         <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
         Updated {formatDateTime(isFullTrip(trip) ? trip.updatedAt : trip.pickupAt)}
       </p>

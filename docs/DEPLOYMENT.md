@@ -12,7 +12,7 @@ Canada and do not let autoscaling create one.
 | | Development | Staging | Production |
 | --- | --- | --- | --- |
 | Where | laptop / `docker compose` | Fly app `rvc-dispatch-api-staging` | Fly app `rvc-dispatch-api` |
-| Database | local Postgres 16 | Fly Postgres, 1 node, `yyz` | Fly Postgres, HA pair, `yyz` |
+| Database | local Postgres 18 | Fly Postgres, 1 node, `yyz` | Fly Postgres, HA pair, `yyz` |
 | `NODE_ENV` | `development` | `production` | `production` |
 | SMS / voice | in-memory provider (recorded, not sent) | Twilio **test credentials** or a real number the team owns | Twilio production |
 | Push | usually off | real VAPID pair (staging's own) | real VAPID pair |
@@ -53,7 +53,7 @@ that a variable env.ts types as a URL cannot be present-but-empty — zod reject
 
 | Variable | Notes |
 | --- | --- |
-| `DATABASE_URL` | Postgres 16. Set by `fly postgres attach`; include `?sslmode=require` if you manage it yourself |
+| `DATABASE_URL` | Postgres 18 (Aiven). End it with `?sslmode=verify-full`; the API trusts the Aiven CA through `NODE_EXTRA_CA_CERTS` |
 | `SESSION_SECRET` | ≥32 characters. Signs session cookies. Rotating it logs everyone out |
 
 ### Required in production (the process refuses to boot otherwise)
@@ -95,7 +95,7 @@ simply disabled and every push delivery is recorded `skipped`.
 | `LICENCE_VERIFICATION_URL` / `LICENCE_VERIFICATION_API_KEY` | unset | the contracted verification service, if one exists |
 | `PUBLIC_SIGNUP_ENABLED` | `true` | `false` closes the public application form and its options endpoint with a 403 |
 | `SIGNUP_MAX_PER_IP_PER_HOUR` | `5` | the per-IP limit on the only unauthenticated write endpoint. Read per request, so it can be changed without a restart |
-| `SENTRY_DSN` | unset | when set, `initMonitoring()` tries to `import('@sentry/node')` at runtime. **That package is not a dependency of `@rvc/api`**, so with a DSN set and the package absent the API logs an error at boot and errors go to the logs only |
+| `SENTRY_DSN` | unset | when set, `initMonitoring()` loads `@sentry/node` (a dependency of `@rvc/api`) and reports unhandled errors, crashes and dead jobs. Unset: errors go to the logs only. See [OUTAGE_DRILL.md](OUTAGE_DRILL.md#alerts-who-gets-told) |
 | `RUN_WORKER_IN_PROCESS` | `true` | `false` means you must run `node dist/jobs/worker.js` separately, or nothing expires, escalates or sends |
 | `WORKER_POLL_MS` | `2000` | queue poll interval, 200–60000 |
 | `WORKER_CONCURRENCY` | `4` | jobs claimed per tick, 1–50. Keep below `DATABASE_POOL_MAX` |
@@ -410,7 +410,7 @@ Require the single aggregate check `ci`, not the individual jobs. `ci` in
 `build` and fails if any of them did not succeed, so adding a job later does not
 mean editing the protection rule and does not leave a new job silently optional.
 
-The `api tests` job runs against a real Postgres 16 service container with the
+The `api tests` job runs against a real Postgres 18 service container with the
 real migrations applied, and asserts before the tests that the schema guarantees
 are present — `next_trip_reference`, the append-only audit trigger,
 `trip_offers_one_accepted_uq` and `trips_engaged_requires_volunteer_chk`. A

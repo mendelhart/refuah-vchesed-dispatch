@@ -121,8 +121,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-command -v pg_dump    >/dev/null || fail "pg_dump not found (apt install postgresql-client-16)"
-command -v pg_restore >/dev/null || fail "pg_restore not found (apt install postgresql-client-16)"
+command -v pg_dump    >/dev/null || fail "pg_dump not found (apt install postgresql-client-18)"
+command -v pg_restore >/dev/null || fail "pg_restore not found (apt install postgresql-client-18)"
 if [ "$LOCAL_ONLY" = false ]; then
   command -v aws >/dev/null || fail "aws CLI not found, and --local-only was not given"
   : "${BACKUP_S3_BUCKET:?BACKUP_S3_BUCKET is required unless --local-only}"

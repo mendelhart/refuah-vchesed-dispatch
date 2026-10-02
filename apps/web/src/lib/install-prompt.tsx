@@ -106,7 +106,7 @@ export function InstallPrompt(): React.JSX.Element | null {
       style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex items-start gap-3">
-        <Download className="mt-0.5 h-5 w-5 shrink-0 text-[#EA0029]" aria-hidden />
+        <Download className="mt-0.5 h-5 w-5 shrink-0 text-[#C80023] dark:text-red-400" aria-hidden />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-900 dark:text-white">
             Thank you for that ride
@@ -130,7 +130,7 @@ export function InstallPrompt(): React.JSX.Element | null {
           type="button"
           onClick={dismiss}
           aria-label="Not now"
-          className="-m-1 rounded p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          className="-m-1 rounded p-1 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
         >
           <X className="h-5 w-5" aria-hidden />
         </button>

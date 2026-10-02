@@ -83,7 +83,7 @@ export function AdminSettingsPage(): React.JSX.Element {
               ].map((tile) => (
                 <div key={tile.label}>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{tile.label}</p>
-                  <p className={`text-2xl font-bold ${tile.value > 0 && tile.label !== 'Jobs pending' ? 'text-[#EA0029]' : 'text-slate-900 dark:text-white'}`}>
+                  <p className={`text-2xl font-bold ${tile.value > 0 && tile.label !== 'Jobs pending' ? 'text-[#C80023]' : 'text-slate-900 dark:text-white'}`}>
                     {tile.value}
                   </p>
                 </div>
@@ -127,7 +127,7 @@ export function AdminSettingsPage(): React.JSX.Element {
                 <label htmlFor={`setting-${key}`} className="block text-sm font-medium text-slate-900 dark:text-white">
                   {SETTING_LABELS[key] ?? titleCase(key)}
                 </label>
-                <p className="mt-0.5 font-mono text-xs text-slate-400 dark:text-slate-500">
+                <p className="mt-0.5 font-mono text-xs text-slate-500 dark:text-slate-400">
                   {key} · default {defaultValue}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">

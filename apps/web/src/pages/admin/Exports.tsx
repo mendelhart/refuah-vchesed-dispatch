@@ -110,7 +110,7 @@ export function ExportsPage(): React.JSX.Element {
       <section className={panelClass}>
         <h2 className="mb-3 font-semibold text-slate-900 dark:text-white">Build a new one</h2>
         <form
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0"
           onSubmit={(event) => {
             event.preventDefault();
             if (from && to && from > to) {
@@ -235,7 +235,7 @@ export function ExportsPage(): React.JSX.Element {
                       {titleCase(row.status)}
                     </span>
                     {row.error ? (
-                      <p className="mt-1 max-w-xs break-words text-xs font-medium text-[#EA0029]">{row.error}</p>
+                      <p className="mt-1 max-w-xs break-words text-xs font-medium text-[#C80023] dark:text-red-400">{row.error}</p>
                     ) : null}
                   </td>
                   <td className="px-4 py-3 text-slate-700 dark:text-slate-200">{row.rowCount ?? '—'}</td>

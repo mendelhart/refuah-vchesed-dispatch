@@ -269,7 +269,7 @@ export function VolunteerDrawer({
                 <label className="flex min-h-[44px] items-center gap-3 text-sm text-slate-700 dark:text-slate-200">
                   <input
                     type="checkbox"
-                    className="h-5 w-5 rounded border-slate-300 text-[#EA0029] focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
+                    className="h-5 w-5 rounded border-slate-300 text-[#C80023] dark:text-red-400 focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800"
                     checked={serviceSlugs.includes(service.slug)}
                     onChange={() => setServiceSlugs((current) => toggle(current, service.slug))}
                   />

@@ -99,7 +99,7 @@ export function TripCard({ trip, compact = false }: { trip: TripDto; compact?: b
           <p className="flex flex-wrap items-center gap-2">
             <Clock className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
             <span>{formatDateTime(trip.pickupAt)}</span>
-            <span className="text-slate-400 dark:text-slate-500">({relativeTime(trip.pickupAt)})</span>
+            <span className="text-slate-500 dark:text-slate-400">({relativeTime(trip.pickupAt)})</span>
           </p>
 
           {showAppointment ? (
@@ -142,7 +142,7 @@ export function TripCard({ trip, compact = false }: { trip: TripDto; compact?: b
           ) : null}
 
           {trip.status === 'expired' ? (
-            <p className="flex items-center gap-2 font-medium text-[#EA0029]">
+            <p className="flex items-center gap-2 font-medium text-[#C80023] dark:text-red-400">
               <AlertOctagon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
               The offer window closed with no answer — this one needs you.
             </p>
@@ -161,7 +161,7 @@ export function TripCard({ trip, compact = false }: { trip: TripDto; compact?: b
             </div>
           ) : null}
 
-          <p className={`${compact ? 'hidden' : 'flex'} flex-wrap items-center gap-2 pt-1 text-xs text-slate-400 dark:text-slate-500`}>
+          <p className={`${compact ? 'hidden' : 'flex'} flex-wrap items-center gap-2 pt-1 text-xs text-slate-500 dark:text-slate-400`}>
             <span>
               {trip.group.name} · {tripTypeLabel(trip.tripType)}
               {trip.assignmentMode === 'admin_approval' ? ' · needs coordinator approval' : ''}
@@ -183,7 +183,7 @@ export function TripCard({ trip, compact = false }: { trip: TripDto; compact?: b
               extra={
                 <Link
                   to={`/trips/${trip.id}`}
-                  className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-medium text-[#EA0029] hover:bg-red-50 dark:hover:bg-red-950/30"
+                  className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-medium text-[#C80023] dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
                 >
                   Open details
                 </Link>
@@ -195,7 +195,7 @@ export function TripCard({ trip, compact = false }: { trip: TripDto; compact?: b
           <TripActions trip={trip} />
           <Link
             to={`/trips/${trip.id}`}
-            className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-medium text-[#EA0029] hover:bg-red-50 dark:hover:bg-red-950/30"
+            className="inline-flex min-h-[44px] items-center rounded-lg px-3 text-sm font-medium text-[#C80023] dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
           >
             Open details
           </Link>

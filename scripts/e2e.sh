@@ -23,6 +23,24 @@ export LOG_LEVEL=${LOG_LEVEL:-warn}
 # The suite signs in as three roles from one IP, and reruns add up against the
 # five-minute window. The limiter is exercised deliberately in the API suite.
 export LOGIN_MAX_PER_IP_PER_5MIN=${LOGIN_MAX_PER_IP_PER_5MIN:-500}
+# The accelerated suite shares a few accounts across hundreds of page loads.
+# This override is ignored by the API in production. API tests keep 300/min.
+export E2E_API_MAX_PER_MINUTE=${E2E_API_MAX_PER_MINUTE:-5000}
+
+# E2E_FEATURES=on switches on every built-but-off feature, so their browser
+# tests (e2e/features/) run; they skip themselves when a feature is off.
+# Production keeps them all off until each is approved.
+if [ "${E2E_FEATURES:-off}" = "on" ]; then
+  export MULTI_LEG_TRIPS_ENABLED=true
+  export DEPARTMENT_SCOPING_ENABLED=true
+  export FOOD_OPS_ENABLED=true
+  export PACKAGE_DELIVERY_ENABLED=true
+  export LIFT_ASSIST_ENABLED=true
+  export REPORTS_ENABLED=true
+  export EMAIL_BUILDER_ENABLED=true
+  export LANGUAGES_ENABLED=en,fr,he
+  export IDEMPOTENCY_KEYS_ENABLED=true
+fi
 
 api_pid=""
 web_pid=""
@@ -46,7 +64,9 @@ node apps/api/dist/index.js &
 api_pid=$!
 
 echo "→ starting the built web app on :4173"
-( cd apps/web && npx vite preview --port 4173 --strictPort --host 127.0.0.1 ) &
+# exec, so the recorded pid is the server itself and cleanup really stops it
+# (killing a plain subshell left vite running and holding port 4173).
+( cd apps/web && exec ../../node_modules/.bin/vite preview --port 4173 --strictPort --host 127.0.0.1 ) &
 web_pid=$!
 
 for i in $(seq 1 40); do

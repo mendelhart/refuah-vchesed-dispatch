@@ -9,11 +9,12 @@ import { useAuth } from '@/lib/auth';
 import { useFeatures } from '@/lib/features';
 import { sectionItems, type NavSection } from '@/components/Layout';
 import { PageHeader, cardClass } from '@/components/states';
+import { navLabel, useI18n, type MessageKey } from '@/i18n';
 
-const TITLES: Record<Exclude<NavSection, 'main'>, { title: string; subtitle: string }> = {
-  more: { title: 'More', subtitle: 'Everything else, one tap away' },
-  admin: { title: 'Admin', subtitle: 'Accounts, messages, records and settings' },
-  profile: { title: 'My profile', subtitle: 'Your hours, what you can help with, your card and settings' },
+const TITLES: Record<Exclude<NavSection, 'main'>, { title: MessageKey; subtitle: MessageKey }> = {
+  more: { title: 'hub.more.title', subtitle: 'hub.more.subtitle' },
+  admin: { title: 'hub.admin.title', subtitle: 'hub.admin.subtitle' },
+  profile: { title: 'hub.profile.title', subtitle: 'hub.profile.subtitle' },
 };
 
 export function HubPage({ section }: { section: Exclude<NavSection, 'main'> }): React.JSX.Element {
@@ -21,7 +22,9 @@ export function HubPage({ section }: { section: Exclude<NavSection, 'main'> }): 
   const features = useFeatures(Boolean(user));
   const role = user?.role ?? 'volunteer';
   const items = sectionItems(role, user?.navHidden, section, features);
-  const { title, subtitle } = TITLES[section];
+  const { t } = useI18n();
+  const title = t(TITLES[section].title);
+  const subtitle = t(TITLES[section].subtitle);
   return (
     <div className="space-y-4">
       <PageHeader title={title} subtitle={subtitle} />
@@ -34,14 +37,14 @@ export function HubPage({ section }: { section: Exclude<NavSection, 'main'> }): 
                 to={item.to}
                 className={`${cardClass} flex min-h-[56px] items-center gap-3 p-4 hover:bg-slate-50 dark:hover:bg-slate-800`}
               >
-                <Icon className="h-5 w-5 flex-shrink-0 text-[#EA0029]" />
+                <Icon className="h-5 w-5 flex-shrink-0 text-[#C80023] dark:text-red-400" />
                 <span className="min-w-0 flex-1">
-                  <span className="block font-medium text-slate-900 dark:text-white">{item.label}</span>
+                  <span className="block font-medium text-slate-900 dark:text-white">{navLabel(t, item.to, item.label)}</span>
                   {item.hint ? (
                     <span className="block text-sm text-slate-500 dark:text-slate-400">{item.hint}</span>
                   ) : null}
                 </span>
-                <ChevronRight className="h-5 w-5 text-slate-400" aria-hidden="true" />
+                <ChevronRight className="h-5 w-5 text-slate-500 dark:text-slate-400" aria-hidden="true" />
               </Link>
             </li>
           );

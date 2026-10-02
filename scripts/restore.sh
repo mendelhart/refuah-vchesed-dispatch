@@ -90,7 +90,7 @@ log()  { printf '[restore %s] %s\n' "$(date -u +%H:%M:%S)" "$*" >&2; }
 fail() { printf '[restore ERROR] %s\n' "$*" >&2; exit 1; }
 
 [ -n "$TARGET" ] || { usage >&2; fail "--target is required"; }
-command -v pg_restore >/dev/null || fail "pg_restore not found (apt install postgresql-client-16)"
+command -v pg_restore >/dev/null || fail "pg_restore not found (apt install postgresql-client-18)"
 command -v psql       >/dev/null || fail "psql not found"
 
 # ---------------------------------------------------------------------------

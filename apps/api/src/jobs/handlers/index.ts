@@ -16,6 +16,7 @@ import { sql as raw } from 'drizzle-orm';
 import { logger } from '../../lib/logger.js';
 import { getNumberSetting } from '../../lib/settings.js';
 import { SETTING_KEYS } from '@rvc/shared';
+import { purgeExpiredIdempotencyKeys } from '../../lib/idempotency.js';
 
 export type JobHandler = (payload: Record<string, unknown>) => Promise<void>;
 
@@ -58,6 +59,8 @@ export const handlers: Record<JobKind, JobHandler> = {
   },
   'cleanup.tokens': async () => {
     await db.execute(raw`delete from rate_limit_buckets where expires_at < now() - interval '1 day'`);
+    // Stored idempotent answers can hold a created record; they live 24h.
+    await purgeExpiredIdempotencyKeys();
     await db.delete(authTokens).where(raw`expires_at < now() - interval '7 days'`);
   },
   /**

@@ -67,7 +67,7 @@ export function NotificationsBell(): React.JSX.Element {
       >
         <Bell className="h-5 w-5" aria-hidden="true" />
         {unread > 0 ? (
-          <span className="absolute right-1 top-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-white px-1 text-[11px] font-bold leading-none text-[#EA0029]">
+          <span className="absolute right-1 top-1 grid h-5 min-w-[20px] place-items-center rounded-full bg-white px-1 text-[11px] font-bold leading-none text-[#C80023] dark:text-red-400">
             {unread > 9 ? '9+' : unread}
           </span>
         ) : null}
@@ -80,7 +80,7 @@ export function NotificationsBell(): React.JSX.Element {
               type="button"
               onClick={() => setOpen(false)}
               aria-label="Close notifications"
-              className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="grid h-9 w-9 place-items-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <X className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -97,7 +97,7 @@ export function NotificationsBell(): React.JSX.Element {
                       {!n.readAt ? <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[#EA0029]" aria-label="new" /> : null}
                     </span>
                     {n.body ? <span className="mt-0.5 block text-sm text-slate-600 line-clamp-2 dark:text-slate-300">{n.body}</span> : null}
-                    <span className="mt-1 block text-xs text-slate-400">{relativeTime(n.createdAt)}</span>
+                    <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">{relativeTime(n.createdAt)}</span>
                   </>
                 );
                 return (

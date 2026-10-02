@@ -374,26 +374,39 @@ document as part of the drill.
 
 ## Free-tier backups (GitHub Actions)
 
-While the database is on Render's free plan there is no Render backup and no
-paid object storage. `.github/workflows/backup.yml` fills the gap at no cost:
+The database is Aiven's free Postgres 18. `.github/workflows/backup.yml` takes
+a nightly backup at no cost, and is built for a **public** repository:
+anything a workflow uploads as an artifact, and every line it logs, is
+readable by anyone. So it never uploads an artifact and logs only sizes and
+counts.
 
-- Every night at about 03:17 Montreal time it runs `scripts/backup.sh
-  --local-only` against the live database (read-only), then
-  `scripts/verify-backup.sh` restores the dump into a throwaway Postgres
-  inside the runner to prove it loads.
-- The dump is encrypted with AES-256 (gpg, symmetric) using the
-  `BACKUP_PASSPHRASE` secret and kept as a private workflow artifact for 30
-  days. The passphrase is also kept in the owner's vault: without it the
-  backups cannot be opened.
-- Run it on demand from GitHub: Actions > Backup > Run workflow.
+Each night at about 03:17 Montreal time it:
 
-To restore (including moving to a new free database when the old one expires):
+1. runs `scripts/backup.sh --local-only` against the live database with the
+   Postgres 18 client, checking the server's certificate (`sslmode=verify-full`
+   and the Aiven CA from a secret),
+2. restores the dump into a throwaway Postgres 18 inside the runner with
+   `scripts/verify-backup.sh` to prove it loads,
+3. encrypts it (AES-256, gpg, with a passphrase only the organisation holds)
+   and deletes the plain copy,
+4. uploads the encrypted file to a **private** S3-compatible bucket. Cloudflare
+   R2 and Backblaze B2 both have free allowances that cover this; choosing one
+   is the owner's decision.
+
+Until all seven `BACKUP_*` secrets are set (listed at the top of the workflow)
+it does nothing and finishes with a notice, so it does not fail every night.
+Run it on demand from GitHub: Actions > Backup > Run workflow.
+
+To restore (including moving to a new database):
 
 ```
-# 1. Download the newest "db-backup-…" artifact from Actions > Backup and unzip it.
-gpg --batch --decrypt --passphrase '<passphrase>' rvc-dispatch-*.dump.gpg > rvc.dump
-# 2. Create the new database on Render, copy its External Database URL.
+# 1. Download the newest nightly/rvc-dispatch-*.dump.gpg from the bucket.
+gpg --batch --decrypt --passphrase-file <file holding the passphrase> rvc-dispatch-*.dump.gpg > rvc.dump
+# 2. Create the new database and copy its connection string.
 pg_restore --no-owner --no-privileges -d "$NEW_DATABASE_URL" rvc.dump
 # 3. Point rvc-api's DATABASE_URL at the new database and redeploy.
 # 4. Update the BACKUP_DATABASE_URL secret.
 ```
+
+Licence numbers and photos inside the dump stay encrypted with
+`FIELD_ENCRYPTION_KEY`; a restore needs that key too (see KEY_ROTATION.md).

@@ -195,7 +195,7 @@ export function DutyPage(): React.JSX.Element {
               Call {formatPhone(onDutyNow.phone)}
             </a>
           ) : (
-            <p className="mt-3 text-sm font-medium text-[#EA0029]">
+            <p className="mt-3 text-sm font-medium text-[#C80023] dark:text-red-400">
               No phone number on file for them, which rather defeats the point. Add one on their record.
             </p>
           )}
@@ -294,7 +294,7 @@ export function DutyPage(): React.JSX.Element {
                       </p>
                       {shift.phone ? (
                         <a
-                          className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-xs font-medium text-[#EA0029] underline"
+                          className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-xs font-medium text-[#C80023] dark:text-red-400 underline"
                           href={telHref(shift.phone)}
                         >
                           <Phone className="h-3 w-3" aria-hidden="true" />
@@ -307,7 +307,7 @@ export function DutyPage(): React.JSX.Element {
                       {canEdit ? (
                         <button
                           type="button"
-                          className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-xs font-medium text-slate-600 hover:text-[#EA0029] dark:text-slate-400"
+                          className="mt-1 inline-flex min-h-[44px] items-center gap-1 text-xs font-medium text-slate-600 hover:text-[#C80023] dark:text-slate-400"
                           disabled={remove.isPending}
                           onClick={() => {
                             confirmation.ask({ title: `Take ${shift.fullName} off this shift?`, action: () => remove.mutate(shift.id) });
@@ -447,7 +447,7 @@ function AddShiftModal({
           {people.isPending ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">Loading people…</p>
           ) : people.isError ? (
-            <p className="text-sm text-[#EA0029]">{errorMessage(people.error)}</p>
+            <p className="text-sm text-[#C80023] dark:text-red-400">{errorMessage(people.error)}</p>
           ) : (
             <select
               id="duty-person"
