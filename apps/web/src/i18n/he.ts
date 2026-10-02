@@ -24,11 +24,6 @@ export const he: Record<MessageKey, string> = {
   'login.newVolunteer': 'מתנדב חדש עם הזמנה?',
   'login.setUp': 'הגדרת החשבון',
   'login.privacy': 'הודעת פרטיות',
-  'login.or': 'או',
-  'login.google': 'כניסה עם Google',
-  'login.googleWorking': 'מתחברים עם Google…',
-  'login.googleFailed': 'הכניסה עם Google לא הצליחה. נסו שוב, או היכנסו עם הסיסמה.',
-  'login.backToSignIn': 'חזרה לכניסה',
 
   'nav./': 'בית',
   'nav./board': 'לוח שיבוץ',

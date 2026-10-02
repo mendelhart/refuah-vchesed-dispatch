@@ -35,10 +35,6 @@ if [ "${E2E_FEATURES:-off}" = "on" ]; then
   export LIFT_ASSIST_ENABLED=true
   export REPORTS_ENABLED=true
   export EMAIL_BUILDER_ENABLED=true
-  # Google sign-in: a made-up client ID (public, not a secret). Google is
-  # never reached in tests; the spec stops the browser at the hand-over.
-  export GOOGLE_SIGNIN_ENABLED=true
-  export GOOGLE_CLIENT_ID=e2e-test.apps.googleusercontent.com
   export LANGUAGES_ENABLED=en,fr,he
   export IDEMPOTENCY_KEYS_ENABLED=true
 fi

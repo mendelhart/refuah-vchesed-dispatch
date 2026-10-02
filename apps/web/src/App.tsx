@@ -79,8 +79,6 @@ const NotificationsAdminPage = React.lazy(() =>
 const FoodPage = React.lazy(() => import('@/pages/Food').then((m) => ({ default: m.FoodPage })));
 const LiftAssistPage = React.lazy(() => import('@/pages/LiftAssist').then((m) => ({ default: m.LiftAssistPage })));
 const ReportsPage = React.lazy(() => import('@/pages/Reports').then((m) => ({ default: m.ReportsPage })));
-const GoogleReturnPage = React.lazy(() => import('@/pages/GoogleReturn').then((m) => ({ default: m.GoogleReturnPage })));
-const GoogleSignInAdminPage = React.lazy(() => import('@/pages/admin/GoogleSignIn').then((m) => ({ default: m.GoogleSignInAdminPage })));
 const EmailDesignsPage = React.lazy(() => import('@/pages/EmailBuilder').then((m) => ({ default: m.EmailDesignsPage })));
 const EmailDesignPage = React.lazy(() => import('@/pages/EmailBuilder').then((m) => ({ default: m.EmailDesignPage })));
 const KitchenPage = React.lazy(() => import('@/pages/Kitchen').then((m) => ({ default: m.KitchenPage })));
@@ -123,7 +121,6 @@ export function App(): React.JSX.Element {
     <>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/auth/google" element={<React.Suspense fallback={<FullPageSpinner label="Loading" />}><GoogleReturnPage /></React.Suspense>} />
         <Route path="/accept-invite" element={<AcceptInvitePage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
 
@@ -361,7 +358,6 @@ export function App(): React.JSX.Element {
         <Route path="/reports" element={<Shell><RequireRole roles={DISPATCH}><ReportsPage /></RequireRole></Shell>} />
         <Route path="/email-builder" element={<Shell><RequireRole roles={DISPATCH}><EmailDesignsPage /></RequireRole></Shell>} />
         <Route path="/email-builder/:id" element={<Shell><RequireRole roles={DISPATCH}><EmailDesignPage /></RequireRole></Shell>} />
-        <Route path="/admin/google-sign-in" element={<Shell><RequireRole roles={ADMIN}><GoogleSignInAdminPage /></RequireRole></Shell>} />
         <Route
           path="/admin/departments"
           element={

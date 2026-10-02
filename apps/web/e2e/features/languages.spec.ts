@@ -18,14 +18,14 @@ test.describe('languages', () => {
     test.skip(!(await languages(page)).includes('he'), 'French and Hebrew are off');
 
     await page.getByRole('radio', { name: 'Français' }).check();
-    await expect(page.getByRole('button', { name: 'Se connecter', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Se connecter' })).toBeVisible();
     await expect(page.getByLabel('Courriel ou numéro de cellulaire')).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr-CA');
     await page.screenshot({ path: 'screenshots/features/login-fr-phone.png', fullPage: true });
 
     await page.getByRole('radio', { name: 'עברית' }).check();
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await expect(page.getByRole('button', { name: 'כניסה', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'כניסה' })).toBeVisible();
     const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(axe.violations.map((v) => v.id)).toEqual([]);
     await page.screenshot({ path: 'screenshots/features/login-he-phone.png', fullPage: true });
