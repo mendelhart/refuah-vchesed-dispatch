@@ -285,7 +285,7 @@ export function AnnouncementsPage(): React.JSX.Element {
               {groups.data.groups.map((group) => (
                 <li key={group.slug}>
                   <label
-                    className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full border px-4 text-sm ${
+                    className={`flex min-h-[44px] max-w-full cursor-pointer items-center gap-2 rounded-3xl border px-4 py-1 text-left text-sm ${
                       groupSlugs.includes(group.slug)
                         ? 'border-[#EA0029] bg-[#EA0029] text-white'
                         : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
@@ -319,7 +319,7 @@ export function AnnouncementsPage(): React.JSX.Element {
               {services.data.services.map((service) => (
                 <li key={service.slug}>
                   <label
-                    className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full border px-4 text-sm ${
+                    className={`flex min-h-[44px] max-w-full cursor-pointer items-center gap-2 rounded-3xl border px-4 py-1 text-left text-sm ${
                       serviceSlugs.includes(service.slug)
                         ? 'border-[#EA0029] bg-[#EA0029] text-white'
                         : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
@@ -347,7 +347,7 @@ export function AnnouncementsPage(): React.JSX.Element {
             {ROLES.map((role) => (
               <li key={role}>
                 <label
-                  className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full border px-4 text-sm ${
+                  className={`flex min-h-[44px] max-w-full cursor-pointer items-center gap-2 rounded-3xl border px-4 py-1 text-left text-sm ${
                     roles.includes(role)
                       ? 'border-[#EA0029] bg-[#EA0029] text-white'
                       : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
@@ -510,7 +510,7 @@ export function AnnouncementsPage(): React.JSX.Element {
                 type="button"
                 aria-pressed={channels.length === 0}
                 onClick={() => setChannels([])}
-                className={`flex min-h-[44px] items-center rounded-full border px-4 text-sm ${
+                className={`flex min-h-[44px] max-w-full items-center rounded-3xl border px-4 py-1 text-left text-sm ${
                   channels.length === 0
                     ? 'border-[#EA0029] bg-[#EA0029] text-white'
                     : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'
@@ -524,7 +524,7 @@ export function AnnouncementsPage(): React.JSX.Element {
               return (
                 <li key={id}>
                   <label
-                    className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full border px-4 text-sm ${
+                    className={`flex min-h-[44px] max-w-full cursor-pointer items-center gap-2 rounded-3xl border px-4 py-1 text-left text-sm ${
                       channels.includes(id)
                         ? 'border-[#EA0029] bg-[#EA0029] text-white'
                         : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'

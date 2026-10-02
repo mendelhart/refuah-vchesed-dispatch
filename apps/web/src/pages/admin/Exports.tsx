@@ -110,7 +110,7 @@ export function ExportsPage(): React.JSX.Element {
       <section className={panelClass}>
         <h2 className="mb-3 font-semibold text-slate-900 dark:text-white">Build a new one</h2>
         <form
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0"
           onSubmit={(event) => {
             event.preventDefault();
             if (from && to && from > to) {

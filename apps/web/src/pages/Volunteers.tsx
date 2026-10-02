@@ -178,7 +178,7 @@ export function VolunteersPage(): React.JSX.Element {
           <option value="active">Active accounts</option>
           <option value="all">Everyone, including paused</option>
         </select>
-        <div role="tablist" aria-label="How to show the roster" className="flex gap-2">
+        <div role="tablist" aria-label="How to show the roster" className="flex flex-wrap gap-2">
           {([
             { id: 'list' as const, label: 'List', icon: List },
             { id: 'calendar' as const, label: 'Calendar', icon: CalendarDays },

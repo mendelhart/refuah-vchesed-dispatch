@@ -181,7 +181,7 @@ export function TemplatesPage(): React.JSX.Element {
             <ul className="space-y-4">
               {grouped.map(([key, rows]) => (
                 <li key={key}>
-                  <h2 className="font-mono text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <h2 className="break-all font-mono text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     {key}
                   </h2>
                   <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">

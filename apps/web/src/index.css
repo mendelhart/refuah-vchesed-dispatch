@@ -86,3 +86,10 @@
     @apply bg-background text-foreground;
   }
 }
+@layer base {
+  /* Long words, codes and addresses wrap instead of pushing the page
+     sideways, at any text size (checked by e2e/a11y-audit.spec.ts). */
+  main, [role='dialog'] {
+    overflow-wrap: anywhere;
+  }
+}

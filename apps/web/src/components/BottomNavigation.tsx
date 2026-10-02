@@ -72,7 +72,7 @@ export function BottomNavigation({ items }: { items: BottomNavItem[] }): React.J
       className="fixed bottom-0 left-0 right-0 z-40 select-none border-t border-slate-200 bg-white lg:hidden dark:border-slate-700 dark:bg-slate-900"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="flex justify-around">
+      <div className="flex justify-around overflow-hidden">
         {items.map((item) => {
           const Icon = item.icon;
           return (
@@ -82,7 +82,7 @@ export function BottomNavigation({ items }: { items: BottomNavItem[] }): React.J
               end={item.to === '/'}
               className={({ isActive }) =>
                 cn(
-                  'flex min-h-[56px] flex-1 flex-col items-center justify-center py-2 transition-colors',
+                  'flex min-h-[56px] min-w-0 flex-1 flex-col items-center justify-center px-0.5 py-2 transition-colors',
                   isActive ? 'text-[#C80023] dark:text-red-400' : 'text-slate-600 dark:text-slate-400',
                 )
               }
@@ -98,7 +98,8 @@ export function BottomNavigation({ items }: { items: BottomNavItem[] }): React.J
                   </span>
                 ) : null}
               </span>
-              <span className="text-[11px] font-medium">{item.label}</span>
+              {/* rem, so it grows with the reader's text size; truncates rather than pushing the bar off-screen at 200% */}
+              <span className="block max-w-full truncate text-[0.6875rem] font-medium leading-tight">{item.label}</span>
             </NavLink>
           );
         })}

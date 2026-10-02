@@ -348,7 +348,7 @@ export function Layout({ children }: { children: React.ReactNode }): React.JSX.E
           </div>
         </aside>
 
-        <main className="w-full flex-1 lg:ml-64">
+        <main className="w-full min-w-0 flex-1 lg:ml-64">
           <div
             className="mx-auto max-w-6xl p-4 md:p-6 lg:p-8"
             // Room for the bottom bar on phones, plus the device inset.

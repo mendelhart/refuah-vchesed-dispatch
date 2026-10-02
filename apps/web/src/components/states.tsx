@@ -117,7 +117,7 @@ export const cardClass =
 export const panelClass =
   'rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900';
 export const inputClass =
-  'min-h-[44px] w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#EA0029] focus:outline-none focus:ring-1 focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500';
+  'min-h-[44px] w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#EA0029] focus:outline-none focus:ring-1 focus:ring-[#EA0029] dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500';
 export const labelClass = 'mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200';
 export const primaryButtonClass =
   'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-[#EA0029] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#C80023] disabled:cursor-not-allowed disabled:opacity-60';
