@@ -11,6 +11,8 @@ export interface FeatureFlags {
   packageDelivery?: boolean;
   liftAssist?: boolean;
   reports?: boolean;
+  emailBuilder?: boolean;
+  googleSignIn?: boolean;
 }
 
 export interface Features {

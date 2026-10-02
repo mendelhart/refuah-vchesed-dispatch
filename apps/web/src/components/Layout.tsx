@@ -40,7 +40,7 @@ import {
   UserPlus,
   Users,
   X,
-  Wrench, CookingPot, HandHelping, BarChart3 } from 'lucide-react';
+  Wrench, CookingPot, HandHelping, BarChart3, Mail } from 'lucide-react';
 import type { Role } from '@rvc/shared';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
@@ -112,6 +112,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/admin/people', label: 'People', icon: Users, roles: ['admin'], dispatch: 'admin', hint: 'Accounts, roles, invites, how each person is reached' },
   { to: '/admin/announcements', label: 'Broadcast', icon: Megaphone, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Message everyone or a group, with a picture' },
   { to: '/admin/notifications', label: 'Notifications', icon: Bell, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Every message sent, and whether it arrived' },
+  { to: '/email-builder', label: 'Email builder', icon: Mail, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Design an email, preview it, send yourself a test', flag: 'emailBuilder' },
   { to: '/admin/templates', label: 'Message templates', icon: MessageSquareText, roles: ['admin'], dispatch: 'admin', hint: 'Wording of the texts' },
   { to: '/impact', label: 'Organization impact', icon: HeartHandshake, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Rides, volunteers and people helped, all together', department: 'reports' },
   { to: '/reports', label: 'Reports', icon: BarChart3, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Totals, trends, staffing and equipment, with downloads', flag: 'reports', department: 'reports' },

@@ -34,6 +34,7 @@ if [ "${E2E_FEATURES:-off}" = "on" ]; then
   export PACKAGE_DELIVERY_ENABLED=true
   export LIFT_ASSIST_ENABLED=true
   export REPORTS_ENABLED=true
+  export EMAIL_BUILDER_ENABLED=true
   export LANGUAGES_ENABLED=en,fr,he
   export IDEMPOTENCY_KEYS_ENABLED=true
 fi
