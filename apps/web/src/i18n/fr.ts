@@ -23,6 +23,11 @@ export const fr: Record<MessageKey, string> = {
   'login.newVolunteer': 'Nouveau bénévole avec une invitation?',
   'login.setUp': 'Créez votre compte',
   'login.privacy': 'Avis de confidentialité',
+  'login.or': 'ou',
+  'login.google': 'Se connecter avec Google',
+  'login.googleWorking': 'Connexion avec Google…',
+  'login.googleFailed': 'La connexion avec Google n’a pas fonctionné. Réessayez, ou connectez-vous avec votre mot de passe.',
+  'login.backToSignIn': 'Retour à la connexion',
 
   'nav./': 'Accueil',
   'nav./board': 'Tableau de répartition',

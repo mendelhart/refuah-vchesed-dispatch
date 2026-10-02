@@ -7,6 +7,45 @@ import { inputClass, labelClass, primaryButtonClass } from '@/components/states'
 import { PasswordInput } from '@/components/PasswordInput';
 import { useI18n } from '@/i18n';
 import { LanguagePicker } from '@/i18n/LanguagePicker';
+import { useQuery } from '@tanstack/react-query';
+import { STATE_KEY, buildGoogleAuthUrl, googleRedirectUri, randomState } from '@/lib/google-signin';
+
+/** "Sign in with Google" (item 9). Shown only when the server says Google
+ *  sign-in is on; password sign-in above is unchanged. */
+function GoogleSignIn(): React.JSX.Element | null {
+  const { t } = useI18n();
+  const [busy, setBusy] = useState(false);
+  const status = useQuery({
+    queryKey: ['public', 'google-signin'],
+    queryFn: () => api.get<{ enabled: boolean }>('/api/public/google-signin'),
+    staleTime: 300_000,
+    retry: false,
+  });
+  if (!status.data?.enabled) return null;
+  const start = async (): Promise<void> => {
+    setBusy(true);
+    try {
+      const { nonce, clientId } = await api.post<{ nonce: string; clientId: string }>('/api/auth/google/start');
+      const state = randomState();
+      sessionStorage.setItem(STATE_KEY, state);
+      window.location.assign(buildGoogleAuthUrl({ clientId, nonce, state, redirectUri: googleRedirectUri(window.location.origin) }));
+    } catch (error) {
+      toast.error(errorMessage(error));
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="mt-4">
+      <p className="mb-4 flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300" aria-hidden="true">
+        <span className="h-px flex-1 bg-slate-300 dark:bg-slate-600" />{t('login.or')}<span className="h-px flex-1 bg-slate-300 dark:bg-slate-600" />
+      </p>
+      <button type="button" onClick={() => void start()} disabled={busy}
+        className="flex min-h-[44px] w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-4 font-semibold text-slate-900 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800">
+        {t('login.google')}
+      </button>
+    </div>
+  );
+}
 
 interface LocationState {
   from?: string;
@@ -111,6 +150,7 @@ export function LoginPage(): React.JSX.Element {
             {resetSent ? t('login.resetRequested') : t('login.forgot')}
           </button>
         </form>
+        <GoogleSignIn />
 
         <p className="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
           {t('login.newVolunteer')} <Link className="underline" to="/accept-invite">{t('login.setUp')}</Link>.

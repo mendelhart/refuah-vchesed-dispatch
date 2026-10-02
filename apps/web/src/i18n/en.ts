@@ -23,6 +23,11 @@ export const en = {
   'login.newVolunteer': 'New volunteer with an invitation?',
   'login.setUp': 'Set up your account',
   'login.privacy': 'Privacy notice',
+  'login.or': 'or',
+  'login.google': 'Sign in with Google',
+  'login.googleWorking': 'Signing you in with Google…',
+  'login.googleFailed': 'Google sign-in did not work. Try again, or sign in with your password.',
+  'login.backToSignIn': 'Back to sign-in',
 
   // Main menu (by route)
   'nav./': 'Home',
