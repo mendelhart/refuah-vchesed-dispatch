@@ -8,6 +8,8 @@ export interface FeatureFlags {
   multiLegTrips?: boolean;
   departmentScoping?: boolean;
   foodOps?: boolean;
+  packageDelivery?: boolean;
+  liftAssist?: boolean;
 }
 
 export interface Features {

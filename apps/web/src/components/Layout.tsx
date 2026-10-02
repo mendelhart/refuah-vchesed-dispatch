@@ -40,7 +40,7 @@ import {
   UserPlus,
   Users,
   X,
-  Wrench, CookingPot } from 'lucide-react';
+  Wrench, CookingPot, HandHelping } from 'lucide-react';
 import type { Role } from '@rvc/shared';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
@@ -103,6 +103,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/directory', label: 'Directory', icon: Users, roles: ['volunteer'], volunteer: 'more', hint: 'The team roster' },
   { to: '/food', label: 'Food', icon: CookingPot, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Kitchen, stock, distribution runs and shopping lists', flag: 'foodOps', department: 'food' },
   { to: '/kitchen', label: 'Help in the kitchen', icon: CookingPot, roles: ['volunteer'], volunteer: 'more', hint: 'Sign up to cook or pack', flag: 'foodOps' },
+  { to: '/lift-assist', label: 'Lift assist', icon: HandHelping, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'more', dispatch: 'more', hint: 'A few helpers for heavy lifting, one lead', flag: 'liftAssist' },
   { to: '/duty', label: 'Phone duty', icon: CalendarClock, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Who is on the phones when' },
     { to: '/vehicles', label: 'Vehicles', icon: Car, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Organisation vehicles' },
   { to: '/admin/applications', label: 'Applications', icon: UserPlus, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'New volunteer sign-ups to review' },

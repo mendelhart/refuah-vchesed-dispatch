@@ -31,6 +31,8 @@ if [ "${E2E_FEATURES:-off}" = "on" ]; then
   export MULTI_LEG_TRIPS_ENABLED=true
   export DEPARTMENT_SCOPING_ENABLED=true
   export FOOD_OPS_ENABLED=true
+  export PACKAGE_DELIVERY_ENABLED=true
+  export LIFT_ASSIST_ENABLED=true
   export IDEMPOTENCY_KEYS_ENABLED=true
 fi
 

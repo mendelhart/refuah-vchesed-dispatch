@@ -35,8 +35,11 @@ import type { CallerProfileResponse, CallerSearchResponse, CallerSearchRow, Save
 import { DateTimeFields } from './DateTimeFields';
 import { blankForm, buildTripPayload, fieldErrors, fromTrip, type FormState } from './trip-form-model';
 import { JourneyFields } from './JourneyFields';
+import { PackageFields } from './PackageFields';
+import { blankPackage, buildPackagePayload, type PackageDraft } from './package-model';
 import { blankJourney, buildJourneyPayload, journeyIsUsed, rideCount, type JourneyDraft } from './journey-model';
 import { useFlag } from '@/lib/features';
+import { createPackageSchema } from '@rvc/shared';
 import { InlineSpinner, inputClass, labelClass, primaryButtonClass, secondaryButtonClass } from './states';
 import type { GroupsResponse, TripResponse } from '@/types/api';
 
@@ -154,13 +157,20 @@ export function TripForm({
   // Round trips, stops and passengers: new trips only, and only when switched on.
   const journeysOn = useFlag('multiLegTrips', open);
   const [journey, setJourney] = useState<JourneyDraft>(blankJourney);
-  const asJourney = !trip && journeysOn && journeyIsUsed(journey);
-  useEffect(() => { if (!open) setJourney(blankJourney()); }, [open]);
+  const packagesOn = useFlag('packageDelivery', open);
+  const [pkg, setPkg] = useState<PackageDraft>(blankPackage);
+  const asPackage = !trip && packagesOn && form.tripType === 'equipment_delivery' && pkg.isPackage;
+  const asJourney = !asPackage && !trip && journeysOn && journeyIsUsed(journey);
+  useEffect(() => { if (!open) { setJourney(blankJourney()); setPkg(blankPackage()); } }, [open]);
 
   const save = useMutation({
     mutationFn: async (): Promise<TripResponse> => {
       if (trip) {
         return api.patch<TripResponse>(`/api/trips/${trip.id}`, { ...payload, version: trip.version });
+      }
+      if (asPackage) {
+        const res = await api.post<{ trip: TripResponse['trip'] }>('/api/packages', buildPackagePayload(payload, pkg));
+        return { trip: res.trip } as TripResponse;
       }
       if (asJourney) {
         const res = await api.post<{ journey: { legs: Array<{ tripId: string }> } }>('/api/journeys', buildJourneyPayload(payload, journey));
@@ -199,7 +209,9 @@ export function TripForm({
   const handleSubmit = (event: React.FormEvent): void => {
     event.preventDefault();
     const schema = trip ? updateTripSchema : createTripSchema;
-    const result = asJourney ? createJourneySchema.safeParse(buildJourneyPayload(payload, journey)) : schema.safeParse(payload);
+    const result = asPackage
+      ? createPackageSchema.safeParse(buildPackagePayload(payload, pkg))
+      : asJourney ? createJourneySchema.safeParse(buildJourneyPayload(payload, journey)) : schema.safeParse(payload);
     if (!result.success) {
       const found = fieldErrors(result.error);
       setErrors(found);
@@ -704,7 +716,11 @@ export function TripForm({
           </div>
         </details>
 
-        {!trip && journeysOn ? (
+        {!trip && packagesOn && form.tripType === 'equipment_delivery' ? (
+          <PackageFields value={pkg} onChange={setPkg} errors={errors} />
+        ) : null}
+
+        {!trip && journeysOn && !asPackage ? (
           <JourneyFields value={journey} onChange={setJourney} errors={errors} />
         ) : null}
 
