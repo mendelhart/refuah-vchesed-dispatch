@@ -15,6 +15,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   AlertTriangle, ArrowLeft, Car, ClipboardList, Inbox, Mail, MapPin, Phone, ShieldCheck,
 } from 'lucide-react';
@@ -127,7 +128,8 @@ function statusChip(status: string): string {
 
 export function ApplicationsPage(): React.JSX.Element {
   const [tab, setTab] = useState<Tab>('submitted');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { id: selectedId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const list = useQuery({
     queryKey: qk.applications.list(tab),
@@ -144,6 +146,10 @@ export function ApplicationsPage(): React.JSX.Element {
   return (
     <div className="space-y-6">
       <PageHeader title="Applications" subtitle="People who have asked to volunteer, and what happens next" />
+      <Link to="/volunteer/apply" target="_blank" rel="noopener noreferrer" className={secondaryButtonClass}>
+        Open volunteer application form
+        <span className="sr-only"> (opens in a new tab)</span>
+      </Link>
 
       <div className="-mx-4 overflow-x-auto px-4">
         <div role="tablist" aria-label="Application statuses" className="flex w-max gap-2 pb-1">
@@ -157,7 +163,7 @@ export function ApplicationsPage(): React.JSX.Element {
                 aria-selected={value === tab}
                 onClick={() => {
                   setTab(value);
-                  setSelectedId(null);
+                  void navigate('/admin/applications');
                 }}
                 className={`min-h-[44px] whitespace-nowrap rounded-full px-4 text-sm font-medium transition-colors ${
                   value === tab
@@ -191,11 +197,10 @@ export function ApplicationsPage(): React.JSX.Element {
             <ul className="space-y-2">
               {list.data.applications.map((row) => (
                 <li key={row.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedId(row.id)}
-                    aria-current={row.id === selectedId}
-                    className={`${cardClass} w-full p-4 text-left ${
+                  <Link
+                    to={`/admin/applications/${encodeURIComponent(row.id)}`}
+                    aria-current={row.id === selectedId ? 'page' : undefined}
+                    className={`${cardClass} block w-full p-4 text-left ${
                       row.id === selectedId ? 'ring-2 ring-[#EA0029]' : ''
                     }`}
                   >
@@ -212,7 +217,7 @@ export function ApplicationsPage(): React.JSX.Element {
                     <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                       Applied {formatDateTime(row.createdAt)}
                     </p>
-                  </button>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -221,7 +226,7 @@ export function ApplicationsPage(): React.JSX.Element {
 
         <div className={selectedId ? 'block' : 'hidden lg:block'}>
           {selectedId ? (
-            <ReviewPanel id={selectedId} onClose={() => setSelectedId(null)} />
+            <ReviewPanel id={selectedId} onClose={() => void navigate('/admin/applications')} />
           ) : (
             <EmptyState
               icon={ClipboardList}
@@ -315,6 +320,15 @@ function ReviewPanel({ id, onClose }: { id: string; onClose: () => void }): Reac
           </div>
           <span className={statusChip(app.status)}>{titleCase(app.status)}</span>
         </div>
+        <Link
+          to={`/admin/applications/${encodeURIComponent(app.id)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${secondaryButtonClass} mt-3`}
+        >
+          Open submitted application
+          <span className="sr-only"> (opens in a new tab)</span>
+        </Link>
       </section>
 
       <DuplicateMatches matches={possibleMatches} phone={app.phone} email={app.email} />

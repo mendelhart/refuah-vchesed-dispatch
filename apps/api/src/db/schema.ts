@@ -1091,6 +1091,8 @@ export const volunteerApplications = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     reference: text('reference').notNull(),
+    ownershipTokenHash: text('ownership_token_hash'),
+    ownershipExpiresAt: timestamp('ownership_expires_at', { withTimezone: true }),
     status: text('status').notNull().default('submitted'),
 
     fullName: text('full_name').notNull(),

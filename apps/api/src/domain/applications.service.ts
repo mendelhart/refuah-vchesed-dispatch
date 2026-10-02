@@ -23,6 +23,7 @@ import { issueAuthToken } from './users.service.js';
 import { ensureVolunteerNumber } from './volunteer.service.js';
 import { logger } from '../lib/logger.js';
 import { env } from '../env.js';
+import { generateToken, hashToken, constantTimeEquals } from '../lib/crypto.js';
 
 /**
  * Volunteer signup and onboarding.
@@ -73,6 +74,8 @@ export interface ApplicationInput {
   notificationPreference?: string;
   consentContact: boolean;
   consentBackgroundCheck?: boolean;
+  ownershipToken?: string;
+  ownershipReference?: string;
   submittedIp?: string | null;
   submittedUserAgent?: string | null;
 }
@@ -81,6 +84,7 @@ export interface SubmitResult {
   reference: string;
   id: string;
   duplicate: boolean;
+  ownershipToken?: string;
 }
 
 /**
@@ -136,26 +140,36 @@ export async function submitApplication(input: ApplicationInput): Promise<Submit
 
   const windowDays = await getNumberSetting(SETTING_KEYS.applicationDuplicateWindowDays);
   const [recent] = await db
-    .select({ id: volunteerApplications.id, reference: volunteerApplications.reference, status: volunteerApplications.status })
+    .select({ id: volunteerApplications.id, reference: volunteerApplications.reference, status: volunteerApplications.status, tokenHash: volunteerApplications.ownershipTokenHash, expiresAt: volunteerApplications.ownershipExpiresAt })
     .from(volunteerApplications)
     .where(
       and(
         isNull(volunteerApplications.deletedAt),
-        or(eq(volunteerApplications.phone, phone), raw`lower(${volunteerApplications.email}) = ${email}`),
+        input.ownershipReference ? eq(volunteerApplications.reference, input.ownershipReference) : or(eq(volunteerApplications.phone, phone), raw`lower(${volunteerApplications.email}) = ${email}`),
         raw`${volunteerApplications.createdAt} > now() - (${windowDays} || ' days')::interval`,
       ),
     )
     .orderBy(desc(volunteerApplications.createdAt))
     .limit(1);
 
-  // A still-open application is updated rather than duplicated, so somebody who
-  // submits the form twice does not create two review tasks.
+  // Matching an identifier is duplicate detection, never proof of ownership.
   if (recent && (recent.status === 'submitted' || recent.status === 'info_requested')) {
-    await db
+    const owns = input.ownershipReference === recent.reference && input.ownershipToken &&
+      recent.tokenHash && recent.expiresAt && recent.expiresAt > new Date() &&
+      constantTimeEquals(hashToken(input.ownershipToken), recent.tokenHash);
+    if (!owns) {
+      // Same generic acknowledgement, without disclosing the existing reference.
+      if (input.ownershipToken || input.ownershipReference) throw Errors.validation('That application link has expired. Ask the office for a new link.');
+      return { reference: 'RVC-A-RECEIVED', id: recent.id, duplicate: true };
+    }
+    const changed = await db
       .update(volunteerApplications)
       .set({
         fullName,
         email,
+        phone,
+        consentBackgroundCheck: input.consentBackgroundCheck ?? false,
+        notificationPreference: input.notificationPreference ?? 'sms',
         addressLine: input.addressLine ?? null,
         city: input.city ?? null,
         postalCode: input.postalCode ?? null,
@@ -174,7 +188,13 @@ export async function submitApplication(input: ApplicationInput): Promise<Submit
         status: 'submitted',
         updatedAt: new Date(),
       })
-      .where(eq(volunteerApplications.id, recent.id));
+      .where(and(eq(volunteerApplications.id, recent.id),
+        eq(volunteerApplications.ownershipTokenHash, recent.tokenHash!),
+        raw`${volunteerApplications.ownershipExpiresAt} > now()`,
+        raw`${volunteerApplications.status} in ('submitted','info_requested')`,
+        isNull(volunteerApplications.deletedAt)))
+      .returning({ id: volunteerApplications.id });
+    if (!changed.length) throw Errors.conflict('That application changed. Ask the office for a new link.');
 
     await recordAudit({
       actor: SYSTEM_ACTOR,
@@ -186,15 +206,19 @@ export async function submitApplication(input: ApplicationInput): Promise<Submit
     return { reference: recent.reference, id: recent.id, duplicate: true };
   }
 
+  if (input.ownershipReference || input.ownershipToken) throw Errors.validation('That application link has expired. Ask the office for a new link.');
   const refRows = (await db.execute(
     raw`select next_application_reference() as reference`,
   )) as unknown as Array<{ reference: string }>;
   const reference = refRows[0]!.reference;
 
+  const ownershipToken = generateToken();
   const [row] = await db
     .insert(volunteerApplications)
     .values({
       reference,
+      ownershipTokenHash: hashToken(ownershipToken),
+      ownershipExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       fullName,
       email,
       phone,
@@ -242,7 +266,7 @@ export async function submitApplication(input: ApplicationInput): Promise<Submit
     logger.error({ err }, 'could not notify reviewers of a new application'),
   );
 
-  return { reference, id: row!.id, duplicate: Boolean(existingUser || recent) };
+  return { reference, id: row!.id, duplicate: Boolean(existingUser || recent), ownershipToken };
 }
 
 async function orgName(): Promise<{ name: string; phone: string | null }> {
@@ -348,7 +372,7 @@ async function notifyReviewers(app: { id: string; fullName: string; reference: s
 // ---------------------------------------------------------------------------
 
 export async function listApplications(status = 'submitted', limit = 100) {
-  return db
+  const rows = await db
     .select()
     .from(volunteerApplications)
     .where(
@@ -358,6 +382,7 @@ export async function listApplications(status = 'submitted', limit = 100) {
     )
     .orderBy(asc(volunteerApplications.createdAt))
     .limit(limit);
+  return rows.map(({ ownershipTokenHash: _hash, ownershipExpiresAt: _expiry, ...row }) => { void _hash; void _expiry; return row; });
 }
 
 export async function getApplication(actor: AuditActor, id: string) {
@@ -393,7 +418,9 @@ export async function getApplication(actor: AuditActor, id: string) {
     metadata: { reference: app.reference },
   });
 
-  return { application: app, licence: licence ?? null, possibleMatches };
+  const { ownershipTokenHash: _hash, ownershipExpiresAt: _expiry, ...safeApplication } = app;
+  void _hash; void _expiry;
+  return { application: safeApplication, licence: licence ?? null, possibleMatches };
 }
 
 export async function requestMoreInformation(actor: AuditActor, id: string, message: string) {
@@ -408,9 +435,12 @@ export async function requestMoreInformation(actor: AuditActor, id: string, mess
     throw Errors.conflict('That application has already been approved.');
   }
 
+  const ownershipToken = generateToken();
   await db
     .update(volunteerApplications)
     .set({
+      ownershipTokenHash: hashToken(ownershipToken),
+      ownershipExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       status: 'info_requested',
       infoRequestedAt: new Date(),
       infoRequestMessage: message,
@@ -430,7 +460,7 @@ export async function requestMoreInformation(actor: AuditActor, id: string, mess
 
   await sendApplicantMessage(id, 'volunteer.application_info_requested', {
     message,
-    resumeUrl: `${env.APP_URL}/volunteer/apply?ref=${app.reference}`,
+    resumeUrl: `${env.APP_URL}/volunteer/apply#ref=${encodeURIComponent(app.reference)}&token=${encodeURIComponent(ownershipToken)}`,
   });
 
   return { status: 'info_requested' };

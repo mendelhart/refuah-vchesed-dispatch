@@ -71,14 +71,13 @@ export function PrivacyPage(): React.JSX.Element {
             <li>If you stop volunteering and are removed, your phone and email are cleared and you can no longer sign in.
               Your name stays on past rides so the history still makes sense.</li>
             <li>The record of important changes is kept permanently so it cannot be quietly edited.</li>
-            <li>Backups are kept for 30 days.</li>
+            <li>An encrypted manual backup is kept separately. Automatic backup scheduling and a fixed backup-retention period are not yet configured.</li>
           </ul>
         </Section>
 
         <Section title="Keeping it safe">
           <p>Everything travels over an encrypted connection. Passwords are never stored in readable form. Sensitive items
-            like licence details are encrypted. Coordinators and admins sign in with a second step (a code from an
-            authenticator app).</p>
+            like licence details are encrypted. Authenticator-app sign-in is available, but is not currently required for coordinators and admins.</p>
         </Section>
 
         <Section title="Your choices">

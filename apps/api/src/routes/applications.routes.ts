@@ -28,6 +28,7 @@ import { SYSTEM_ACTOR } from '../lib/audit.js';
 import { db } from '../db/client.js';
 import { volunteerGroups } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
+import { hashToken, constantTimeEquals } from '../lib/crypto.js';
 
 const idParam = z.object({ id: uuidSchema });
 
@@ -94,15 +95,16 @@ export async function applicationRoutes(app: FastifyInstance): Promise<void> {
       }
 
       const body = applicationSchema.parse(req.body);
+      const ownership = z.object({ ownershipToken: z.string().min(40).max(100).optional(), ownershipReference: z.string().max(30).optional() }).parse(req.body);
       const result = await submitApplication({
-        ...body,
+        ...body, ...ownership,
         submittedIp: req.ip,
         submittedUserAgent:
           typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
       });
 
       reply.status(201);
-      return { reference: result.reference, received: true };
+      return { reference: result.reference, received: true, ...(result.ownershipToken ? { ownershipToken: result.ownershipToken } : {}) };
     },
   );
 
@@ -122,13 +124,16 @@ export async function applicationRoutes(app: FastifyInstance): Promise<void> {
       config: { rateLimit: { max: 10, timeWindow: '1 hour' } },
     },
     async (req) => {
+      if (!env.PUBLIC_SIGNUP_ENABLED) throw Errors.forbidden('Volunteer signup is closed at the moment.');
+      const token = z.string().min(40).max(100).safeParse(req.headers['x-application-token']);
+      if (!token.success) throw Errors.notFound('We could not find an open application with that link.');
       const { reference } = z.object({ reference: z.string().trim().max(30) }).parse(req.params);
       const body = licenceSchema.parse(req.body);
 
       const { volunteerApplications } = await import('../db/schema.js');
       const { and, isNull, inArray } = await import('drizzle-orm');
       const [application] = await db
-        .select({ id: volunteerApplications.id })
+        .select({ id: volunteerApplications.id, tokenHash: volunteerApplications.ownershipTokenHash, expiresAt: volunteerApplications.ownershipExpiresAt })
         .from(volunteerApplications)
         .where(
           and(
@@ -138,7 +143,8 @@ export async function applicationRoutes(app: FastifyInstance): Promise<void> {
           ),
         )
         .limit(1);
-      if (!application) throw Errors.notFound('We could not find an open application with that reference.');
+      if (!application?.tokenHash || !application.expiresAt || application.expiresAt <= new Date() ||
+          !constantTimeEquals(hashToken(token.data), application.tokenHash)) throw Errors.notFound('We could not find an open application with that link.');
 
       const decode = (v: string): Buffer => {
         const comma = v.indexOf(',');
