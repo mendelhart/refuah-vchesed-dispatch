@@ -29,6 +29,7 @@ export LOGIN_MAX_PER_IP_PER_5MIN=${LOGIN_MAX_PER_IP_PER_5MIN:-500}
 # Production keeps them all off until each is approved.
 if [ "${E2E_FEATURES:-off}" = "on" ]; then
   export MULTI_LEG_TRIPS_ENABLED=true
+  export DEPARTMENT_SCOPING_ENABLED=true
   export IDEMPOTENCY_KEYS_ENABLED=true
 fi
 

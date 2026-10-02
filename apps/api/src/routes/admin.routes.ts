@@ -14,6 +14,7 @@ import { deadJobCount } from '../jobs/queue.js';
 import { recordAudit } from '../lib/audit.js';
 import { Errors } from '../lib/errors.js';
 import { featureFlags } from '../lib/flags.js';
+import { departmentScope } from '../lib/departments.js';
 
 export async function adminRoutes(app: FastifyInstance): Promise<void> {
   app.get('/api/admin/health', { preHandler: requireAdmin }, async () => ({
@@ -136,10 +137,16 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
   });
 
   /** Which optional screens are switched on. Everyone signed in needs this for the menu. */
-  app.get('/api/features', { preHandler: requireAuth }, async () => {
+  app.get('/api/features', { preHandler: requireAuth }, async (req) => {
     const s = await loadSettings();
     const on = (key: string) => Number(s[key] ?? 1) !== 0;
-    return { announcements: on(SETTING_KEYS.featureAnnouncements), flags: featureFlags() };
+    const scope = await departmentScope(req.user);
+    return {
+      announcements: on(SETTING_KEYS.featureAnnouncements),
+      flags: featureFlags(),
+      // What this coordinator works on (departments feature); null = everything.
+      departments: scope ? [...scope] : null,
+    };
   });
 
   app.put('/api/settings/:key', { preHandler: requireAdmin }, async (req) => {

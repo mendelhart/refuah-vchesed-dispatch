@@ -48,7 +48,7 @@ import { useTheme } from '@/lib/theme';
 import { qk } from '@/lib/query';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { FEATURE_ROUTES, useFeatures, type Features } from '@/lib/features';
+import { FEATURE_ROUTES, useFeatures, type FeatureFlags, type Features } from '@/lib/features';
 import { BottomNavigation, bottomNavItems } from './BottomNavigation';
 import type { BoardSummaryResponse, TripListResponse } from '@/types/api';
 import { exitViewAs, getViewAs } from '@/lib/viewAs';
@@ -69,6 +69,11 @@ interface NavItem {
   volunteer?: NavSection;
   /** One-line description on the hub pages. */
   hint?: string;
+  /** Shown only when this new feature is switched on. */
+  flag?: keyof FeatureFlags;
+  /** For coordinators limited to departments: hidden outside this one.
+   *  (The server refuses those requests anyway; this keeps the menu honest.) */
+  department?: string;
 }
 
 /**
@@ -86,8 +91,8 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/contacts', label: 'Contacts', icon: BookUser, roles: ['dispatcher', 'admin'] },
   // Top level for coordinators (user asked for it to be more prominent); volunteers never see it.
   { to: '/calls', label: 'Call log', icon: Phone, roles: ['dispatcher', 'admin'], hint: 'Calls placed through the app' },
-  { to: '/recurring', label: 'Standing rides', icon: Repeat, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Rides that repeat every week' },
-  { to: '/equipment', label: 'Equipment', icon: Package, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'more', dispatch: 'more', hint: 'Loans of wheelchairs and other equipment' },
+  { to: '/recurring', label: 'Standing rides', icon: Repeat, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Rides that repeat every week', department: 'rides' },
+  { to: '/equipment', label: 'Equipment', icon: Package, roles: ['volunteer', 'dispatcher', 'admin'], volunteer: 'more', dispatch: 'more', hint: 'Loans of wheelchairs and other equipment', department: 'equipment' },
 
   { to: '/my-trips', label: 'My rides', icon: Car, roles: ['volunteer', 'dispatcher', 'admin'], dispatch: 'profile' },
   { to: '/me', label: 'My profile', icon: IdCard, roles: ['volunteer', 'dispatcher', 'admin'] },
@@ -105,7 +110,8 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/admin/announcements', label: 'Broadcast', icon: Megaphone, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Message everyone or a group, with a picture' },
   { to: '/admin/notifications', label: 'Notifications', icon: Bell, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Every message sent, and whether it arrived' },
   { to: '/admin/templates', label: 'Message templates', icon: MessageSquareText, roles: ['admin'], dispatch: 'admin', hint: 'Wording of the texts' },
-  { to: '/impact', label: 'Organization impact', icon: HeartHandshake, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Rides, volunteers and people helped, all together' },
+  { to: '/impact', label: 'Organization impact', icon: HeartHandshake, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Rides, volunteers and people helped, all together', department: 'reports' },
+  { to: '/admin/departments', label: 'Departments', icon: Users, roles: ['admin'], dispatch: 'admin', hint: 'Which coordinators work on rides, food, equipment or reports', flag: 'departmentScoping' },
   { to: '/admin/backup', label: 'Full backup', icon: Download, roles: ['admin'], dispatch: 'admin', hint: 'Encrypted full database download' },
   { to: '/admin/exports', label: 'Exports', icon: Download, roles: ['admin'], dispatch: 'admin', hint: 'Download data' },
   { to: '/admin/audit', label: 'Audit log', icon: FileText, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Who changed what' },
@@ -135,6 +141,8 @@ export function sectionItems(
     if (!item.roles.includes(role) || sectionOf(item, role) !== section) return false;
     const flag = FEATURE_ROUTES[item.to];
     if (flag && !features[flag]) return false;
+    if (item.flag && !features.flags?.[item.flag]) return false;
+    if (item.department && role === 'dispatcher' && features.departments && !features.departments.includes(item.department)) return false;
     return section !== 'main' || !isNavItemHidden(role, navHidden, item.to);
   });
 }

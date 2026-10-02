@@ -76,6 +76,9 @@ const AuditPage = React.lazy(() =>
 const NotificationsAdminPage = React.lazy(() =>
   import('@/pages/admin/Notifications').then((m) => ({ default: m.NotificationsAdminPage })),
 );
+const DepartmentsPage = React.lazy(() =>
+  import('@/pages/admin/Departments').then((m) => ({ default: m.DepartmentsPage })),
+);
 const AdminSettingsPage = React.lazy(() =>
   import('@/pages/admin/AdminSettings').then((m) => ({ default: m.AdminSettingsPage })),
 );
@@ -339,6 +342,16 @@ export function App(): React.JSX.Element {
             <Shell>
               <RequireRole roles={DISPATCH}>
                 <NotificationsAdminPage />
+              </RequireRole>
+            </Shell>
+          }
+        />
+        <Route
+          path="/admin/departments"
+          element={
+            <Shell>
+              <RequireRole roles={ADMIN}>
+                <DepartmentsPage />
               </RequireRole>
             </Shell>
           }

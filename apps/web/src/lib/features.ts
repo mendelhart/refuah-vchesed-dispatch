@@ -6,11 +6,14 @@ import { qk } from '@/lib/query';
  *  All default off; a missing value means off. */
 export interface FeatureFlags {
   multiLegTrips?: boolean;
+  departmentScoping?: boolean;
 }
 
 export interface Features {
   announcements: boolean;
   flags?: FeatureFlags;
+  /** Departments this coordinator works in; null/absent = everything. */
+  departments?: string[] | null;
 }
 
 /** Optional screens an administrator can switch off. Defaults to on while loading. */
