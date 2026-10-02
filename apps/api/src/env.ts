@@ -150,6 +150,8 @@ const envSchema = z.object({
   /** Languages people may choose, comma-separated (en, fr, he). English is
    *  always included. Add a language only after its translation is reviewed. */
   LANGUAGES_ENABLED: z.string().default('en'),
+  /** Reports: totals, trends, staffing, equipment, CSV. */
+  REPORTS_ENABLED: bool(false),
 
   SENTRY_DSN: z.string().optional(),
   HEALTH_CHECK_TOKEN: z.string().min(16).optional(),

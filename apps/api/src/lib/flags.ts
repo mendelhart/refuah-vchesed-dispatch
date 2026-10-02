@@ -16,6 +16,7 @@ export interface FeatureFlags {
   foodOps: boolean;
   packageDelivery: boolean;
   liftAssist: boolean;
+  reports: boolean;
   /** Languages that may be chosen; always starts with English. */
   languages: string[];
 }
@@ -35,6 +36,7 @@ export function featureFlags(): FeatureFlags {
     foodOps: env.FOOD_OPS_ENABLED,
     packageDelivery: env.PACKAGE_DELIVERY_ENABLED,
     liftAssist: env.LIFT_ASSIST_ENABLED,
+    reports: env.REPORTS_ENABLED,
     languages: enabledLanguages(),
   };
 }
