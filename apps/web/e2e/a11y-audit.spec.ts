@@ -85,3 +85,23 @@ for (const [role, paths] of Object.entries(PAGES) as Array<[keyof typeof PAGES, 
   });
 }
 
+test.describe('keyboard', () => {
+  test('every control on the sign-in page is reachable by Tab and shows a focus ring', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'phone', 'checked once');
+    await page.goto('/login');
+    const seen: string[] = [];
+    for (let i = 0; i < 8; i++) {
+      await page.keyboard.press('Tab');
+      const info = await page.evaluate(() => {
+        const el = document.activeElement as HTMLElement | null;
+        if (!el || el === document.body) return null;
+        const style = getComputedStyle(el);
+        return { tag: el.tagName.toLowerCase(), name: el.getAttribute('aria-label') ?? el.textContent?.trim().slice(0, 30) ?? '', outline: parseFloat(style.outlineWidth) || 0 };
+      });
+      if (!info) continue;
+      expect(info.outline, `${info.tag} "${info.name}" has no visible focus ring`).toBeGreaterThanOrEqual(2);
+      seen.push(info.tag);
+    }
+    expect(seen).toEqual(expect.arrayContaining(['input', 'button']));
+  });
+});
