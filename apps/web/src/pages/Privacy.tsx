@@ -76,8 +76,7 @@ export function PrivacyPage(): React.JSX.Element {
         </Section>
 
         <Section title="Where it is stored">
-          <p>The app runs on servers in Ohio, in the United States. It is not hosted in Canada, so the information the
-            app keeps about you is stored and handled in the United States.</p>
+          <p>The app runs on servers in Ohio, in the United States. It is not hosted in Canada.</p>
         </Section>
 
         <Section title="Keeping it safe">
