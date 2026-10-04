@@ -41,7 +41,7 @@ asked it to), and nothing at all that ran when a browser tab was closed. Every
 | Files | local disk or S3-compatible, encrypted at rest | licence photographs are the most sensitive object here |
 | Geocoding | Nominatim, proxied server-side | the browser never talks to the geocoder |
 | Calendar | `@hebcal/core` | Shabbos and yom tov boundaries are dispatch information, not decoration |
-| Hosting | Fly.io, region `yyz` (Toronto) | Canadian data residency is a requirement |
+| Hosting | Render, region Ohio (United States) | Decided 2026-10-04: data is hosted in Ohio, USA, not Canada. Fly.io `yyz` was the original plan and is not in use |
 
 Monorepo, npm workspaces. Node 22 is required (`.nvmrc`).
 
