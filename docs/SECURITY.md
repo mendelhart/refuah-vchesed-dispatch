@@ -574,8 +574,11 @@ key, so at most one is outstanding at a time. Trips and audit events are
 operational history and are kept; the message, delivery and call traffic *around*
 them carries personal data and ages out.
 
-**Law 25 (Quebec).** Personal information stays in Canada: `primary_region =
-"yyz"`, backups to a Canadian region of an S3-compatible provider. A subject
+**Law 25 (Quebec).** Hosting is in Ohio, United States (owner decision,
+2026-10-04), so personal information is stored outside Canada and the privacy
+notice says so. Whether Law 25 needs more for transfers outside Quebec should be
+confirmed with counsel. (`primary_region = "yyz"` and Canadian-region backups were
+the original plan and are not in use.) A subject
 access or erasure request is answerable from `users`, `trips`, `notifications`,
 `sms_events`, `sms_messages`, `calls` and `volunteer_applications` by user id or
 phone number — but note that erasure and the append-only audit trail are in
