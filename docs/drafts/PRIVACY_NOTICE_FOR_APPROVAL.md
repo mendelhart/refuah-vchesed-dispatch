@@ -45,8 +45,8 @@ the records are kept until the office removes them.]
 
 ## Where it is stored
 
-[Hosting: the app runs on Render (United States, Ohio region) and the database
-on Aiven ([region]). Confirm both before publishing.]
+The app runs on servers in Ohio, in the United States. It is not hosted in
+Canada. [Database region on Aiven: confirm before publishing.]
 
 ## Questions and corrections
 
