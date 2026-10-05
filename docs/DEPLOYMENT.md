@@ -1,9 +1,11 @@
 # Deployment
 
-Target: **Fly.io, region `yyz` (Toronto)**. Canadian data residency is a
-requirement, not a preference — see [SECURITY.md](SECURITY.md#retention). The
-only other acceptable region is `yul` (Montreal). Do not add regions outside
-Canada and do not let autoscaling create one.
+Current hosting: **Render, region Ohio (United States)**, with the database on
+Aiven. The owner decided on 2026-10-04 to keep hosting in Ohio, so personal
+information is stored in the United States, not Canada, and the privacy notice
+says so. The Fly.io `yyz` (Toronto) instructions below are the original plan and
+are not what runs today. Moving to Canada would be a new decision and needs the
+privacy notice updated at the same time.
 
 ---
 
@@ -583,7 +585,7 @@ Then the worker sends N messages at `WORKER_CONCURRENCY` (default 4) per tick
   machine runs no worker: offers never expire, nothing escalates, no SMS is sent,
   standing rides are not materialised and equipment reminders do not go out.
   `fly.toml` sets `auto_stop_machines = false` for this reason.
-- **Do not add regions outside Canada.**
+- **Region:** hosting is in Ohio by owner decision (2026-10-04). Keep the privacy notice in step with any region change.
 
 ### When to split the worker out
 

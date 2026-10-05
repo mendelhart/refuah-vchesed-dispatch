@@ -7,11 +7,11 @@ import { Link } from 'react-router-dom';
  *
  * Keep it in step with docs/SECURITY.md "Retention". It says only what the
  * app actually does; anything the organisation decides outside the app (who
- * the privacy officer is, where the servers are) belongs to the office, and
+ * the privacy officer is) belongs to the office, and
  * the page tells people to ask the office.
  */
 
-const LAST_UPDATED = 'September 2026';
+const LAST_UPDATED = 'October 2026';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }): React.JSX.Element {
   return (
@@ -73,6 +73,10 @@ export function PrivacyPage(): React.JSX.Element {
             <li>The record of important changes is kept permanently so it cannot be quietly edited.</li>
             <li>An encrypted manual backup is kept separately. Automatic backup scheduling and a fixed backup-retention period are not yet configured.</li>
           </ul>
+        </Section>
+
+        <Section title="Where it is stored">
+          <p>The app runs on servers in Ohio, in the United States. It is not hosted in Canada.</p>
         </Section>
 
         <Section title="Keeping it safe">
