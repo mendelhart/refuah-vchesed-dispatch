@@ -99,7 +99,10 @@ describe('reports', () => {
                          values (${eq!.id}, 'Private Person', '+15145550199', now() - interval '3 days')`);
     const asCoord = await get('/api/reports/equipment');
     expect(asCoord.body.byStatus).toEqual({ loaned: 1 });
-    expect(asCoord.body.overdue).toEqual([{ itemCode: 'W-1', type: 'wheelchair', daysOverdue: 3 }]);
+    // The report counts days against the database's current_date but the due date in Toronto time, so
+    // the answer is 3 or 4 depending on the hour. Derive it the same way instead of assuming 3.
+    const [exp] = await db.execute<{ d: number }>(raw`select (current_date - ((now() - interval '3 days') at time zone 'America/Toronto')::date)::int as d`);
+    expect(asCoord.body.overdue).toEqual([{ itemCode: 'W-1', type: 'wheelchair', daysOverdue: exp!.d }]);
     const asAdmin = await get('/api/reports/equipment', admin);
     expect((asAdmin.body.overdue as Array<{ borrower?: string }>)[0]!.borrower).toBe('Private Person');
   });
