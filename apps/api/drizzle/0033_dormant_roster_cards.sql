@@ -10,6 +10,7 @@ CREATE TABLE roster_verification_cards (
  public_name text NOT NULL,
  unit_number text NOT NULL CHECK(unit_number ~ '^[0-9]{1,3}$' AND unit_number::integer BETWEEN 1 AND 999),
  public_photo text,
+ vehicle_details jsonb,
  expires_at timestamptz NOT NULL,
  issued_at timestamptz NOT NULL DEFAULT now(),
  revision integer NOT NULL DEFAULT 1
