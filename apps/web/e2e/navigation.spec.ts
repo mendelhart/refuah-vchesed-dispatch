@@ -121,6 +121,12 @@ test.describe('every screen opens', () => {
 
   test('the public card check answers without a session', async ({ page }) => {
     await page.goto('/verify/0123456789abcdef0123');
-    await expect(page.locator('body')).toContainText(/not current/i);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText("Cette carte n'est pas valide");
+    await expect(page.getByRole('navigation', { name: /primary/i })).toHaveCount(0);
+    await expect(page.getByRole('img', { name: "Refuah V'Chesed" })).toBeVisible();
+    await page.getByRole('button', { name: 'English', exact: true }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('This card is not valid');
+    await page.getByRole('button', { name: 'Français', exact: true }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText("Cette carte n'est pas valide");
   });
 });
