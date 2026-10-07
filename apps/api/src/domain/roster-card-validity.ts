@@ -1,8 +1,9 @@
 /** Dormant policy. Does not read people, create tokens or activate verification. */
-export type RosterCardState='active'|'lost'|'revoked'|'inactive';
+export type RosterCardState='active'|'lost'|'revoked'|'inactive'|'suspended';
 export function cardValidity(state:RosterCardState,activeVolunteer:boolean,expiresAt:Date,now:Date):{valid:boolean;reason:string}{
  if(state==='lost')return{valid:false,reason:'reported_lost'};
  if(state==='revoked')return{valid:false,reason:'revoked'};
+ if(state==='suspended')return{valid:false,reason:'suspended'};
  if(state==='inactive'||!activeVolunteer)return{valid:false,reason:'inactive'};
  if(expiresAt.getTime()<=now.getTime())return{valid:false,reason:'expired'};
  return{valid:true,reason:'active'};
