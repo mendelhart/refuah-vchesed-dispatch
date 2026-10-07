@@ -5,8 +5,8 @@ export interface CardFields {
 }
 export const initialCardFields: CardFields = {
   name: 'SAMPLE VOLUNTEER', number: 'SAMPLE-ID', photo: null, plate: 'SAMPLE', unit: 'SAMPLE', expiry: '',
-  termsFr: "Cette carte identifie un bénévole de Refuah V’Chesed. Elle est personnelle et non transférable. Utilisez-la uniquement dans le cadre des activités bénévoles autorisées par l’organisation. Respectez la confidentialité des patients et les règles de l’établissement. Signalez toute perte à Refuah V’Chesed. Cette carte ne confère aucun privilège de circulation, de stationnement ou d’accès.",
-  termsEn: "This card identifies a Refuah V’Chesed volunteer. It is personal and non-transferable. Use it only for volunteer activities approved by the organization. Respect patient privacy and facility rules. Report a lost card to Refuah V’Chesed. This card grants no traffic, parking or access privileges.",
+  termsFr: "Cette carte identifie un bénévole de Refuah V’Chesed. Elle est personnelle et non transférable. Utilisez-la uniquement dans le cadre des activités bénévoles autorisées par l’organisation. Respectez la confidentialité des patients et les règles de l’établissement. Signalez toute perte à Refuah V’Chesed.",
+  termsEn: "This card identifies a Refuah V’Chesed volunteer. It is personal and non-transferable. Use it only for volunteer activities approved by the organization. Respect patient privacy and facility rules. Report a lost card to Refuah V’Chesed.",
 };
 export type Face = 'volunteer-front' | 'volunteer-back' | 'vehicle-front' | 'vehicle-back';
 const R = '#ed1925';
@@ -78,4 +78,4 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  </>}
  {id?<Draft w={w} h={h}/>:<g><rect x="490" y="774" width="270" height="22" rx="3" fill="white" opacity=".95"/><text x="625" y="790" textAnchor="middle" fontFamily={font} fontSize="16" fill="#555">REVIEW DRAFT · NOT VALID</text></g>}
  </svg></FontContext.Provider>;
-   }
+}
