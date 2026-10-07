@@ -11,7 +11,7 @@ export const initialCardFields: CardFields = {
 export type Face = 'volunteer-front' | 'volunteer-back' | 'vehicle-front' | 'vehicle-back';
 const R = '#ed1925';
 const logo = '/brand/cards/rvc-logo.svg';
-const heart = '/brand/heart.svg';
+const heart = '/brand/cards/rvc-heart.svg';
 const font = 'CardCondensed, sans-serif';
 const FontContext = React.createContext(font);
 function Text({x,y,size=28,fill='black',bold=false,anchor='start',children}:{x:number;y:number;size?:number;fill?:string;bold?:boolean;anchor?:'start'|'middle'|'end';children:React.ReactNode}) {
@@ -78,4 +78,4 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  </>}
  {id?<Draft w={w} h={h}/>:<g><rect x="490" y="774" width="270" height="22" rx="3" fill="white" opacity=".95"/><text x="625" y="790" textAnchor="middle" fontFamily={font} fontSize="16" fill="#555">REVIEW DRAFT · NOT VALID</text></g>}
  </svg></FontContext.Provider>;
-   }
+}
