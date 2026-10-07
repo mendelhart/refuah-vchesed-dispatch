@@ -26,9 +26,9 @@ export function CardReportForm({ token, lang = 'fr' }: { token: string; lang?: L
     ['found card', T.btnFound[lang]],
     ['comment', T.btnContact[lang]],
   ];
-  const input = 'w-full rounded border p-2';
+  const input = `w-full rounded border border-slate-300 bg-white p-2 text-slate-900 ${token === 'preview' ? 'dark:bg-white dark:text-slate-900' : 'dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100'}`;
   return (
-    <section className="mt-6 border-t pt-5 text-left">
+    <section className={`mt-6 border-t border-slate-300 pt-5 text-left text-slate-900 ${token === 'preview' ? 'dark:text-slate-900' : 'dark:border-slate-700 dark:text-slate-100'}`}>
       <div className="flex flex-wrap gap-2">
         {buttons.map(([type, label]) => (
           <button
