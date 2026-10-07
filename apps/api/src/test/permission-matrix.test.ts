@@ -47,6 +47,9 @@ const PUBLIC = new Set([
   'POST /api/public/volunteer-applications',
   'POST /api/public/volunteer-applications/:reference/licence',
   'GET /api/id-card/verify/:token',
+  // Owner-approved public QR check and private-inbox report submission.
+  'GET /api/roster-cards/verify/:token',
+  'POST /api/roster-cards/verify/:token/report',
   // Webhooks are authenticated by provider signature, not by session; the
   // signature checks have their own suites (sms-webhook, waha-signature).
   'POST /webhooks/waha',
@@ -137,6 +140,12 @@ const SIGNED_IN = new Set([
 
 const ADMIN_ONLY = new Set([
   'GET /api/admin/card-drafts',
+  'GET /api/admin/card-preparations',
+  'PUT /api/admin/card-preparations/:id',
+  'GET /api/admin/roster-cards',
+  'POST /api/admin/roster-cards/issue',
+  'PATCH /api/admin/roster-cards/:id/status',
+  'GET /api/admin/roster-card-reports',
   'GET /api/admin/health',
   'GET /api/admin/backup/status',
   'POST /api/admin/backup/download',

@@ -225,6 +225,27 @@
       "when": 1791356400000,
       "tag": "0031_inert_volunteer_roster",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791371000000,
+      "tag": "0032_card_preparations",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1791371500000,
+      "tag": "0033_dormant_roster_cards",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1791371600000,
+      "tag": "0034_roster_card_reports",
+      "breakpoints": true
     }
   ]
-    }
+}
