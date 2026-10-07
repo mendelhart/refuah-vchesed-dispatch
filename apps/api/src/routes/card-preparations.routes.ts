@@ -4,7 +4,7 @@ import {sql} from '../db/client.js';
 import {requireAdmin} from '../auth/guards.js';
 import {Errors} from '../lib/errors.js';
 import {canonicalUnit,planUnitNumbers} from '../domain/card-preparation.js';
-const fields=z.object({name:z.string().trim().min(1).max(48),number:z.string().regex(/^\d{1,3}$/),plate:z.string().max(20),unit:z.string().max(3),photo:z.string().max(7_000_000).regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/).nullable(),expiry:z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),termsFr:z.string().max(450),termsEn:z.string().max(450)}).strict();
+const fields=z.object({name:z.string().trim().min(1).max(48),number:z.string().regex(/^\d{1,3}$/),plate:z.string().max(20),unit:z.string().max(3),photo:z.string().max(7_000_000).regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/).nullable(),expiry:z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),termsFr:z.string().max(450),termsEn:z.string().max(450),make:z.string().trim().max(60).optional(),model:z.string().trim().max(60).optional(),year:z.string().regex(/^(19|20)\d{2}$/).or(z.literal('')).optional()}).strict();
 const input=z.object({fields,groups:z.array(z.string().trim().min(1).max(60)).max(20),revision:z.number().int().min(0),verificationState:z.enum(['unissued','active','lost','revoked','inactive'])}).strict();
 export async function cardPreparationRoutes(app:FastifyInstance):Promise<void>{
  app.get('/api/admin/card-preparations',{preHandler:requireAdmin},async(_req,reply)=>{
