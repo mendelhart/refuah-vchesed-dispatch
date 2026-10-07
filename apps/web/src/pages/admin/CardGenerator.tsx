@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { api } from '@/lib/api';
 import { PageHeader, ErrorState } from '@/components/states';
 import { CardArtwork, initialCardFields, type CardFields, type Face } from './card-artwork';
+import { RequestMissingInfo } from './RequestMissingInfo';
 import './card-artwork.css';
 import './card-font-regular.css';
 import font0 from './card-font-regular.css?raw';
@@ -14,10 +15,10 @@ import './vehicle-font-regular.css';
 import font2 from './vehicle-font-regular.css?raw';
 import './vehicle-font-bold.css';
 import font3 from './vehicle-font-bold.css?raw';
-interface Volunteer {id:string;fullName:string;volunteerNumber:string|null;photo:string|null;status:string;hasVehicle:boolean}
+interface Volunteer {id:string;fullName:string;volunteerNumber:string|null;photo:string|null;status:string;hasVehicle:boolean;sourceDraft?:boolean;yiddishName?:string;plate?:string;unit?:string;phone?:string;email?:string;car?:string}
 const faces:Face[]=['volunteer-front','volunteer-back','vehicle-front','vehicle-back'];
 const labels:Record<Face,string>={'volunteer-front':'Volunteer front · 54 x 85.6 mm','volunteer-back':'Volunteer reverse · proposed terms','vehicle-front':'Vehicle front · 8.5 x 5.5 in','vehicle-back':'Vehicle reverse · historical text'};
-export function fieldsForVolunteer(v:Volunteer):CardFields {return {...initialCardFields,name:v.fullName.toUpperCase(),number:v.volunteerNumber??'',photo:v.photo,plate:'',unit:''};}
+export function fieldsForVolunteer(v:Volunteer):CardFields {return {...initialCardFields,name:v.fullName.toUpperCase(),number:v.volunteerNumber??'',photo:v.photo,plate:v.sourceDraft?v.plate??'':'',unit:v.sourceDraft?v.unit??'':''};}
 export function PrintFace({face,fields,marks}:{face:Face;fields:CardFields;marks:boolean}):React.JSX.Element {
  const uid=React.useId().replace(/:/g,'');const id=face.startsWith('volunteer');const w=id?54:215.9;const h=id?85.6:139.7;
  if(!marks)return <CardArtwork face={face} fields={fields}/>;
@@ -83,9 +84,10 @@ export function CardGeneratorPage():React.JSX.Element {
  return <div className="card-generator space-y-5"><PageHeader title="Annual cards" subtitle="Admin-only draft artwork. No credentials are issued or renewed."/>
  <div className="notice">Every volunteer gets a draft automatically when this screen opens. The original December 2025 expiry is not renewed automatically. Choose a proposed issue month to calculate a two-year expiry, or adjust the expiry after review. No issuance date is saved. Missing ID numbers, photos, plates and unit IDs stay unassigned. No changes are saved to volunteer accounts.</div>
  {roster.isError&&<ErrorState error={roster.error} onRetry={()=>void roster.refetch()} what="the admin card roster"/>}
+ {current?.sourceDraft&&<RequestMissingInfo key={current.id} person={{id:current.id,name:current.fullName,email:current.email,phone:current.phone,car:current.car,plate:current.plate,unit:current.unit}}/>}
  <div className="card-fields"><label>Volunteer<select aria-label="Volunteer" value={selected} onChange={e=>setSelected(e.target.value)}><option value="sample">Sample preview only</option>{roster.data?.volunteers.map(v=><option key={v.id} value={v.id}>{v.fullName} · {v.status}</option>)}</select></label><label>Proposed certificate issue month<input aria-label="Issue month" type="month" value={issueMonth} onChange={e=>{setIssueMonth(e.target.value);setExpiry(twoYearExpiry(e.target.value));}}/></label><label>Expiry month/year (adjustable)<input aria-label="Expiry" type="month" value={expiry} onChange={e=>setExpiry(e.target.value)}/></label>
  {(['name','number','plate','unit'] as const).map(key=><label key={key}>{({name:'Printed name',number:'Existing volunteer ID',plate:'Confirmed license plate',unit:'Confirmed unit ID'})[key]}<input aria-label={key} value={fields[key]} onChange={e=>update(key,e.target.value)} maxLength={key==='name'?48:20}/></label>)}
- <label>Photo for this draft only<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>void photo(e.target.files?.[0])}/></label><div className="muted">No volunteer-to-plate link exists in the current app. Plate and unit must be confirmed per volunteer. Draft edits and photos are lost when you leave this screen.</div>
+ <label>Photo for this draft only<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>void photo(e.target.files?.[0])}/></label><div className="muted">Source draft plate/unit values are historical source data; confirm them before printing. Operational user records have no volunteer-to-plate link. Plate and unit must be confirmed per volunteer. Draft edits and photos are lost when you leave this screen.</div>
  <label>Proposed French reverse terms<textarea aria-label="French terms" value={fields.termsFr} maxLength={450} onChange={e=>update('termsFr',e.target.value)}/></label><label>Proposed English reverse terms<textarea value={fields.termsEn} maxLength={450} onChange={e=>update('termsEn',e.target.value)}/></label></div>
  <div className="notice">Review-only historical vehicle wording includes “VÉHICULE DE RÉPONSE AUTORISÉ” and requests to law enforcement. It is not proof of public authority or parking permission. The Quebec government mark from the original ID is intentionally withheld pending confirmation of permitted use. Proposed ID reverse terms need owner approval. Printer bleed and duplex alignment still need production approval.</div>
  <div className="flex flex-wrap items-center gap-3"><label>Export type<select aria-label="Export type" value={kind} onChange={e=>setKind(e.target.value as 'volunteer'|'vehicle')}><option value="volunteer">Volunteer front + reverse</option><option value="vehicle">Vehicle front + reverse</option></select></label><label style={{display:'flex',gap:8}}><input style={{width:'auto'}} type="checkbox" checked={all} onChange={e=>setAll(e.target.checked)}/>All volunteer drafts ({roster.data?.volunteers.length??0})</label><label style={{display:'flex',gap:8}}><input style={{width:'auto'}} aria-label="Crop marks" type="checkbox" checked={cropMarks} onChange={e=>setCropMarks(e.target.checked)}/>Crop marks + provisional 3 mm background bleed</label><button disabled={busy||docs.length===0} onClick={()=>void download()}>{busy?'Preparing…':'Download drafts'}</button><button onClick={()=>window.print()}>Print / Save as PDF</button></div>
