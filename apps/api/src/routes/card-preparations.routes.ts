@@ -28,6 +28,7 @@ export async function cardPreparationRoutes(app:FastifyInstance):Promise<void>{
    if((old[0]?.revision??0)!==revision)throw Errors.conflict('Card changed; reload before saving');
    const collisions=await tx`SELECT 1 FROM volunteer_roster_drafts r WHERE r.id<>${req.params.id} AND COALESCE((SELECT p.unit_number FROM card_preparations p WHERE p.roster_id=r.id),r.unit_number) ~ '^[0-9]{1,3}$' AND ltrim(COALESCE((SELECT p.unit_number FROM card_preparations p WHERE p.roster_id=r.id),r.unit_number),'0')=${n} UNION ALL SELECT 1 FROM users WHERE volunteer_number ~ '^[0-9]{1,3}$' AND ltrim(volunteer_number,'0')=${n}`;
    if(collisions.length)throw Errors.conflict('Number already assigned; choose another');
+   await tx`UPDATE roster_verification_cards SET state='revoked',revision=revision+1 WHERE roster_id=${req.params.id} AND state<>'revoked'`;
    const result=await tx`INSERT INTO card_preparations (roster_id,unit_number,fields,groups,verification_state) VALUES (${req.params.id},${f.number},${tx.json(f)},${tx.json([...new Set(groups)])},${verificationState}) ON CONFLICT (roster_id) DO UPDATE SET unit_number=EXCLUDED.unit_number,fields=EXCLUDED.fields,groups=EXCLUDED.groups,verification_state=EXCLUDED.verification_state,revision=card_preparations.revision+1,updated_at=now() RETURNING revision`;
    return {revision:result[0]!.revision,verificationActive:false};
   });
