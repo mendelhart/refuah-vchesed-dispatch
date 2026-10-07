@@ -98,6 +98,8 @@ const ContactsHubPage = React.lazy(() =>
   import('@/pages/ContactsHub').then((m) => ({ default: m.ContactsHubPage })),
 );
 
+const CardGeneratorPage = React.lazy(() => import('@/pages/admin/CardGenerator').then(m => ({ default: m.CardGeneratorPage })));
+
 const DISPATCH = ["dispatcher", "admin"] as const;
 const ADMIN = ["admin"] as const;
 
@@ -352,6 +354,7 @@ export function App(): React.JSX.Element {
             </Shell>
           }
         />
+        <Route path="/admin/cards" element={<Shell><RequireRole roles={ADMIN}><CardGeneratorPage /></RequireRole></Shell>} />
         <Route path="/food" element={<Shell><RequireRole roles={DISPATCH}><FoodPage /></RequireRole></Shell>} />
         <Route path="/kitchen" element={<Shell><KitchenPage /></Shell>} />
         <Route path="/lift-assist" element={<Shell><LiftAssistPage /></Shell>} />
@@ -460,4 +463,4 @@ export function App(): React.JSX.Element {
       <InstallPrompt />
     </>
   );
-}
+                                 }
