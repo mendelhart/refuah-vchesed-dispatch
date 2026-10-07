@@ -218,6 +218,13 @@
       "when": 1790973500000,
       "tag": "0030_application_ownership",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1791356400000,
+      "tag": "0031_inert_volunteer_roster",
+      "breakpoints": true
     }
   ]
-}
+    }

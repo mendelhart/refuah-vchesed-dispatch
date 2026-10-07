@@ -1403,3 +1403,19 @@ export type VolunteerApplicationRow = typeof volunteerApplications.$inferSelect;
 export type DriverLicenceRow = typeof driverLicences.$inferSelect;
 export type MessageTemplateRow = typeof messageTemplates.$inferSelect;
 export type DutyShiftRow = typeof dutyShifts.$inferSelect;
+
+/** Source staging for admin card drafts, not person identity or dispatch eligibility. */
+export const volunteerRosterDrafts = pgTable('volunteer_roster_drafts', {
+ id: uuid('id').primaryKey().defaultRandom(),
+ sourceKey:text('source_key').notNull().unique(),
+ memberNumber:text('member_number').notNull().unique(),
+ fullName:text('full_name').notNull(),
+ yiddishName:text('yiddish_name'),
+ sourceStatus:text('source_status').notNull(),
+ unitNumber:text('unit_number'),
+ plate:text('plate'),
+ data:jsonb('data').$type<{phone?:string;email?:string;car?:string}>().notNull(),
+ sourceRefs:jsonb('source_refs').$type<string[]>().notNull(),
+ reviewState:text('review_state').notNull().default('candidate'),
+ createdAt:createdAt(),
+});
