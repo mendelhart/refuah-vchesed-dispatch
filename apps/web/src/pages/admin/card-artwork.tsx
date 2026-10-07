@@ -3,7 +3,7 @@ import {QrCode} from '../MyIdCard';
 import {cardGlyphWidths} from './card-text-metrics';
 export interface CardFields {
   name: string; number: string; photo: string | null; plate: string; unit: string; expiry: string;
-  termsFr: string; termsEn: string; verificationUrl?:string; vehicleVerificationUrl?:string; issued?:boolean; vehicleIssued?:boolean;
+  termsFr: string; termsEn: string; make?:string;model?:string;year?:string; verificationUrl?:string; vehicleVerificationUrl?:string; issued?:boolean; vehicleIssued?:boolean;
 }
 export const initialCardFields: CardFields = {
   name: 'SAMPLE VOLUNTEER', number: 'SAMPLE-ID', photo: null, plate: 'SAMPLE', unit: 'SAMPLE', expiry: '',
