@@ -109,6 +109,7 @@ export const NAV_ITEMS: NavItem[] = [
     { to: '/vehicles', label: 'Vehicles', icon: Car, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Organisation vehicles' },
   { to: '/admin/applications', label: 'Applications', icon: UserPlus, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'New volunteer sign-ups to review' },
 
+  { to: '/admin/cards', label: 'Annual cards', icon: IdCard, roles: ['admin'], dispatch: 'admin', hint: 'Private volunteer and vehicle artwork drafts' },
   { to: '/admin/people', label: 'People', icon: Users, roles: ['admin'], dispatch: 'admin', hint: 'Accounts, roles, invites, how each person is reached' },
   { to: '/admin/announcements', label: 'Broadcast', icon: Megaphone, roles: ['dispatcher', 'admin'], dispatch: 'more', hint: 'Message everyone or a group, with a picture' },
   { to: '/admin/notifications', label: 'Notifications', icon: Bell, roles: ['dispatcher', 'admin'], dispatch: 'admin', hint: 'Every message sent, and whether it arrived' },
@@ -409,4 +410,4 @@ function ViewAsBanner(): React.JSX.Element | null {
       </button>
     </div>
   );
-}
+    }
