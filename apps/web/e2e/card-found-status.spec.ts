@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 test('synthetic vehicle preview and private finder form are bilingual', async ({ page }) => {
+ await page.route('**/api/auth/me', route => route.fulfill({ status: 401, contentType: 'application/json', body: '{}' }));
  await page.goto('/verify/preview?state=vehicle');
  await expect(page.getByText('DEMO 101')).toBeVisible();
  await expect(page.getByText('Statut du bénévole: Actif')).toBeVisible();
