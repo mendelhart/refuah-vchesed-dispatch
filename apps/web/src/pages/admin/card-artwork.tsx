@@ -56,8 +56,8 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  <image href="/brand/cards/fleur.svg" x="56" y="312" width="261" height="320"/><image href="/brand/cards/accessibility.svg" x="1035" y="374" width="180" height="270"/>
  <rect x="294" y="347" width="666" height="66" fill="black"/>
  <Text x={627} y={393} size={36} bold fill="white" anchor="middle">VÉHICULE DE RÉPONSE AUTORISÉ</Text>
- <rect x="242" y="434" width="467" height="212" fill="white" stroke="#666" strokeWidth="3"/><Text x={475} y={482} size={38} fill="#555" anchor="middle">PRÉPARÉ POUR LA PLAQUE</Text><Text x={475} y={530} size={38} fill="#555" anchor="middle">D’IMMATRICULATION:</Text><Text x={475} y={617} size={Math.min(92,690/Math.max(1,fields.plate.length))} bold fill="#ee0000" anchor="middle">{fields.plate||'À CONFIRMER'}</Text>
- <rect x="779" y="473" width="204" height="173" fill="white" stroke="#666" strokeWidth="3"/><Text x={881} y={523} size={37} fill="#555" anchor="middle">ID UNITÉ</Text><Text x={881} y={617} size={Math.min(88,300/Math.max(1,fields.unit.length))} bold fill="#ee0000" anchor="middle">{fields.unit||'À CONFIRMER'}</Text>
+ <rect x="242" y="434" width="467" height="212" fill="white" stroke="#666" strokeWidth="3"/><Text x={475} y={482} size={38} fill="#555" anchor="middle">PRÉPARÉ POUR LA PLAQUE</Text><Text x={475} y={530} size={38} fill="#555" anchor="middle">D’IMMATRICULATION:</Text><Text x={475} y={617} size={Math.min(92,690/(fields.plate||'À CONFIRMER').length)} bold fill="#ee0000" anchor="middle">{fields.plate||'À CONFIRMER'}</Text>
+ <rect x="779" y="473" width="204" height="173" fill="white" stroke="#666" strokeWidth="3"/><Text x={881} y={523} size={37} fill="#555" anchor="middle">ID UNITÉ</Text><Text x={881} y={617} size={Math.min(88,300/(fields.unit||'À CONFIRMER').length)} bold fill="#ee0000" anchor="middle">{fields.unit||'À CONFIRMER'}</Text>
  <Text x={95} y={731} size={35} fill="#555">Exp. {expiry}</Text><image href="/brand/cards/rvc-original-compact.svg" x="930" y="657" width="245" height="85"/>
  </>}
  {face==='vehicle-back'&&<>
@@ -78,4 +78,4 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  </>}
  {id?<Draft w={w} h={h}/>:<g><rect x="490" y="774" width="270" height="22" rx="3" fill="white" opacity=".95"/><text x="625" y="790" textAnchor="middle" fontFamily={font} fontSize="16" fill="#555">REVIEW DRAFT · NOT VALID</text></g>}
  </svg></FontContext.Provider>;
-}
+   }
