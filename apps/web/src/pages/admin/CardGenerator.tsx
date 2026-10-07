@@ -18,6 +18,41 @@ interface Volunteer {id:string;fullName:string;volunteerNumber:string|null;photo
 const faces:Face[]=['volunteer-front','volunteer-back','vehicle-front','vehicle-back'];
 const labels:Record<Face,string>={'volunteer-front':'Volunteer front · 54 x 85.6 mm','volunteer-back':'Volunteer reverse · proposed terms','vehicle-front':'Vehicle front · 8.5 x 5.5 in','vehicle-back':'Vehicle reverse · historical text'};
 export function fieldsForVolunteer(v:Volunteer):CardFields {return {...initialCardFields,name:v.fullName.toUpperCase(),number:v.volunteerNumber??'',photo:v.photo,plate:'',unit:''};}
+export function PrintFace({face,fields,marks}:{face:Face;fields:CardFields;marks:boolean}):React.JSX.Element {
+ const uid=React.useId().replace(/:/g,'');const id=face.startsWith('volunteer');const w=id?54:215.9;const h=id?85.6:139.7;
+ if(!marks)return <CardArtwork face={face} fields={fields}/>;
+ // Provisional 3 mm background bleed. The trim illustration is rendered untouched above it.
+ const b=3,m=7;const W=w+14,H=h+14;const aw=id?855:1250,ah=id?1355:800;
+ const bx=b*aw/w,by=b*ah/h;
+ // Extend the original quadratic curves, not the picture or its repeating heart pattern.
+ const curve=(p0:number[],p1:number[],p2:number[])=>{
+  const t0=-.2,t1=1.2;const point=(t:number)=>p0.map((v,i)=>(1-t)**2*v+2*(1-t)*t*p1[i]!+t*t*p2[i]!);
+  const start=point(t0),end=point(t1),control=start.map((v,i)=>v+(t1-t0)*((1-t0)*(p1[i]!-p0[i]!)+t0*(p2[i]!-p1[i]!)));
+  return {start,end,control};
+ };
+ const band=(p0:number[],p1:number[],p2:number[],edge:number)=>{const c=curve(p0,p1,p2);return `M${c.start[0]} ${edge}V${c.start[1]}Q${c.control.join(' ')} ${c.end.join(' ')}V${edge}Z`;};
+ return <svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${W} ${H}`} style={{width:'100%',height:'100%'}} aria-label="Crop-mark proof, provisional 3 mm bleed">
+ <defs><clipPath id={`bleed${uid}`}><path clipRule="evenodd" d={`M${m-b} ${m-b}h${w+2*b}v${h+2*b}h-${w+2*b}Z M${m} ${m}v${h}h${w}v-${h}Z`}/></clipPath></defs>
+ <rect width={W} height={H} fill="white"/>
+ <g clipPath={`url(#bleed${uid})`}><svg x={m} y={m} width={w} height={h} viewBox={`0 0 ${aw} ${ah}`} overflow="visible" preserveAspectRatio="none">
+ <rect x={-bx} y={-by} width={aw+2*bx} height={ah+2*by} fill={id?'white':'#d8d9dc'}/>
+ {id?<>
+ <path d={band([855,302],[490,295],[0,474],-by)} fill="#b31d27"/>
+ <path d={band([855,302],[475,350],[0,235],-by)} fill="#ed1925"/>
+ <path d={band([0,1185],[315,1400],[855,1148],ah+by)} fill="#b31d27"/>
+ <path d={band([0,1268],[520,1305],[855,1148],ah+by)} fill="#ed1925"/>
+ </>:<>{[false,true].map(bottom=><g key={String(bottom)} transform={bottom?'translate(1250,800) rotate(180)':undefined}>
+ <rect x={-bx} y={-by} width={1250+2*bx} height={60+by} fill="#262626"/>
+ <path d={`M${-bx} ${-by}H${515+by}L490 25H${-bx}Z`} fill="#ed1925"/>
+ <path d={`M${-bx} 27H897L${925+by} ${-by}H${967+by}L912 60H${-bx}Z`} fill="#d6d6d6"/>
+ <path d={`M${-bx} 51H910L${960+by} ${-by}`} fill="none" stroke="#ed1925" strokeWidth="2"/>
+ <path d={`M1190 60L${1250+by} ${-by}H${1250+bx}V60Z`} fill="#ed1925"/>
+ </g>)}</>}
+ </svg></g>
+ <svg x={m} y={m} width={w} height={h} viewBox={`0 0 ${aw} ${ah}`} preserveAspectRatio="none"><CardArtwork face={face} fields={fields}/></svg>
+ <g stroke="black" strokeWidth="0.18">{[m,m+w].map(x=><React.Fragment key={x}><line x1={x} x2={x} y1="0.7" y2="3.2"/><line x1={x} x2={x} y1={H-3.2} y2={H-.7}/></React.Fragment>)}{[m,m+h].map(y=><React.Fragment key={y}><line y1={y} y2={y} x1="0.7" x2="3.2"/><line y1={y} y2={y} x1={W-3.2} x2={W-.7}/></React.Fragment>)}</g>
+ </svg>;
+}
 export function twoYearExpiry(issueMonth:string):string {
  if(!/^\d{4}-\d{2}$/.test(issueMonth))return '';
  const [year,month]=issueMonth.split('-').map(Number);
@@ -26,7 +61,7 @@ export function twoYearExpiry(issueMonth:string):string {
 }
 export function CardGeneratorPage():React.JSX.Element {
  const roster=useQuery({queryKey:['admin-card-drafts'],queryFn:()=>api.get<{volunteers:Volunteer[]}>('/api/admin/card-drafts'),gcTime:0,refetchOnWindowFocus:false});
- const [issueMonth,setIssueMonth]=useState('');const [selected,setSelected]=useState('sample');const [overrides,setOverrides]=useState<Record<string,CardFields>>({});const [expiry,setExpiry]=useState('');
+ const [cropMarks,setCropMarks]=useState(false);const [issueMonth,setIssueMonth]=useState('');const [selected,setSelected]=useState('sample');const [overrides,setOverrides]=useState<Record<string,CardFields>>({});const [expiry,setExpiry]=useState('');
  const [kind,setKind]=useState<'volunteer'|'vehicle'>('volunteer');const [all,setAll]=useState(false);const [busy,setBusy]=useState(false);const [error,setError]=useState('');
  const current=roster.data?.volunteers.find(v=>v.id===selected);
  const base=current?fieldsForVolunteer(current):initialCardFields;
@@ -36,13 +71,13 @@ export function CardGeneratorPage():React.JSX.Element {
  const chosen=faces.filter(f=>f.startsWith(kind));
  const photo=async(file:File|undefined)=>{setError('');if(!file)return;if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5_000_000){setError('Use a JPEG, PNG or WebP photo under 5 MB.');return;}const value=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=reject;reader.readAsDataURL(file);});update('photo',value);};
  const download=async()=>{setBusy(true);setError('');try{
-  let html=docs.map(d=>chosen.map(face=>`<div class="print-face ${kind==='volunteer'?'id':'vehicle'}">${renderToStaticMarkup(<CardArtwork face={face} fields={d}/>)}</div>`).join('')).join('');
+  let html=docs.map(d=>chosen.map(face=>`<div class="print-face ${kind==='volunteer'?'id':'vehicle'}">${renderToStaticMarkup(<PrintFace face={face} fields={d} marks={cropMarks}/>)}</div>`).join('')).join('');
   // Self-contained export. No external photo retrieval and no public artifact URL.
   const assets=[...new Set([...html.matchAll(/href="(\/brand\/[^"]+)"/g)].map(m=>m[1]!))];
   for(const path of assets){const response=await fetch(path);if(!response.ok)throw new Error('Artwork asset unavailable');const blob=await response.blob();const data=await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=reject;r.readAsDataURL(blob);});html=html.split(`href="${path}"`).join(`href="${data}"`);}
   const css=kind==='vehicle'?font2+font3:font0+font1;
-  const size=kind==='volunteer'?'54mm 85.6mm':'215.9mm 139.7mm';
-  const source=`<!doctype html><html lang="en"><meta charset="utf-8"><title>RVC draft artwork - not valid</title><style>${css}@page{size:${size};margin:0}body{margin:0;background:#ddd}.print-face{width:${kind==='volunteer'?'54mm':'215.9mm'};height:${kind==='volunteer'?'85.6mm':'139.7mm'};break-after:page;background:white}.print-face svg{width:100%;height:100%}</style><body>${html}</body></html>`;
+  const width=(kind==='volunteer'?54:215.9)+(cropMarks?14:0);const height=(kind==='volunteer'?85.6:139.7)+(cropMarks?14:0);const size=`${width}mm ${height}mm`;
+  const source=`<!doctype html><html lang="en"><meta charset="utf-8"><title>RVC draft artwork - not valid</title><style>${css}@page{size:${size};margin:0}body{margin:0;background:#ddd}.print-face{width:${width}mm;height:${height}mm;break-after:page;background:white}.print-face>svg{width:100%;height:100%;display:block}.print-face:last-child{break-after:auto}</style><body>${html}</body></html>`;
   const url=URL.createObjectURL(new Blob([source],{type:'text/html;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`rvc-${kind}-drafts.html`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  }catch(e){setError(e instanceof Error?e.message:'Download failed.');}finally{setBusy(false);}};
  return <div className="card-generator space-y-5"><PageHeader title="Annual cards" subtitle="Admin-only draft artwork. No credentials are issued or renewed."/>
@@ -53,11 +88,11 @@ export function CardGeneratorPage():React.JSX.Element {
  <label>Photo for this draft only<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>void photo(e.target.files?.[0])}/></label><div className="muted">No volunteer-to-plate link exists in the current app. Plate and unit must be confirmed per volunteer. Draft edits and photos are lost when you leave this screen.</div>
  <label>Proposed French reverse terms<textarea aria-label="French terms" value={fields.termsFr} maxLength={450} onChange={e=>update('termsFr',e.target.value)}/></label><label>Proposed English reverse terms<textarea value={fields.termsEn} maxLength={450} onChange={e=>update('termsEn',e.target.value)}/></label></div>
  <div className="notice">Review-only historical vehicle wording includes “VÉHICULE DE RÉPONSE AUTORISÉ” and requests to law enforcement. It is not proof of public authority or parking permission. The Quebec government mark from the original ID is intentionally withheld pending confirmation of permitted use. Proposed ID reverse terms need owner approval. Printer bleed and duplex alignment still need production approval.</div>
- <div className="flex flex-wrap items-center gap-3"><label>Export type<select aria-label="Export type" value={kind} onChange={e=>setKind(e.target.value as 'volunteer'|'vehicle')}><option value="volunteer">Volunteer front + reverse</option><option value="vehicle">Vehicle front + reverse</option></select></label><label style={{display:'flex',gap:8}}><input style={{width:'auto'}} type="checkbox" checked={all} onChange={e=>setAll(e.target.checked)}/>All volunteer drafts ({roster.data?.volunteers.length??0})</label><button disabled={busy||docs.length===0} onClick={()=>void download()}>{busy?'Preparing…':'Download drafts'}</button><button onClick={()=>window.print()}>Print / Save as PDF</button></div>
+ <div className="flex flex-wrap items-center gap-3"><label>Export type<select aria-label="Export type" value={kind} onChange={e=>setKind(e.target.value as 'volunteer'|'vehicle')}><option value="volunteer">Volunteer front + reverse</option><option value="vehicle">Vehicle front + reverse</option></select></label><label style={{display:'flex',gap:8}}><input style={{width:'auto'}} type="checkbox" checked={all} onChange={e=>setAll(e.target.checked)}/>All volunteer drafts ({roster.data?.volunteers.length??0})</label><label style={{display:'flex',gap:8}}><input style={{width:'auto'}} aria-label="Crop marks" type="checkbox" checked={cropMarks} onChange={e=>setCropMarks(e.target.checked)}/>Crop marks + provisional 3 mm background bleed</label><button disabled={busy||docs.length===0} onClick={()=>void download()}>{busy?'Preparing…':'Download drafts'}</button><button onClick={()=>window.print()}>Print / Save as PDF</button></div>
  {error&&<p role="alert">{error}</p>}
- <p className="muted">Export is a self-contained HTML file, including vector logos and fonts. Open it and print at 100%, with headers/footers off, to Save as PDF at the stated size. It contains personal information and must remain private. Every draft is marked NOT VALID; issuance is not implemented.</p>
+ <p className="muted">Crop-mark proof keeps finished sizes unchanged. Provisional 3 mm bleed extends only native background shapes, never the logo pattern. Confirm bleed with your printer; duplex alignment still needs a test print. Not printer-certified.</p><p className="muted">Export is a self-contained HTML file, including vector logos and fonts. Open it and print at 100%, with headers/footers off, to Save as PDF at the stated size. It contains personal information and must remain private. Every draft is marked NOT VALID; issuance is not implemented.</p>
  <div className="card-faces">{faces.map(face=><div className="card-face" key={face}><div className="card-face-label">{labels[face]}</div><CardArtwork face={face} fields={fields}/></div>)}</div>
- <style>{`@media print{@page{size:${kind==='volunteer'?'54mm 85.6mm':'215.9mm 139.7mm'};margin:0}}`}</style>
- <div className="card-print-output">{docs.map((d,i)=>chosen.map(face=><div className={`print-face ${kind==='volunteer'?'id':'vehicle'}`} key={`${i}-${face}`}><CardArtwork face={face} fields={d}/></div>))}</div>
+ <style>{`@media print{@page{size:${kind==='volunteer'?(cropMarks?'68mm 99.6mm':'54mm 85.6mm'):(cropMarks?'229.9mm 153.7mm':'215.9mm 139.7mm')};margin:0}}`}</style>
+ <div className="card-print-output">{docs.map((d,i)=>chosen.map(face=><div style={{width:`${(kind==='volunteer'?54:215.9)+(cropMarks?14:0)}mm`,height:`${(kind==='volunteer'?85.6:139.7)+(cropMarks?14:0)}mm`}} className={`print-face ${kind==='volunteer'?'id':'vehicle'}`} key={`${i}-${face}`}><PrintFace face={face} fields={d} marks={cropMarks}/></div>))}</div>
  </div>;
 }

@@ -1,26 +1,26 @@
 import React from 'react';
+import {cardGlyphWidths} from './card-text-metrics';
 export interface CardFields {
   name: string; number: string; photo: string | null; plate: string; unit: string; expiry: string;
   termsFr: string; termsEn: string;
 }
 export const initialCardFields: CardFields = {
   name: 'SAMPLE VOLUNTEER', number: 'SAMPLE-ID', photo: null, plate: 'SAMPLE', unit: 'SAMPLE', expiry: '',
-  termsFr: "Cette carte identifie un bénévole de Refuah V’Chesed. Elle est personnelle et non transférable. Utilisez-la uniquement dans le cadre des activités bénévoles autorisées par l’organisation. Respectez la confidentialité des patients et les règles de l’établissement. Signalez toute perte à Refuah V’Chesed. Cette carte ne confère aucun privilège de circulation, de stationnement ou d’accès.",
-  termsEn: "This card identifies a Refuah V’Chesed volunteer. It is personal and non-transferable. Use it only for volunteer activities approved by the organization. Respect patient privacy and facility rules. Report a lost card to Refuah V’Chesed. This card grants no traffic, parking or access privileges.",
+  termsFr: "Cette carte identifie un bénévole de Refuah V’Chesed. Elle est personnelle et non transférable. Utilisez-la uniquement dans le cadre des activités bénévoles autorisées par l’organisation. Respectez la confidentialité des patients et les règles de l’établissement. Signalez toute perte à Refuah V’Chesed.",
+  termsEn: "This card identifies a Refuah V’Chesed volunteer. It is personal and non-transferable. Use it only for volunteer activities approved by the organization. Respect patient privacy and facility rules. Report a lost card to Refuah V’Chesed.",
 };
 export type Face = 'volunteer-front' | 'volunteer-back' | 'vehicle-front' | 'vehicle-back';
 const R = '#ed1925';
 const logo = '/brand/cards/rvc-logo.svg';
-const heart = '/brand/cards/rvc-heart.svg';
 const font = 'CardCondensed, sans-serif';
 const FontContext = React.createContext(font);
 function Text({x,y,size=28,fill='black',bold=false,anchor='start',children}:{x:number;y:number;size?:number;fill?:string;bold?:boolean;anchor?:'start'|'middle'|'end';children:React.ReactNode}) {
   return <text x={x} y={y} fontSize={size} fill={fill} fontWeight={bold?700:400} textAnchor={anchor} fontFamily={React.useContext(FontContext)}>{children}</text>;
 }
 function Lines({x,y,width,text,size=25,line=33,bold=false}:{x:number;y:number;width:number;text:string;size?:number;line?:number;bold?:boolean}) {
-  // Conservative wrap: the condensed font is <= 0.55 em for ordinary letters.
-  const max=Math.floor(width/(size*.5)); const rows:string[]=[]; let row='';
-  for(const word of text.split(/\s+/)){if((row+' '+word).length>max&&row){rows.push(row);row=word;}else row+=(row?' ':'')+word;} if(row)rows.push(row);
+  const rows:string[]=[]; let row='';
+  const measure=(value:string)=>[...value].reduce((sum,c)=>sum+(cardGlyphWidths[c]??.55)*size,0);
+  for(const word of text.split(/\s+/)){if(measure(row+' '+word)>width&&row){rows.push(row);row=word;}else row+=(row?' ':'')+word;} if(row)rows.push(row);
   return <>{rows.map((v,i)=><Text key={i} x={x} y={y+i*line} size={size} bold={bold}>{v}</Text>)}</>;
 }
 function Draft({w,h}:{w:number;h:number}) {return <g opacity="0.20"><text transform={`translate(${w/2},${h/2}) rotate(-30)`} textAnchor="middle" fontFamily={font} fontWeight="700" fontSize={w*.115} fill="#333">DRAFT · NOT VALID</text></g>;}
@@ -29,9 +29,9 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  const id=face.startsWith('volunteer');const w=id?855:1250;const h=id?1355:800;const expiry=fields.expiry?fields.expiry.split('-').reverse().join('/'):'À CONFIRMER';
  const unique=React.useId().replace(/:/g,'');
  return <FontContext.Provider value={id?font:'VehicleCondensed, sans-serif'}><svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${w} ${h}`} aria-label={face} style={{display:'block',width:'100%',height:'auto'}}>
- <defs><radialGradient id={`bg${unique}`} cx="50%" cy="40%" r="80%"><stop offset="0" stopColor="white"/><stop offset="1" stopColor="#d8d9dc"/></radialGradient><pattern id={`p${unique}`} width="260" height="250" patternUnits="userSpaceOnUse" patternTransform="rotate(-15)"><image href={heart} width="125" height="125" x="60" y="55" opacity=".14"/></pattern><clipPath id={`c${unique}`}><rect x="236" y="281" width="382" height="500" rx="20"/></clipPath></defs>
+ <defs><radialGradient id={`bg${unique}`} cx="50%" cy="40%" r="80%"><stop offset="0" stopColor="white"/><stop offset="1" stopColor="#d8d9dc"/></radialGradient><clipPath id={`c${unique}`}><rect x="236" y="281" width="382" height="500" rx="20"/></clipPath></defs>
  <rect width={w} height={h} fill={id?"white":`url(#bg${unique})`}/>
- {id?<><rect width={w} height={h} fill={`url(#p${unique})`}/><path d="M0 0H855V302Q490 295 0 474Z" fill="#b31d27"/><path d="M0 0H855V302Q475 350 0 235Z" fill={R}/><path d="M0 1185Q315 1400 855 1148V1355H0Z" fill="#b31d27"/><path d="M0 1268Q520 1305 855 1148V1355H0Z" fill={R}/></>:<><Stripe/><Stripe bottom/></>}
+ {id?<><g transform="rotate(-15)" opacity=".22">{Array.from({length:42},(_,i)=>{const col=i%6-1,row=Math.floor(i/6);return <g key={i} transform={`translate(${60+260*col},${55+250*row}) scale(.912) translate(-147.48,-314.191)`}><path d="M 280.617188 400.363281 C 275.742188 405.472656 253.675781 427.457031 217.394531 427.457031 C 181.390625 427.457031 152.125 391.304688 152.125 360.878906 C 152.125 342.761719 162.578125 333.238281 182.089844 333.238281 C 207.175781 333.238281 213.675781 355.304688 213.675781 355.304688 L 218.324219 355.304688 C 218.324219 355.304688 225.289062 332.773438 249.910156 332.773438 C 271.28125 332.773438 279.875 340.203125 279.875 356.695312 C 279.875 379.574219 246.894531 399.214844 216 396.5625 C 197.019531 394.933594 178.824219 380.03125 169.546875 366.683594 L 165.828125 377.367188 C 173.050781 396.4375 197.019531 412.621094 216 415.023438 C 249.9375 419.316406 284.519531 392.746094 284.519531 356.695312 C 284.519531 329.289062 272.675781 314.191406 249.910156 314.191406 C 231.328125 314.191406 220.414062 333.46875 216 343.691406 C 211.585938 333.703125 200.902344 314.65625 182.089844 314.65625 C 160.953125 314.65625 147.480469 333.238281 147.480469 360.878906 C 147.480469 410.117188 182.648438 446.035156 217.394531 446.035156 C 241.085938 446.035156 268.074219 429.863281 283.871094 412.90625 Z M 280.617188 400.363281 " fill="#777"/></g>;})}</g><path d="M0 0H855V302Q490 295 0 474Z" fill="#b31d27"/><path d="M0 0H855V302Q475 350 0 235Z" fill={R}/><path d="M0 1185Q315 1400 855 1148V1355H0Z" fill="#b31d27"/><path d="M0 1268Q520 1305 855 1148V1355H0Z" fill={R}/></>:<><Stripe/><Stripe bottom/></>}
  {face==='volunteer-front'&&<>
  <Text x={427} y={194} size={67} fill="white" bold anchor="middle">BÉNÉVOLE · VOLUNTEER</Text>
  <rect x="225" y="270" width="404" height="522" rx="29" fill="white"/>
@@ -45,10 +45,10 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  <Text x={427} y={147} size={52} fill="white" bold anchor="middle">CONDITIONS · TERMS</Text>
  <rect x="55" y="350" width="745" height="825" fill="white" opacity=".94"/>
  <Lines x={85} y={407} width={685} text={fields.termsFr} size={fields.termsFr.length>450?22:27} line={fields.termsFr.length>450?30:35}/>
- <Lines x={85} y={787} width={685} text={fields.termsEn} size={27} line={35}/>
+ <Lines x={85} y={747} width={685} text={fields.termsEn} size={27} line={35}/>
  <Text x={85} y={1090} size={32} bold fill={R}>SI TROUVÉE · IF FOUND</Text>
  <Text x={85} y={1130} size={29}>514 357 2167 · info@refuahvchesed.org</Text>
- <Text x={427} y={1318} size={29} fill="white" anchor="middle">Texte proposé · Wording for review</Text>
+ <Text x={427} y={1318} size={29} fill="white" anchor="middle">BROUILLON · DRAFT</Text>
  </>}
  {face==='vehicle-front'&&<>
  <image href="/brand/cards/chesed-on-the-go.svg" x="44" y="70" width="404" height="242"/>
@@ -69,13 +69,13 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  <Lines x={64} y={311} width={1123} size={25} line={32} bold text="Le propriétaire de ce véhicule fait partie du programme de bénévolat Chesed on the Go de l’organisation Refuah V’Chesed, offrant un transport gratuit aux patients et à leurs familles vers et en provenance des hôpitaux de la région de Montréal, Québec."/>
  <Lines x={64} y={425} width={1123} size={25} line={32} bold text="Nous demandons respectueusement aux agents de la loi d’être attentifs au service communautaire que ce membre fournit. Merci!"/>
  <Text x={625} y={491} size={25} bold anchor="middle">Cette carte est la propriété de :</Text><Text x={625} y={526} size={31} bold fill={R} anchor="middle">REFUAH V’CHESED</Text>
- <image href="/brand/cards/rvc-original-compact.svg" x="103" y="572" width="292" height="122"/>
+ <image href={logo} x="103" y="572" width="292" height="122"/>
  <Text x={1183} y={576} size={27} bold fill={R} anchor="end">SI TROUVÉ, VEUILLEZ RETOURNER À :</Text>
  <Text x={1183} y={612} size={25} anchor="end">420, rue Beaubien O, bureau 101</Text>
  <Text x={1183} y={645} size={25} anchor="end">Montréal, QC, H2V 4S6</Text>
  <Text x={1183} y={678} size={25} anchor="end">Numéro de téléphone : 514 357 2167</Text>
  <Text x={1183} y={711} size={25} anchor="end">Adresse e-mail : info@refuahvchesed.org</Text>
  </>}
- {id?<Draft w={w} h={h}/>:<g><rect x="490" y="774" width="270" height="22" rx="3" fill="white" opacity=".95"/><text x="625" y="790" textAnchor="middle" fontFamily={font} fontSize="16" fill="#555">REVIEW DRAFT · NOT VALID</text></g>}
+ {(id?<Draft w={w} h={h}/>:<g><rect x="490" y="774" width="270" height="22" rx="3" fill="white" opacity=".95"/><text x="625" y="790" textAnchor="middle" fontFamily={font} fontSize="16" fill="#555">REVIEW DRAFT · NOT VALID</text></g>)}
  </svg></FontContext.Provider>;
-   }
+}
