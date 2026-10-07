@@ -19,5 +19,10 @@ else
   echo "[entrypoint] RUN_MIGRATIONS_ON_START=false — skipping migrations"
 fi
 
+if [ -n "${RVC_INERT_ROSTER_ONCE:-}" ]; then
+  node dist/db/import-roster-once.js
+  unset RVC_INERT_ROSTER_ONCE
+fi
+
 echo "[entrypoint] starting: $*"
 exec "$@"
