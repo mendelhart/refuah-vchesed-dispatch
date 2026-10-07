@@ -463,4 +463,4 @@ export function App(): React.JSX.Element {
       <InstallPrompt />
     </>
   );
-                                 }
+}
