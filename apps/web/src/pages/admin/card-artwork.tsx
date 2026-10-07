@@ -1,8 +1,9 @@
 import React from 'react';
+import {QrCode} from '../MyIdCard';
 import {cardGlyphWidths} from './card-text-metrics';
 export interface CardFields {
   name: string; number: string; photo: string | null; plate: string; unit: string; expiry: string;
-  termsFr: string; termsEn: string;
+  termsFr: string; termsEn: string; verificationUrl?:string; vehicleVerificationUrl?:string; issued?:boolean; vehicleIssued?:boolean;
 }
 export const initialCardFields: CardFields = {
   name: 'SAMPLE VOLUNTEER', number: 'SAMPLE-ID', photo: null, plate: 'SAMPLE', unit: 'SAMPLE', expiry: '',
@@ -43,12 +44,13 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  </>}
  {face==='volunteer-back'&&<>
  <Text x={427} y={147} size={52} fill="white" bold anchor="middle">CONDITIONS · TERMS</Text>
- <rect x="55" y="350" width="745" height="825" fill="white" opacity=".94"/>
+ <rect x="55" y="350" width="745" height="665" fill="white" opacity=".94"/>
  <Lines x={85} y={407} width={685} text={fields.termsFr} size={fields.termsFr.length>450?22:27} line={fields.termsFr.length>450?30:35}/>
  <Lines x={85} y={747} width={685} text={fields.termsEn} size={27} line={35}/>
- <Text x={85} y={1090} size={32} bold fill={R}>SI TROUVÉE · IF FOUND</Text>
- <Text x={85} y={1130} size={29}>514 357 2167 · info@refuahvchesed.org</Text>
- <Text x={427} y={1318} size={29} fill="white" anchor="middle">BROUILLON · DRAFT</Text>
+ <Text x={85} y={970} size={32} bold fill={R}>SI TROUVÉE · IF FOUND</Text>
+ <Text x={85} y={1010} size={29}>514 357 2167 · info@refuahvchesed.org</Text>
+ <svg x="90" y="1040" width="220" height="220" viewBox="0 0 220 220"><QrCode text={fields.verificationUrl??"https://rvc-web-0klk.onrender.com/verify/preview?kind=volunteer"} title="Preview QR: verification not activated"/></svg><Text x={340} y={1130} size={27} bold>{fields.issued?'SCAN FOR VALIDITY':'QR PREVIEW ONLY'}</Text><Text x={340} y={1170} size={25}>{fields.issued?'VERIFY THE HOLDER':'VERIFICATION NOT ACTIVE'}</Text>
+ <Text x={427} y={1318} size={29} fill="white" anchor="middle">{fields.issued?'REFUAH V’CHESED':'BROUILLON · DRAFT'}</Text>
  </>}
  {face==='vehicle-front'&&<>
  <image href="/brand/cards/chesed-on-the-go.svg" x="44" y="70" width="404" height="242"/>
@@ -70,12 +72,13 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  <Lines x={64} y={425} width={1123} size={25} line={32} bold text="Nous demandons respectueusement aux agents de la loi d’être attentifs au service communautaire que ce membre fournit. Merci!"/>
  <Text x={625} y={491} size={25} bold anchor="middle">Cette carte est la propriété de :</Text><Text x={625} y={526} size={31} bold fill={R} anchor="middle">REFUAH V’CHESED</Text>
  <image href={logo} x="103" y="572" width="292" height="122"/>
+ <svg x="526" y="560" width="170" height="170" viewBox="0 0 170 170"><QrCode text={fields.vehicleVerificationUrl??"https://rvc-web-0klk.onrender.com/verify/preview?kind=vehicle"} title="Vehicle QR preview: not issued"/></svg><Text x={610} y={755} size={20} anchor="middle">{fields.vehicleIssued?'SCAN FOR VALIDITY':'SCAN FOR VALIDITY · PREVIEW'}</Text>
  <Text x={1183} y={576} size={27} bold fill={R} anchor="end">SI TROUVÉ, VEUILLEZ RETOURNER À :</Text>
  <Text x={1183} y={612} size={25} anchor="end">420, rue Beaubien O, bureau 101</Text>
  <Text x={1183} y={645} size={25} anchor="end">Montréal, QC, H2V 4S6</Text>
  <Text x={1183} y={678} size={25} anchor="end">Numéro de téléphone : 514 357 2167</Text>
  <Text x={1183} y={711} size={25} anchor="end">Adresse e-mail : info@refuahvchesed.org</Text>
  </>}
- {(id?<Draft w={w} h={h}/>:<g><rect x="490" y="774" width="270" height="22" rx="3" fill="white" opacity=".95"/><text x="625" y="790" textAnchor="middle" fontFamily={font} fontSize="16" fill="#555">REVIEW DRAFT · NOT VALID</text></g>)}
+ {(!(id?fields.issued:fields.vehicleIssued))&&(id?<Draft w={w} h={h}/>:<g><rect x="490" y="774" width="270" height="22" rx="3" fill="white" opacity=".95"/><text x="625" y="790" textAnchor="middle" fontFamily={font} fontSize="16" fill="#555">REVIEW DRAFT · NOT VALID</text></g>)}
  </svg></FontContext.Provider>;
 }
