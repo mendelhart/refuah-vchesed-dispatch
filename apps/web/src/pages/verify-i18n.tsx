@@ -29,6 +29,16 @@ export function useLang(): [Lang, (l: Lang) => void] {
 }
 
 export const T = {
+  volunteerStatus: { fr: 'Statut du bénévole', en: 'Volunteer status' },
+  cardStatus: { fr: 'Statut de la carte', en: 'Card status' },
+  active: { fr: 'Actif', en: 'Active' },
+  inactive: { fr: 'Inactif', en: 'Inactive' },
+  suspended: { fr: 'Suspendu', en: 'Suspended' },
+  statusUnknown: { fr: 'Non confirmé', en: 'Not confirmed' },
+  phone: { fr: 'Numéro de téléphone', en: 'Phone number' },
+  preferredContact: { fr: 'Moyen de contact préféré', en: 'Preferred contact method' },
+  chooseContact: { fr: 'Choisir', en: 'Choose' },
+  emailContact: { fr: 'Courriel', en: 'Email' },
   checking: { fr: 'Vérification…', en: 'Checking…' },
   unable: { fr: 'Impossible de vérifier cette carte', en: 'Unable to verify this card' },
   lost: { fr: 'Signalée perdue - non valide', en: 'Reported lost - not valid' },
@@ -62,10 +72,7 @@ export const T = {
   btnReport: { fr: 'Signaler un comportement / plainte', en: 'Report misbehavior / complaint' },
   btnFound: { fr: "J'ai trouvé cette carte", en: 'I found this card' },
   btnContact: { fr: 'Nous joindre', en: 'Contact us' },
-  formNote: {
-    fr: "Vos renseignements vont à la boîte privée de l'administration RVC. L'identité du déclarant n'est pas vérifiée. Aucune coordonnée du bénévole n'est partagée. Pour une urgence, communiquez directement avec RVC.",
-    en: 'Your information goes to the private RVC admin inbox. Reporter identity is unverified. No volunteer contact details are shared. For urgent help, contact RVC directly.',
-  },
+  formNote: { fr: 'Pour une urgence, appelez RVC.', en: 'For urgent help, call RVC.' },
   reportType: { fr: 'Type de signalement', en: 'Report type' },
   yourName: { fr: 'Votre nom', en: 'Your name' },
   orgType: { fr: "Type d'organisation", en: 'Organization type' },
@@ -113,3 +120,10 @@ export function LangToggle({ lang, setLang }: { lang: Lang; setLang: (l: Lang) =
     </div>
   );
 }
+
+export const CONTACT_METHODS: [string, { fr: string; en: string }][] = [
+ ['phone', { fr: 'Appel téléphonique', en: 'Phone call' }],
+ ['text', { fr: 'Texto', en: 'Text message' }],
+ ['WhatsApp', { fr: 'WhatsApp', en: 'WhatsApp' }],
+ ['email', { fr: 'Courriel', en: 'Email' }],
+];

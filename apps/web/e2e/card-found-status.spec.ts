@@ -1,0 +1,20 @@
+import { test, expect } from '@playwright/test';
+test('synthetic vehicle preview and private finder form are bilingual', async ({ page }) => {
+ await page.route('**/api/auth/me', route => route.fulfill({ status: 401, contentType: 'application/json', body: '{}' }));
+ await page.goto('/verify/preview?state=vehicle');
+ await expect(page.getByText('DEMO 101')).toBeVisible();
+ await expect(page.getByText('Statut du bénévole: Actif')).toBeVisible();
+ await page.getByRole('button',{name:'English',exact:true}).click();
+ await page.getByRole('button',{name:'I found this card',exact:true}).click();
+ await page.locator('[name=organizationType]').selectOption('private person');
+ await expect(page.locator('[name=organizationName]')).toHaveCount(0);
+ await expect(page.locator('[name=phone]')).toHaveAttribute('required','');
+ await expect(page.locator('[name=preferredContactMethod]')).toHaveAttribute('required','');
+ await expect(page.getByRole('button',{name:'Submit to RVC'})).toBeDisabled();
+ await page.locator('[name=preferredContactMethod]').selectOption('email');
+ await expect(page.locator('[name=contact]')).toHaveAttribute('type','email');
+ await page.goto('/verify/preview?state=suspended');
+ await expect(page.getByText('Volunteer status: Suspended')).toBeVisible();
+ await expect(page.getByText('Sample Volunteer')).toHaveCount(0);
+ await expect(page.getByText('DEMO 101')).toHaveCount(0);
+});

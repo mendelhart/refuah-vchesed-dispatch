@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { api } from '@/lib/api';
-import { ORG_TYPES, REPORT_TYPES, T, type Lang } from './verify-i18n';
+import { CONTACT_METHODS, ORG_TYPES, REPORT_TYPES, T, type Lang } from './verify-i18n';
 
 export function CardReportForm({ token, lang = 'fr' }: { token: string; lang?: Lang }): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
   const [reportType, setReportType] = useState('report conduct');
+  const [organizationType, setOrganizationType] = useState('hospital');
+  const [preferredContactMethod, setPreferredContactMethod] = useState('');
+  const foundCard = reportType === 'found card';
   const submit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     const body = Object.fromEntries(new FormData(e.currentTarget).entries());
@@ -37,6 +40,7 @@ export function CardReportForm({ token, lang = 'fr' }: { token: string; lang?: L
             className="rounded-lg bg-[#ed1925] px-4 py-2 text-white"
             onClick={() => {
               setReportType(type);
+              setOrganizationType('hospital');
               setOpen(true);
             }}
           >
@@ -49,7 +53,7 @@ export function CardReportForm({ token, lang = 'fr' }: { token: string; lang?: L
           <p className="text-sm">{T.formNote[lang]}</p>
           <label className="block">
             {T.reportType[lang]}
-            <select required name="reportType" value={reportType} onChange={(e) => setReportType(e.target.value)} className={input}>
+            <select required name="reportType" value={reportType} onChange={(e) => { setReportType(e.target.value); setOrganizationType('hospital'); }} className={input}>
               {REPORT_TYPES.map(([v, l]) => (
                 <option key={v} value={v}>{l[lang]}</option>
               ))}
@@ -61,20 +65,29 @@ export function CardReportForm({ token, lang = 'fr' }: { token: string; lang?: L
           </label>
           <label className="block">
             {T.orgType[lang]}
-            <select name="organizationType" required className={input}>
-              {ORG_TYPES.map(([v, l]) => (
+            <select name="organizationType" value={organizationType} onChange={(e) => setOrganizationType(e.target.value)} required className={input}>
+              {[...ORG_TYPES, ...(foundCard ? [['private person', {fr: 'Particulier', en: 'Private person'}] as [string, {fr: string; en: string}]] : [])].map(([v, l]) => (
                 <option key={v} value={v}>{l[lang]}</option>
               ))}
             </select>
           </label>
-          <label className="block">
+          {organizationType !== 'private person' && <label className="block">
             {T.orgName[lang]}
             <input required name="organizationName" maxLength={160} className={input} />
-          </label>
-          <label className="block">
-            {T.contact[lang]}
-            <input required name="contact" maxLength={180} className={input} />
-          </label>
+          </label>}
+          {foundCard && <>
+            <label className="block">{T.phone[lang]}<input required type="tel" name="phone" maxLength={40} minLength={7} className={input} /></label>
+            <label className="block">{T.preferredContact[lang]}
+              <select required name="preferredContactMethod" value={preferredContactMethod} onChange={(e) => setPreferredContactMethod(e.target.value)} className={input}>
+                <option value="">{T.chooseContact[lang]}</option>
+                {CONTACT_METHODS.map(([v, l]) => <option key={v} value={v}>{l[lang]}</option>)}
+              </select>
+            </label>
+          </>}
+          {(!foundCard || preferredContactMethod === 'email') ? <label className="block">
+            {foundCard ? T.emailContact[lang] : T.contact[lang]}
+            <input required type={foundCard ? 'email' : 'text'} name="contact" maxLength={180} className={input} />
+          </label> : <input type="hidden" name="contact" value="See phone number" />}
           <label className="block">
             {T.message[lang]}
             <textarea required name="message" maxLength={4000} rows={4} className={input} />
