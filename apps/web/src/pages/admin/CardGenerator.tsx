@@ -38,7 +38,7 @@ export function CardGeneratorPage():React.JSX.Element {
  const download=async()=>{setBusy(true);setError('');try{
   let html=docs.map(d=>chosen.map(face=>`<div class="print-face ${kind==='volunteer'?'id':'vehicle'}">${renderToStaticMarkup(<CardArtwork face={face} fields={d}/>)}</div>`).join('')).join('');
   // Self-contained export. No external photo retrieval and no public artifact URL.
-  const assets=[...new Set([...html.matchAll(/href="(\/brand\/[^\"]+)"/g)].map(m=>m[1]!))];
+  const assets=[...new Set([...html.matchAll(/href="(\/brand\/[^"]+)"/g)].map(m=>m[1]!))];
   for(const path of assets){const response=await fetch(path);if(!response.ok)throw new Error('Artwork asset unavailable');const blob=await response.blob();const data=await new Promise<string>((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result));r.onerror=reject;r.readAsDataURL(blob);});html=html.split(`href="${path}"`).join(`href="${data}"`);}
   const css=kind==='vehicle'?font2+font3:font0+font1;
   const size=kind==='volunteer'?'54mm 85.6mm':'215.9mm 139.7mm';
