@@ -136,6 +136,7 @@ const SIGNED_IN = new Set([
 ]);
 
 const ADMIN_ONLY = new Set([
+  'GET /api/admin/card-drafts',
   'GET /api/admin/health',
   'GET /api/admin/backup/status',
   'POST /api/admin/backup/download',

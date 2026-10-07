@@ -1,3 +1,4 @@
+import { cardDraftRoutes } from './card-drafts.routes.js';
 import { runHealthChecks } from '../lib/health-checks.js';
 import { env } from '../env.js';
 import type { FastifyInstance } from 'fastify';
@@ -58,6 +59,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   await app.register(userRoutes);
   await app.register(callRoutes);
   await app.register(adminRoutes);
+  await app.register(cardDraftRoutes);
   await app.register(miscRoutes);
   await app.register(webhookRoutes);
   await app.register(eventRoutes);
