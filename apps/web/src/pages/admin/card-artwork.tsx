@@ -78,4 +78,4 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  </>}
  {id?<Draft w={w} h={h}/>:<g><rect x="490" y="774" width="270" height="22" rx="3" fill="white" opacity=".95"/><text x="625" y="790" textAnchor="middle" fontFamily={font} fontSize="16" fill="#555">REVIEW DRAFT · NOT VALID</text></g>}
  </svg></FontContext.Provider>;
-}
+   }
