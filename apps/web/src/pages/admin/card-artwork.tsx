@@ -24,7 +24,6 @@ function Lines({x,y,width,text,size=25,line=33,bold=false}:{x:number;y:number;wi
   for(const word of text.split(/\s+/)){if(measure(row+' '+word)>width&&row){rows.push(row);row=word;}else row+=(row?' ':'')+word;} if(row)rows.push(row);
   return <>{rows.map((v,i)=><Text key={i} x={x} y={y+i*line} size={size} bold={bold}>{v}</Text>)}</>;
 }
-function Draft({w,h}:{w:number;h:number}) {return <g opacity="0.20"><text transform={`translate(${w/2},${h/2}) rotate(-30)`} textAnchor="middle" fontFamily={font} fontWeight="700" fontSize={w*.115} fill="#333">DRAFT · NOT VALID</text></g>;}
 function Stripe({bottom=false}:{bottom?:boolean}) {return <g transform={bottom?'translate(1250,800) rotate(180)':undefined}><path d="M0 0H1250V60H0Z" fill="#262626"/><path d="M0 0H515L490 25H0Z" fill={R}/><path d="M0 27H897L925 0H967L912 60H0Z" fill="#d6d6d6"/><path d="M0 51H910L960 0" fill="none" stroke={R} strokeWidth="2"/><path d="M1190 60L1250 0V60Z" fill={R}/></g>;}
 export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.JSX.Element {
  const id=face.startsWith('volunteer');const w=id?855:1250;const h=id?1355:800;const expiry=fields.expiry?fields.expiry.split('-').reverse().join(' | '):'À CONFIRMER';
