@@ -27,7 +27,7 @@ function Lines({x,y,width,text,size=25,line=33,bold=false}:{x:number;y:number;wi
 function Draft({w,h}:{w:number;h:number}) {return <g opacity="0.20"><text transform={`translate(${w/2},${h/2}) rotate(-30)`} textAnchor="middle" fontFamily={font} fontWeight="700" fontSize={w*.115} fill="#333">DRAFT · NOT VALID</text></g>;}
 function Stripe({bottom=false}:{bottom?:boolean}) {return <g transform={bottom?'translate(1250,800) rotate(180)':undefined}><path d="M0 0H1250V60H0Z" fill="#262626"/><path d="M0 0H515L490 25H0Z" fill={R}/><path d="M0 27H897L925 0H967L912 60H0Z" fill="#d6d6d6"/><path d="M0 51H910L960 0" fill="none" stroke={R} strokeWidth="2"/><path d="M1190 60L1250 0V60Z" fill={R}/></g>;}
 export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.JSX.Element {
- const id=face.startsWith('volunteer');const w=id?855:1250;const h=id?1355:800;const expiry=fields.expiry?fields.expiry.split('-').reverse().join('/'):'À CONFIRMER';
+ const id=face.startsWith('volunteer');const w=id?855:1250;const h=id?1355:800;const expiry=fields.expiry?fields.expiry.split('-').reverse().join(id?' / ':' | '):'À CONFIRMER';
  const unique=React.useId().replace(/:/g,'');
  return <FontContext.Provider value={id?font:'VehicleCondensed, sans-serif'}><svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${w} ${h}`} aria-label={face} style={{display:'block',width:'100%',height:'auto'}}>
  <defs><radialGradient id={`bg${unique}`} cx="50%" cy="40%" r="80%"><stop offset="0" stopColor="white"/><stop offset="1" stopColor="#d8d9dc"/></radialGradient><clipPath id={`c${unique}`}><rect x="236" y="281" width="382" height="500" rx="20"/></clipPath></defs>
@@ -59,8 +59,8 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  <rect x="294" y="347" width="666" height="66" fill="black"/>
  <Text x={627} y={393} size={36} bold fill="white" anchor="middle">VÉHICULE DE RÉPONSE AUTORISÉ</Text>
  <rect x="242" y="434" width="467" height="212" fill="white" stroke="#666" strokeWidth="3"/><Text x={475} y={482} size={38} fill="#555" anchor="middle">PRÉPARÉ POUR LA PLAQUE</Text><Text x={475} y={530} size={38} fill="#555" anchor="middle">D’IMMATRICULATION:</Text><Text x={475} y={617} size={Math.min(92,690/(fields.plate||'À CONFIRMER').length)} bold fill="#ee0000" anchor="middle">{fields.plate||'À CONFIRMER'}</Text>
- <rect x="779" y="473" width="204" height="173" fill="white" stroke="#666" strokeWidth="3"/><Text x={881} y={523} size={37} fill="#555" anchor="middle">ID UNITÉ</Text><Text x={881} y={617} size={Math.min(88,300/(fields.unit||'À CONFIRMER').length)} bold fill="#ee0000" anchor="middle">{fields.unit||'À CONFIRMER'}</Text>
- <rect x="242" y="671" width="467" height="65" fill="white" stroke="#666" strokeWidth="3"/><Text x={266} y={714} size={32} fill="#555">EXPIRATION</Text><Text x={685} y={716} size={40} bold fill="#ee0000" anchor="end">{expiry}</Text><image href="/brand/cards/rvc-original-compact.svg" x="930" y="657" width="245" height="85"/>
+ <rect x="779" y="434" width="204" height="212" fill="white" stroke="#666" strokeWidth="3"/><Text x={881} y={482} size={37} fill="#555" anchor="middle">ID UNITÉ</Text><Text x={881} y={617} size={Math.min(88,300/(fields.unit||'À CONFIRMER').length)} bold fill="#ee0000" anchor="middle">{fields.unit||'À CONFIRMER'}</Text>
+ <rect x="242" y="671" width="467" height="65" fill="white" stroke="#666" strokeWidth="3"/><Text x={266} y={714} size={32} fill="#555">EXPIRATION</Text><Text x={685} y={716} size={40} bold fill="#ee0000" anchor="end">{expiry}</Text><image href={logo} x="758" y="657" width="245" height="80"/>
  </>}
  {face==='vehicle-back'&&<>
  <image href="/brand/cards/chesed-on-the-go.svg" x="44" y="76" width="340" height="204"/>
@@ -82,7 +82,7 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  <Text x={58} y={642} size={31} bold>SI TROUVÉE / IF FOUND</Text>
  <Text x={58} y={684} size={30}>514 357 2167 · info@refuahvchesed.org</Text>
  <Text x={58} y={721} size={25} fill="#666">420, rue Beaubien O, bureau 101 · Montréal, QC H2V 4S6</Text>
- <image href="/brand/cards/rvc-original-compact.svg" x="930" y="631" width="245" height="85"/>
+ <image href={logo} x="967" y="637" width="214" height="80"/>
  <rect x="445" y="773" width="360" height="23" fill="white" opacity=".95"/><Text x={625} y={790} size={16} anchor="middle">{fields.vehicleIssued?'REFUAH V’CHESED':'SPÉCIMEN · DONNÉES FICTIVES · NON VALIDE'}</Text>
  </>}
  {(!(id?fields.issued:fields.vehicleIssued))&&face!=='vehicle-back'&&(id?<Draft w={w} h={h}/>:<g><rect x="490" y="774" width="270" height="22" rx="3" fill="white" opacity=".95"/><text x="625" y="790" textAnchor="middle" fontFamily={font} fontSize="16" fill="#555">REVIEW DRAFT · NOT VALID</text></g>)}
