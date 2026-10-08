@@ -32,7 +32,7 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  return <FontContext.Provider value={id?font:'VehicleCondensed, sans-serif'}><svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${w} ${h}`} aria-label={face} style={{display:'block',width:'100%',height:'auto'}}>
  <defs><radialGradient id={`bg${unique}`} cx="50%" cy="40%" r="80%"><stop offset="0" stopColor="white"/><stop offset="1" stopColor="#d8d9dc"/></radialGradient><clipPath id={`c${unique}`}><rect x="236" y="281" width="382" height="500" rx="20"/></clipPath></defs>
  <rect width={w} height={h} fill={id?"white":`url(#bg${unique})`}/>
- {id?<><g transform="rotate(-15)" opacity=".22">{Array.from({length:42},(_,i)=>{const col=i%6-1,row=Math.floor(i/6);return <g key={i} transform={`translate(${60+260*col},${55+250*row}) scale(.912) translate(-147.48,-314.191)`}><path d="M 280.617188 400.363281 C 275.742188 405.472656 253.675781 427.457031 217.394531 427.457031 C 181.390625 427.457031 152.125 391.304688 152.125 360.878906 C 152.125 342.761719 162.578125 333.238281 182.089844 333.238281 C 207.175781 333.238281 213.675781 355.304688 213.675781 355.304688 L 218.324219 355.304688 C 218.324219 355.304688 225.289062 332.773438 249.910156 332.773438 C 271.28125 332.773438 279.875 340.203125 279.875 356.695312 C 279.875 379.574219 246.894531 399.214844 216 396.5625 C 197.019531 394.933594 178.824219 380.03125 169.546875 366.683594 L 165.828125 377.367188 C 173.050781 396.4375 197.019531 412.621094 216 415.023438 C 249.9375 419.316406 284.519531 392.746094 284.519531 356.695312 C 284.519531 329.289062 272.675781 314.191406 249.910156 314.191406 C 231.328125 314.191406 220.414062 333.46875 216 343.691406 C 211.585938 333.703125 200.902344 314.65625 182.089844 314.65625 C 160.953125 314.65625 147.480469 333.238281 147.480469 360.878906 C 147.480469 410.117188 182.648438 446.035156 217.394531 446.035156 C 241.085938 446.035156 268.074219 429.863281 283.871094 412.90625 Z M 280.617188 400.363281 " fill="#777"/></g>;})}</g><path d="M0 0H855V302Q490 295 0 474Z" fill="#b31d27"/><path d="M0 0H855V302Q475 350 0 235Z" fill={R}/><path d="M0 1185Q315 1400 855 1148V1355H0Z" fill="#b31d27"/><path d="M0 1268Q520 1305 855 1148V1355H0Z" fill={R}/></>:<>{face==='vehicle-front'&&<><Stripe/><Stripe bottom/></>}</>}
+ {id?<><g transform="rotate(-15)" opacity=".22">{Array.from({length:42},(_,i)=>{const col=i%6-1,row=Math.floor(i/6);return <g key={i} transform={`translate(${60+260*col},${55+250*row}) scale(.912) translate(-147.48,-314.191)`}><path d="M 280.617188 400.363281 C 275.742188 405.472656 253.675781 427.457031 217.394531 427.457031 C 181.390625 427.457031 152.125 391.304688 152.125 360.878906 C 152.125 342.761719 162.578125 333.238281 182.089844 333.238281 C 207.175781 333.238281 213.675781 355.304688 213.675781 355.304688 L 218.324219 355.304688 C 218.324219 355.304688 225.289062 332.773438 249.910156 332.773438 C 271.28125 332.773438 279.875 340.203125 279.875 356.695312 C 279.875 379.574219 246.894531 399.214844 216 396.5625 C 197.019531 394.933594 178.824219 380.03125 169.546875 366.683594 L 165.828125 377.367188 C 173.050781 396.4375 197.019531 412.621094 216 415.023438 C 249.9375 419.316406 284.519531 392.746094 284.519531 356.695312 C 284.519531 329.289062 272.675781 314.191406 249.910156 314.191406 C 231.328125 314.191406 220.414062 333.46875 216 343.691406 C 211.585938 333.703125 200.902344 314.65625 182.089844 314.65625 C 160.953125 314.65625 147.480469 333.238281 147.480469 360.878906 C 147.480469 410.117188 182.648438 446.035156 217.394531 446.035156 C 241.085938 446.035156 268.074219 429.863281 283.871094 412.90625 Z M 280.617188 400.363281 " fill="#777"/></g>;})}</g><path d="M0 0H855V302Q490 295 0 474Z" fill="#b31d27"/><path d="M0 0H855V302Q475 350 0 235Z" fill={R}/><path d="M0 1185Q315 1400 855 1148V1355H0Z" fill="#b31d27"/><path d="M0 1268Q520 1305 855 1148V1355H0Z" fill={R}/></>:<><Stripe/><Stripe bottom/></>}
  {face==='volunteer-front'&&<>
  <Text x={427} y={194} size={67} fill="white" bold anchor="middle">BÉNÉVOLE · VOLUNTEER</Text>
  <rect x="225" y="270" width="404" height="522" rx="29" fill="white"/>
@@ -60,31 +60,30 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  <Text x={627} y={393} size={36} bold fill="white" anchor="middle">VÉHICULE DE RÉPONSE AUTORISÉ</Text>
  <rect x="242" y="434" width="467" height="212" fill="white" stroke="#666" strokeWidth="3"/><Text x={475} y={482} size={38} fill="#555" anchor="middle">PRÉPARÉ POUR LA PLAQUE</Text><Text x={475} y={530} size={38} fill="#555" anchor="middle">D’IMMATRICULATION:</Text><Text x={475} y={617} size={Math.min(92,690/(fields.plate||'À CONFIRMER').length)} bold fill="#ee0000" anchor="middle">{fields.plate||'À CONFIRMER'}</Text>
  <rect x="779" y="473" width="204" height="173" fill="white" stroke="#666" strokeWidth="3"/><Text x={881} y={523} size={37} fill="#555" anchor="middle">ID UNITÉ</Text><Text x={881} y={617} size={Math.min(88,300/(fields.unit||'À CONFIRMER').length)} bold fill="#ee0000" anchor="middle">{fields.unit||'À CONFIRMER'}</Text>
- <rect x="64" y="671" width="360" height="73" rx="3" fill="white" stroke="#ed1925" strokeWidth="3"/><Text x={87} y={719} size={33} fill="#555">EXPIRATION</Text><Text x={404} y={719} size={40} bold fill="#ed1925" anchor="end">{expiry}</Text><image href="/brand/cards/rvc-original-compact.svg" x="930" y="657" width="245" height="85"/>
+ <rect x="242" y="671" width="467" height="65" fill="white" stroke="#666" strokeWidth="3"/><Text x={266} y={714} size={32} fill="#555">EXPIRATION</Text><Text x={685} y={716} size={40} bold fill="#ee0000" anchor="end">{expiry}</Text><image href="/brand/cards/rvc-original-compact.svg" x="930" y="657" width="245" height="85"/>
  </>}
  {face==='vehicle-back'&&<>
- <rect width="1250" height="800" fill="white"/>
- <rect x="12" y="12" width="1226" height="776" fill="none" stroke={R} strokeWidth="3"/>
- <rect x="16" y="16" width="1218" height="63" fill={R}/>
- <Text x={625} y={61} size={37} fill="white" bold anchor="middle">VÉRIFICATION DU VÉHICULE / VEHICLE VERIFICATION</Text>
- <image href={logo} x="58" y="106" width="325" height="122"/>
- <Text x={447} y={145} size={34} bold>TRANSPORT HOSPITALIER BÉNÉVOLE</Text>
- <Text x={447} y={191} size={29}>Plaque {fields.plate||'À CONFIRMER'} · Unité {fields.unit||'À CONFIRMER'} · Exp. {expiry}</Text>
- <path d="M58 258H1192" stroke="#ddd" strokeWidth="2"/>
- <Text x={58} y={313} size={34} bold>Vérifiez le statut actuel avant de vous fier à cette plaque.</Text>
- <Text x={58} y={359} size={29}>Transport gratuit de patients et de leurs proches vers et depuis les hôpitaux.</Text>
- <Text x={58} y={402} size={29}>Utilisation réservée aux activités autorisées par Refuah V’Chesed.</Text>
- <Text x={58} y={470} size={33} bold>Check the current status before relying on this plaque.</Text>
- <Text x={58} y={511} size={29}>Free hospital transport for patients and their family members.</Text>
- <Text x={58} y={550} size={29}>For volunteer activities approved by Refuah V’Chesed only.</Text>
- <svg x="963" y="288" width="214" height="214" viewBox="0 0 214 214"><QrCode text={fields.vehicleVerificationUrl??"https://rvc-web-0klk.onrender.com/verify/preview?kind=vehicle"} title={fields.vehicleIssued?'Vehicle verification':'Demonstration QR: not issued'}/></svg>
- <Text x={1070} y={535} size={24} fill="#555" anchor="middle">{fields.vehicleIssued?'VÉRIFIER / VERIFY':'QR DE DÉMONSTRATION'}</Text>
- <path d="M58 590H1192" stroke={R} strokeWidth="3"/>
- <Text x={58} y={636} size={31} bold>SI TROUVÉE / IF FOUND</Text>
- <Text x={58} y={678} size={32}>514 357 2167 · info@refuahvchesed.org</Text>
- <Text x={58} y={717} size={25} fill="#666">420, rue Beaubien O, bureau 101 · Montréal, QC H2V 4S6</Text>
- <rect x="16" y="752" width="1218" height="33" fill="#eee"/>
- <Text x={625} y={776} size={22} anchor="middle">{fields.vehicleIssued?'REFUAH V’CHESED':'SPÉCIMEN · DONNÉES FICTIVES · NON VALIDE'}</Text>
+ <image href="/brand/cards/chesed-on-the-go.svg" x="44" y="76" width="340" height="204"/>
+ <Text x={810} y={125} size={43} fill="#e60000" bold anchor="middle">VÉRIFICATION DU VÉHICULE</Text>
+ <Text x={810} y={176} size={36} fill="#e60000" bold anchor="middle">VEHICLE VERIFICATION</Text>
+ <Text x={810} y={227} size={31} bold anchor="middle">TRANSPORT HOSPITALIER BÉNÉVOLE</Text>
+ <rect x="435" y="253" width="750" height="46" fill="white" stroke="#666" strokeWidth="2"/>
+ <Text x={810} y={285} size={27} fill="#555" anchor="middle">Plaque {fields.plate||'À CONFIRMER'} · Unité {fields.unit||'À CONFIRMER'} · Exp. {expiry}</Text>
+
+ <Text x={58} y={354} size={32} bold>Vérifiez le statut actuel avant de vous fier à cette plaque.</Text>
+ <Text x={58} y={397} size={28}>Transport gratuit de patients et de leurs proches vers et depuis les hôpitaux.</Text>
+ <Text x={58} y={437} size={28}>Utilisation réservée aux activités autorisées par Refuah V’Chesed.</Text>
+ <Text x={58} y={497} size={31} bold>Check the current status before relying on this plaque.</Text>
+ <Text x={58} y={537} size={28}>Free hospital transport for patients and their family members.</Text>
+ <Text x={58} y={575} size={28}>For volunteer activities approved by Refuah V’Chesed only.</Text>
+ <svg x="967" y="330" width="214" height="214" viewBox="0 0 214 214"><QrCode text={fields.vehicleVerificationUrl??"https://rvc-web-0klk.onrender.com/verify/preview?kind=vehicle"} title={fields.vehicleIssued?'Vehicle verification':'Demonstration QR: not issued'}/></svg>
+ <Text x={1070} y={567} size={24} fill="#555" anchor="middle">{fields.vehicleIssued?'VÉRIFIER / VERIFY':'QR DE DÉMONSTRATION'}</Text>
+ <path d="M58 602H1192" stroke={R} strokeWidth="3"/>
+ <Text x={58} y={642} size={31} bold>SI TROUVÉE / IF FOUND</Text>
+ <Text x={58} y={684} size={30}>514 357 2167 · info@refuahvchesed.org</Text>
+ <Text x={58} y={721} size={25} fill="#666">420, rue Beaubien O, bureau 101 · Montréal, QC H2V 4S6</Text>
+ <image href="/brand/cards/rvc-original-compact.svg" x="930" y="631" width="245" height="85"/>
+ <rect x="445" y="773" width="360" height="23" fill="white" opacity=".95"/><Text x={625} y={790} size={16} anchor="middle">{fields.vehicleIssued?'REFUAH V’CHESED':'SPÉCIMEN · DONNÉES FICTIVES · NON VALIDE'}</Text>
  </>}
  {(!(id?fields.issued:fields.vehicleIssued))&&face!=='vehicle-back'&&(id?<Draft w={w} h={h}/>:<g><rect x="490" y="774" width="270" height="22" rx="3" fill="white" opacity=".95"/><text x="625" y="790" textAnchor="middle" fontFamily={font} fontSize="16" fill="#555">REVIEW DRAFT · NOT VALID</text></g>)}
  </svg></FontContext.Provider>;
