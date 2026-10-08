@@ -27,30 +27,42 @@ function Lines({x,y,width,text,size=25,line=33,bold=false}:{x:number;y:number;wi
 function Draft({w,h}:{w:number;h:number}) {return <g opacity="0.20"><text transform={`translate(${w/2},${h/2}) rotate(-30)`} textAnchor="middle" fontFamily={font} fontWeight="700" fontSize={w*.115} fill="#333">DRAFT · NOT VALID</text></g>;}
 function Stripe({bottom=false}:{bottom?:boolean}) {return <g transform={bottom?'translate(1250,800) rotate(180)':undefined}><path d="M0 0H1250V60H0Z" fill="#262626"/><path d="M0 0H515L490 25H0Z" fill={R}/><path d="M0 27H897L925 0H967L912 60H0Z" fill="#d6d6d6"/><path d="M0 51H910L960 0" fill="none" stroke={R} strokeWidth="2"/><path d="M1190 60L1250 0V60Z" fill={R}/></g>;}
 export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.JSX.Element {
- const id=face.startsWith('volunteer');const w=id?855:1250;const h=id?1355:800;const expiry=fields.expiry?fields.expiry.split('-').reverse().join('/'):'À CONFIRMER';
+ const id=face.startsWith('volunteer');const w=id?855:1250;const h=id?1355:800;const expiry=fields.expiry?fields.expiry.split('-').reverse().join(id?' | ':'/'):'À CONFIRMER';
  const unique=React.useId().replace(/:/g,'');
  return <FontContext.Provider value={id?font:'VehicleCondensed, sans-serif'}><svg xmlns="http://www.w3.org/2000/svg" viewBox={`0 0 ${w} ${h}`} aria-label={face} style={{display:'block',width:'100%',height:'auto'}}>
  <defs><radialGradient id={`bg${unique}`} cx="50%" cy="40%" r="80%"><stop offset="0" stopColor="white"/><stop offset="1" stopColor="#d8d9dc"/></radialGradient><clipPath id={`c${unique}`}><rect x="236" y="281" width="382" height="500" rx="20"/></clipPath></defs>
  <rect width={w} height={h} fill={id?"white":`url(#bg${unique})`}/>
  {id?<><g transform="rotate(-15)" opacity=".22">{Array.from({length:42},(_,i)=>{const col=i%6-1,row=Math.floor(i/6);return <g key={i} transform={`translate(${60+260*col},${55+250*row}) scale(.912) translate(-147.48,-314.191)`}><path d="M 280.617188 400.363281 C 275.742188 405.472656 253.675781 427.457031 217.394531 427.457031 C 181.390625 427.457031 152.125 391.304688 152.125 360.878906 C 152.125 342.761719 162.578125 333.238281 182.089844 333.238281 C 207.175781 333.238281 213.675781 355.304688 213.675781 355.304688 L 218.324219 355.304688 C 218.324219 355.304688 225.289062 332.773438 249.910156 332.773438 C 271.28125 332.773438 279.875 340.203125 279.875 356.695312 C 279.875 379.574219 246.894531 399.214844 216 396.5625 C 197.019531 394.933594 178.824219 380.03125 169.546875 366.683594 L 165.828125 377.367188 C 173.050781 396.4375 197.019531 412.621094 216 415.023438 C 249.9375 419.316406 284.519531 392.746094 284.519531 356.695312 C 284.519531 329.289062 272.675781 314.191406 249.910156 314.191406 C 231.328125 314.191406 220.414062 333.46875 216 343.691406 C 211.585938 333.703125 200.902344 314.65625 182.089844 314.65625 C 160.953125 314.65625 147.480469 333.238281 147.480469 360.878906 C 147.480469 410.117188 182.648438 446.035156 217.394531 446.035156 C 241.085938 446.035156 268.074219 429.863281 283.871094 412.90625 Z M 280.617188 400.363281 " fill="#777"/></g>;})}</g><path d="M0 0H855V302Q490 295 0 474Z" fill="#b31d27"/><path d="M0 0H855V302Q475 350 0 235Z" fill={R}/><path d="M0 1185Q315 1400 855 1148V1355H0Z" fill="#b31d27"/><path d="M0 1268Q520 1305 855 1148V1355H0Z" fill={R}/></>:<><Stripe/><Stripe bottom/></>}
  {face==='volunteer-front'&&<>
- <Text x={427} y={194} size={67} fill="white" bold anchor="middle">BÉNÉVOLE · VOLUNTEER</Text>
+ <Text x={427} y={163} size={61} fill="white" bold anchor="middle">BÉNÉVOLE</Text>
+ <Text x={427} y={217} size={32} fill="white" anchor="middle">VOLUNTEER</Text>
  <rect x="225" y="270" width="404" height="522" rx="29" fill="white"/>
- {fields.photo?<image href={fields.photo} x="236" y="281" width="382" height="500" preserveAspectRatio="xMidYMid slice" clipPath={`url(#c${unique})`}/>:<><rect x="236" y="281" width="382" height="500" rx="20" fill="#ececec"/><circle cx="427" cy="443" r="78" fill="#c5c5c5"/><path d="M290 719V664a137 137 0 01274 0v55" fill="#c5c5c5"/><Text x={427} y={754} size={29} anchor="middle">PHOTO À CONFIRMER</Text></>}
- <Text x={427} y={906} size={Math.min(67,1120/Math.max(fields.name.length,1))} fill={R} bold anchor="middle">{fields.name}</Text>
- <Text x={70} y={994} size={32}>NUMÉRO D’IDENTIFICATION:</Text><Text x={785} y={994} size={38} bold anchor="end">{fields.number||'À CONFIRMER'}</Text>
- <image href={logo} x="70" y="1060" width="420" height="152"/>
- <Text x={785} y={1320} size={32} fill="white" anchor="end">EXPIRATION: {expiry}</Text>
+ {fields.photo?<image href={fields.photo} x="236" y="281" width="382" height="500" preserveAspectRatio="xMidYMid slice" clipPath={`url(#c${unique})`}/>:<><rect x="236" y="281" width="382" height="500" rx="20" fill="#ececec"/><circle cx="427" cy="443" r="78" fill="#c5c5c5"/><path d="M290 719V664a137 137 0 01274 0v55" fill="#c5c5c5"/><Text x={427} y={754} size={27} anchor="middle">PHOTO À CONFIRMER</Text></>}
+ <Text x={427} y={884} size={Math.min(55,1120/Math.max(fields.name.length,1))} fill={R} bold anchor="middle">{fields.name}</Text>
+ <path d="M85 933H770" stroke="#ddd" strokeWidth="2"/>
+ <Text x={85} y={979} size={28} fill="#555">IDENTIFICATION</Text>
+ <Text x={770} y={979} size={38} bold anchor="end">{fields.number}</Text>
+ <path d="M85 1001H770" stroke="#ddd" strokeWidth="2"/>
+ <Text x={85} y={1050} size={28} fill="#555">EXPIRATION</Text>
+ <Text x={770} y={1050} size={38} bold fill={R} anchor="end">{expiry}</Text>
+ <path d="M0 1100Q420 1220 855 1090V1355H0Z" fill={R}/><image href="/brand/logo-white.svg" x="202" y="1175" width="450" height="119"/>
  </>}
  {face==='volunteer-back'&&<>
- <Text x={427} y={147} size={52} fill="white" bold anchor="middle">CONDITIONS · TERMS</Text>
- <rect x="55" y="350" width="745" height="665" fill="white" opacity=".94"/>
- <Lines x={85} y={407} width={685} text={fields.termsFr} size={fields.termsFr.length>450?22:27} line={fields.termsFr.length>450?30:35}/>
- <Lines x={85} y={747} width={685} text={fields.termsEn} size={27} line={35}/>
- <Text x={85} y={970} size={32} bold fill={R}>SI TROUVÉE · IF FOUND</Text>
- <Text x={85} y={1010} size={29}>514 357 2167 · info@refuahvchesed.org</Text>
- <svg x="90" y="1040" width="220" height="220" viewBox="0 0 220 220"><QrCode text={fields.verificationUrl??"https://rvc-web-0klk.onrender.com/verify/preview?kind=volunteer"} title="Preview QR: verification not activated"/></svg><Text x={340} y={1130} size={27} bold>{fields.issued?'SCAN FOR VALIDITY':'QR PREVIEW ONLY'}</Text><Text x={340} y={1170} size={25}>{fields.issued?'VERIFY THE HOLDER':'VERIFICATION NOT ACTIVE'}</Text>
- <Text x={427} y={1318} size={29} fill="white" anchor="middle">{fields.issued?'REFUAH V’CHESED':'BROUILLON · DRAFT'}</Text>
+ <Text x={427} y={163} size={58} fill="white" bold anchor="middle">CONDITIONS</Text>
+ <Text x={427} y={217} size={32} fill="white" anchor="middle">TERMS</Text>
+ <rect x="55" y="345" width="745" height="815" fill="white" opacity=".97"/>
+ <Text x={85} y={397} size={24} bold fill={R}>FRANÇAIS</Text>
+ <Lines x={85} y={438} width={685} text={fields.termsFr} size={27} line={35}/>
+ <path d="M85 603H770" stroke="#ddd" strokeWidth="2"/>
+ <Text x={85} y={649} size={24} bold fill={R}>ENGLISH</Text>
+ <Lines x={85} y={690} width={685} text={fields.termsEn} size={27} line={35}/>
+ <path d="M85 824H770" stroke="#ddd" strokeWidth="2"/>
+ <Text x={85} y={873} size={29} bold>SI TROUVÉE · IF FOUND</Text>
+ <Text x={85} y={914} size={28}>514 357 2167 · info@refuahvchesed.org</Text>
+ <svg x="70" y="950" width="196" height="196" viewBox="0 0 196 196"><QrCode text={fields.verificationUrl??"https://rvc-web-0klk.onrender.com/verify/preview?kind=volunteer"} title={fields.issued?"Volunteer verification":"Review QR: not issued"}/></svg>
+ <Text x={168} y={1164} size={22} fill="#555" anchor="middle">VÉRIFIER · VERIFY</Text><image href={logo} x="360" y="973" width="365" height="132"/>
+ <rect x="85" y="1197" width="685" height="76" fill="white"/>
+ <Text x={106} y={1246} size={27} fill="#555">EXPIRATION</Text><Text x={749} y={1246} size={37} bold fill={R} anchor="end">{expiry}</Text>
  </>}
  {face==='vehicle-front'&&<>
  <image href="/brand/cards/chesed-on-the-go.svg" x="44" y="70" width="404" height="242"/>
@@ -79,6 +91,6 @@ export function CardArtwork({face,fields}:{face:Face;fields:CardFields}):React.J
  <Text x={1183} y={678} size={25} anchor="end">Numéro de téléphone : 514 357 2167</Text>
  <Text x={1183} y={711} size={25} anchor="end">Adresse e-mail : info@refuahvchesed.org</Text>
  </>}
- {(!(id?fields.issued:fields.vehicleIssued))&&(id?<Draft w={w} h={h}/>:<g><rect x="490" y="774" width="270" height="22" rx="3" fill="white" opacity=".95"/><text x="625" y="790" textAnchor="middle" fontFamily={font} fontSize="16" fill="#555">REVIEW DRAFT · NOT VALID</text></g>)}
+ {(!(id?fields.issued:fields.vehicleIssued))&&(id?<g><rect x="260" y="1320" width="335" height="26" fill="white" opacity=".95"/><Text x={427} y={1341} size={20} anchor="middle">SPÉCIMEN · NON VALIDE</Text></g>:<g><rect x="490" y="774" width="270" height="22" rx="3" fill="white" opacity=".95"/><text x="625" y="790" textAnchor="middle" fontFamily={font} fontSize="16" fill="#555">REVIEW DRAFT · NOT VALID</text></g>)}
  </svg></FontContext.Provider>;
 }
